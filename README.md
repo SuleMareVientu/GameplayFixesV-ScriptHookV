@@ -13,30 +13,30 @@ This mod is **does not** patch the game directly, and should thus last more with
 - Enable friendly fire
 - Allow player to jack friendly peds vehicles
 - Sprint inside interiors
-    - Works in b1180 & later, but doesn't in b372. Don't know in between
-- Allow weapons inside safehouse
-    -  **Could (and probably will) break some story missions**, but shouldn't otherwise have problems in normal freeroam
+    - Works in b1180 & later, but doesn't in b372. I don't know in between
+- Allow weapons inside the safehouse
+    -  **Could (and probably will) break some story missions**, but shouldn't otherwise have problems in normal free-roam
 
 **Player Vehicle:**
 - Disable mid-air car controls and the ability to rotate the player's vehicle while stuck/upside down
-- Disable the automatic explosion after the players vehicle collides with something at high speeds
-- Leave engine on when exiting vehicle if player keeps the exit vehicle button pressed for 200ms. Similar to GTA:IV
+- Disable the automatic explosion after the player's vehicle collides with something at high speeds
+- Leave the engine on when exiting the vehicle if the player keeps the exit vehicle button pressed for 200ms. Similar to GTA:IV
 - Disable the auto-centering of the player vehicle's wheels on exit. 
     - While this is universally compatible, **it could cause some issues** with mission vehicles. Disable if necessary
 - Block player from entering ragdoll when standing on car roofs
     - The max speed the player can reach before entering ragdoll is customizable inside the INI
-- Disable the forced jump out when entering a water body with a bike (player will still jump out if completely submerged)
+- Disable the forced jump out when entering a water body with a bike (the player will still jump out if completely submerged)
 
 **Peds:**
 - Block peds from entering the "writhe" state and consequently dying
 - Blocks peds from entering the "hurt" state when shot while standing and consequently dying (or entering writhe)
     - Should be enabled in tandem with "DisableWritheWhenInjured", makes shootouts last much longer 
-- Allow mission peds to be damaged by other entities' and not only the player
+- Allow mission peds to be damaged by other entities and not only the player
 - Make (most) sitting peds behave normally when shot, instead of dying instantly
 - Disable dead peds from jumping out of the vehicle they are in
 
 ## Credits:
-- The modding community for giving ideas and finding the first methods to circument some of the issues listed here
+- The modding community for giving ideas and finding the first methods to circumvent some of the issues listed here
 - DurtyFree - [GTA V Data Dumps](https://github.com/DurtyFree/gta-v-data-dumps)
 - root-cause - [GTA V Decompiled Scripts](https://github.com/root-cause/v-decompiled-scripts)
 - [Grand Theft Auto V Native Database](https://gta5.nativedb.dotindustries.dev/natives)
