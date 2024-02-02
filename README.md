@@ -13,7 +13,7 @@ This mod is **does not** patch the game directly, and should thus last more with
 - ToggleFPSWalking - Allow player to toggle between jogging and walking in FPS mode. Inspired by chinagreenelvis's [Walk Toggle](https://www.gta5-mods.com/scripts/walk-toggle)
 - DisableEngineFire - Disables engine fires when engine healts reaches below 0. Also disables automatic vehicle explosion after engine healt reaches -4000
 - DisableEngineSmoke - Same as DisableEngineFire, but the threshold is set to 400. Prevents the engine from smoking and catching fire
-- DisableRecording - Disables the replay recording feature completely
+- DisableRecording - Disables the replay recording feature completely  
 **Fixes:**
 - Improved friendly fire code allowing player to perform melee lockon on friendly peds
 - Allow player to still have control of wheel steering when vehicle is stuck
