@@ -8,6 +8,18 @@ This mod is **does not** patch the game directly, and should thus last more with
 
 **Requires [ScriptHookV](http://www.dev-c.com/gtav/scripthookv/)**
 
+**v1.1** - Changelog:
+- DisarmPlayerWhenShot / DisarmPedWhenShot - Allows enemies that hit the player's weapon (or hands) to disarm the player, similar to RDR and GTA:IV. Adjust DisarmChance and DisarmIncludeLeftHand at your liking. Inspired by jedijosh920's [Disarm](https://www.gta5-mods.com/scripts/disarm)
+- ToggleFPSWalking - Allow player to toggle between jogging and walking in FPS mode. Inspired by chinagreenelvis's [Walk Toggle](https://www.gta5-mods.com/scripts/walk-toggle)
+- DisableEngineFire - Disables engine fires when engine healts reaches below 0. Also disables automatic vehicle explosion after engine healt reaches -4000
+- DisableEngineSmoke - Same as DisableEngineFire, but the threshold is set to 400. Prevents the engine from smoking and catching fire
+- DisableRecording - Disables the replay recording feature completely
+**Fixes:**
+- Improved friendly fire code allowing player to perform melee lockon on friendly peds
+- Allow player to still have control of wheel steering when vehicle is stuck
+- Allow player to switch characters while inside the safehouse (AllowWeaponsInsideSafeHouse is now disabled by default)
+- Made the LeaveEngineOnWhenExitingVehicles option more similar to GTA:IV's
+
 ## Features
 **Player:**
 - Enable friendly fire
@@ -20,7 +32,7 @@ This mod is **does not** patch the game directly, and should thus last more with
 **Player Vehicle:**
 - Disable mid-air car controls and the ability to rotate the player's vehicle while stuck/upside down
 - Disable the automatic explosion after the players vehicle collides with something at high speeds
-- Leave engine on when exiting vehicle if player keeps the exit vehicle button pressed for 200ms. Similar to GTA:IV
+- Leave engine on when exiting vehicle unless the player keeps the exit vehicle button pressed for 250ms. Similar to GTA:IV
 - Disable the auto-centering of the player vehicle's wheels on exit. 
     - While this is universally compatible, **it could cause some issues** with mission vehicles. Disable if necessary
 - Block player from entering ragdoll when standing on car roofs
