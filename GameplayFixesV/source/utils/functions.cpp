@@ -10,6 +10,8 @@ static Weapon lastPlayerWeapon = NULL;
 static Vehicle lastVeh = NULL;
 static Vehicle tmpVeh = NULL;
 static bool wasSetAsMissionEntity = false;
+static bool isWalking = false;
+static float playerLastMoveBlend = 0.0f;
 
 void EnablePedConfigFlag(Ped ped, int flag)
 {
@@ -36,6 +38,71 @@ void DisablePedResetFlag(Ped ped, int flag)
 {
 	if (PED::GET_PED_RESET_FLAG(ped, flag))
 		PED::SET_PED_RESET_FLAG(ped, flag, false);
+	return;
+}
+
+static void FriendlyFire()
+{
+	PED::SET_CAN_ATTACK_FRIENDLY(playerPed, true, true);
+
+	Ped ped = NULL;
+	SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);
+	if (!GET_CLOSEST_PED(playerLoc.x, playerLoc.y, playerLoc.z, 10.0f, true, true, &ped, false, true, -1))
+		return;
+
+	int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(playerPed, ped);
+	if (relationship == 0 || relationship == 1)
+	{
+		SET_PED_CAN_RAGDOLL(ped, true);
+		SET_PED_CAN_BE_TARGETTED(ped, true);
+		SET_PED_CAN_BE_TARGETTED_BY_PLAYER(ped, player, true);
+		SET_PED_CAN_BE_TARGETED_WHEN_INJURED(ped, true);
+		DisablePedConfigFlag(ped, PCF_NeverEverTargetThisPed);
+		CAN_PED_IN_COMBAT_SEE_TARGET(playerPed, ped);
+	}
+	return;
+}
+
+static bool CanDisarmPlayer()
+{
+	int bone = NULL;
+	GET_PED_LAST_DAMAGE_BONE(playerPed, &bone);
+
+	if (bone == NULL)
+		return false;
+
+	switch (bone)
+	{
+	case SkelRightHand:		case PHRightHand:		case IKRightHand:		case SkelRightFinger00:	case SkelRightFinger01:
+	case SkelRightFinger02:	case SkelRightFinger10:	case SkelRightFinger11:	case SkelRightFinger12:	case SkelRightFinger20:
+	case SkelRightFinger21:	case SkelRightFinger22:	case SkelRightFinger30:	case SkelRightFinger31:	case SkelRightFinger32:
+	case SkelRightFinger40:	case SkelRightFinger41:	case SkelRightFinger42:
+	case SkelLeftHand:		case PHLeftHand:		case IKLeftHand:		case SkelLeftFinger00:	case SkelLeftFinger01:
+	case SkelLeftFinger02:	case SkelLeftFinger10:	case SkelLeftFinger11:	case SkelLeftFinger12:	case SkelLeftFinger20:
+	case SkelLeftFinger21:	case SkelLeftFinger22:	case SkelLeftFinger30:	case SkelLeftFinger31:	case SkelLeftFinger32:
+	case SkelLeftFinger40:	case SkelLeftFinger41:	case SkelLeftFinger42:
+		return true;
+	default:
+		return false;
+	}
+}
+
+static void DisarmPlayerWhenShot()
+{
+	Hash weapon = NULL;
+	GET_CURRENT_PED_WEAPON(playerPed, &weapon, false);
+	if (weapon == WEAPON_UNARMED)
+		return;
+
+	if (HAS_ENTITY_BEEN_DAMAGED_BY_WEAPON(playerPed, WEAPON_STUNGUN, 0) || CanDisarmPlayer())
+	{
+		if (!IS_AMBIENT_SPEECH_PLAYING(playerPed))
+			PLAY_PED_AMBIENT_SPEECH_NATIVE(playerPed, "GENERIC_CURSE_MED", "SPEECH_PARAMS_FORCE", false);
+
+		SET_PED_DROPS_WEAPON(playerPed);
+		CLEAR_PED_LAST_DAMAGE_BONE(playerPed);
+		CLEAR_ENTITY_LAST_WEAPON_DAMAGE(playerPed);
+	}
 	return;
 }
 
@@ -126,10 +193,12 @@ static void SetFakeWanted(Player player, bool toggle)
 
 //This approach isn't great, and could cause a lot of issues with the game's story... Too bad
 //MUST BE CALLED EVERY FRAME
+//A different and more aggressive approach would be to terminate these scripts, which are responsible for the family scenes
+//inside the safehouses and disable the player's control: family_scene_f0, family_scene_f1, family_scene_m, family_scene_t0, family_scene_t1
 static void AllowWeaponsInsideSafeHouse()
 {
 	//Force selected player weapon for 1000ms upon exit/enter of safehouse - USES TIMERB
-	if (TIMERB() < 1000 && lastPlayerWeapon != WEAPON_UNARMED)
+	if (TimerB.Get() < 1000 && lastPlayerWeapon != WEAPON_UNARMED)
 		SET_CURRENT_PED_WEAPON(playerPed, lastPlayerWeapon, true);
 
 	//Checks if player is inside valid interior
@@ -140,8 +209,8 @@ static void AllowWeaponsInsideSafeHouse()
 	{
 		if (isFakeWanted)
 		{
+			TimerB.Set(0);
 			SetFakeWanted(player, false);
-			SETTIMERB(0);
 		}
 		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(playerPed);
 		return;
@@ -151,9 +220,30 @@ static void AllowWeaponsInsideSafeHouse()
 	if (!IsPlayerInsideSafehouse(playerPed, playerLoc) || (!isFakeWanted && GET_PLAYER_WANTED_LEVEL(player) != 0))
 		return;
 
+	//Allow player to switch characters while inside the safehouse
+	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_CHARACTER_WHEEL)				||
+		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_MICHAEL)		||
+		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_FRANKLIN)	||
+		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_TREVOR))
+	{
+		TimerF.Set(0);
+	}
+	else if (TimerF.Get() > 250 &&
+		(IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_CHARACTER_WHEEL)				||
+			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_MICHAEL)	||
+			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_FRANKLIN)	||
+			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_TREVOR)))
+	{
+		if (isFakeWanted)
+			SetFakeWanted(player, false);
+
+		TimerB.Set(0);
+		return;
+	}
+
 	//Reset weapon timer
 	if (!isFakeWanted)
-		SETTIMERB(0);
+		TimerB.Set(0);
 	else
 		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(playerPed);
 
@@ -162,14 +252,61 @@ static void AllowWeaponsInsideSafeHouse()
 	return;
 }
 
+static void ToggleFPSWalking()
+{
+	if (!IS_PED_ON_FOOT(playerPed) || !IS_CONTROL_ENABLED(PLAYER_CONTROL, INPUT_SPRINT) ||
+		GET_FOLLOW_PED_CAM_VIEW_MODE() != CAM_VIEW_MODE_FIRST_PERSON)
+	{
+		if (isWalking)
+		{
+			isWalking = false;
+			SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, PEDMOVEBLENDRATIO_SPRINT);
+		}
+		return;
+	}
+
+	//Walk Toggle
+	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SPRINT))
+	{
+		TimerA.Set(0);
+		playerLastMoveBlend = GET_PED_DESIRED_MOVE_BLEND_RATIO(playerPed);
+		SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, playerLastMoveBlend);
+	}
+	else if (TimerA.Get() < 250)
+	{
+		if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_SPRINT))
+		{
+			if (isWalking)
+			{
+				SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, PEDMOVEBLENDRATIO_SPRINT);
+				isWalking = false;
+			}
+			else
+			{
+				SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, PEDMOVEBLENDRATIO_WALK);
+				isWalking = true;
+			}
+		}
+		else
+			SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, playerLastMoveBlend);
+	}
+	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SPRINT))
+	{
+		isWalking = false;
+		SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, PEDMOVEBLENDRATIO_SPRINT);
+	}
+	else if (isWalking)
+		SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, PEDMOVEBLENDRATIO_WALK);
+	return;
+}
+
 static void DisableCarMidAirAndRollControl()
 {
 	Vehicle veh = GET_VEHICLE_PED_IS_IN(playerPed, true);
-
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
-	//Clean up old veh stuck checks
+	//Clean up old veh stuck checks, since the game is limited to ~16 of them
 	if (lastVeh != veh && DOES_ENTITY_EXIST(lastVeh) && DOES_VEHICLE_HAVE_STUCK_VEHICLE_CHECK(veh))
 		REMOVE_VEHICLE_STUCK_CHECK(veh);
 
@@ -187,6 +324,7 @@ static void DisableCarMidAirAndRollControl()
 			IS_VEHICLE_STUCK_TIMER_UP(veh, VEH_STUCK_ON_SIDE, time))
 		{
 			DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_VEH_MOVE_LR, false);
+			DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_VEH_MOVE_UD, false);
 			DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_VEH_MOVE_UP_ONLY, false);
 			DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_VEH_MOVE_DOWN_ONLY, false);
 			DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_VEH_MOVE_LEFT_ONLY, false);
@@ -195,6 +333,9 @@ static void DisableCarMidAirAndRollControl()
 			DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_VEH_MOVE_RIGHT, false);
 			DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_VEH_MOVE_UP, false);
 			DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_VEH_MOVE_DOWN, false);
+
+			//Still enable player to change steering angle  - Control normal must be inverted
+			SET_VEHICLE_STEER_BIAS(veh, -GET_DISABLED_CONTROL_UNBOUND_NORMAL(PLAYER_CONTROL, INPUT_VEH_MOVE_LR));
 		}
 	}
 	return;
@@ -206,12 +347,16 @@ static void DisableForcedCarExplosionOnImpact()
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
-	//Check if vehicle is boat/car and if it's in the air, else set it as not a mission entity
+	//Check if vehicle is boat/car
 	Hash vehModel = GET_ENTITY_MODEL(veh);
-	if (!IS_ENTITY_IN_AIR(veh) || GET_ENTITY_SPEED(veh) < 10.0f || (!IS_THIS_MODEL_A_CAR(vehModel) && !IS_THIS_MODEL_A_BOAT(vehModel)))
+	if (!IS_THIS_MODEL_A_CAR(vehModel) && !IS_THIS_MODEL_A_BOAT(vehModel))
+		return;
+
+	//If not in the air, set it as no longer needed as a mission entity
+	if (!IS_ENTITY_IN_AIR(veh) || GET_ENTITY_SPEED(veh) < 10.0f)
 	{
 		//Wait 500ms before setting vehicle as no longer needed
-		if (TIMERD() > 500 && IS_ENTITY_A_MISSION_ENTITY(veh) && wasSetAsMissionEntity)
+		if (TimerD.Get() > 500 && IS_ENTITY_A_MISSION_ENTITY(veh) && wasSetAsMissionEntity)
 		{
 			wasSetAsMissionEntity = false;
 			SET_VEHICLE_AS_NO_LONGER_NEEDED(&veh);
@@ -220,7 +365,7 @@ static void DisableForcedCarExplosionOnImpact()
 		return;
 	}
 
-	SETTIMERD(0);
+	TimerD.Set(0);
 	if (!IS_ENTITY_A_MISSION_ENTITY(veh))
 	{
 		wasSetAsMissionEntity = true;
@@ -230,37 +375,62 @@ static void DisableForcedCarExplosionOnImpact()
 	return;
 }
 
+static void DisableEngineSmoke()
+{
+	Vehicle veh = GET_VEHICLE_PED_IS_USING(playerPed);
+	if (veh == NULL)
+		return;
+
+	if (GET_VEHICLE_ENGINE_HEALTH(veh) <= ENGINE_DAMAGE_RADBURST)
+	{
+		SET_VEHICLE_ENGINE_HEALTH(veh, ENGINE_DAMAGE_RADBURST + 5.0f);
+		SET_VEHICLE_ENGINE_CAN_DEGRADE(veh, false);
+	}
+	return;
+}
+
+static void DisableEngineFire()
+{
+	Vehicle veh = GET_VEHICLE_PED_IS_USING(playerPed);
+	if (veh == NULL)
+		return;
+
+	if (GET_VEHICLE_ENGINE_HEALTH(veh) <= ENGINE_DAMAGE_ONFIRE)
+	{
+		SET_VEHICLE_ENGINE_HEALTH(veh, ENGINE_DAMAGE_ONFIRE + 5.0f);
+		SET_VEHICLE_ENGINE_CAN_DEGRADE(veh, false);
+	}
+	return;
+}
+
 static void DisableRagdollOnVehicleRoof()
 {
 	//Velocity Unit -> Km/h
 	if (iniMaxVehicleSpeed > 0.0f)
 	{
-		float speed = GET_ENTITY_SPEED(playerPed) * 3.6f;
+		const float speed = GET_ENTITY_SPEED(playerPed) * 3.6f;	//m\s to Km\h
 		if (speed > iniMaxVehicleSpeed)
-			DisablePedResetFlag(playerPed, PRF_BlockRagdollFromVehicleFallOff);
-		else
-			EnablePedResetFlag(playerPed, PRF_BlockRagdollFromVehicleFallOff);
+			return;
 	}
-	else
-		EnablePedResetFlag(playerPed, PRF_BlockRagdollFromVehicleFallOff);
+
+	EnablePedResetFlag(playerPed, PRF_BlockRagdollFromVehicleFallOff);
 	return;
 }
 
 static void LeaveEngineOnWhenExitingVehicles()
 {
-	Vehicle veh = GET_VEHICLE_PED_IS_USING(playerPed);
-	if (!DOES_ENTITY_EXIST(veh))
+	Vehicle veh = GET_VEHICLE_PED_IS_IN(playerPed, true);
+	if (veh == NULL)
 		return;
 
-	const int timeToEnableAction = 200;
-	EnablePedConfigFlag(playerPed, PCF_LeaveEngineOnWhenExitingVehicles);
-	if (IS_DISABLED_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && IS_PED_IN_ANY_VEHICLE(playerPed, false))
-		SETTIMERC(0);
-	else if (IS_DISABLED_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_EXIT) && TIMERC() < timeToEnableAction)
-	{
-		SETTIMERC(0);
+	const int TURN_OFF_ENGINE_DURATION = 250;
+	SET_VEHICLE_KEEP_ENGINE_ON_WHEN_ABANDONED(veh, true);
+	//EnablePedConfigFlag(playerPed, PCF_LeaveEngineOnWhenExitingVehicles);
+	if (IS_DISABLED_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT))
+		TimerC.Set(0);
+	else if (IS_DISABLED_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_EXIT) && TimerC.Get() > TURN_OFF_ENGINE_DURATION)
 		SET_VEHICLE_ENGINE_ON(veh, false, true, false);
-	}
+	 
 	return;
 }
 
@@ -296,13 +466,13 @@ static void DisableWheelsAutoCenterOnCarExit()
 
 	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && IS_PED_IN_ANY_VEHICLE(playerPed, false) && !IS_VEHICLE_ATTACHED_TO_TRAILER(veh) && GET_ENTITY_SPEED(veh) < 7.0f)
 	{
-		SETTIMERE(0);
+		TimerE.Set(0);
 		ATTACH_ENTITY_TO_ENTITY_PHYSICALLY(veh, tmpVeh, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, false, false, false, true, 2);
 		return;
 	}
 
 	//Detach veh after 1500ms 
-	if (IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh) && TIMERE() > 1500)
+	if (IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh) && TimerE.Get() > 1500)
 	{
 		DETACH_ENTITY(veh, false, false);
 		DETACH_ENTITY(tmpVeh, false, false);
@@ -311,13 +481,31 @@ static void DisableWheelsAutoCenterOnCarExit()
 	return;
 }
 
+static void DisableShallowWaterBikeJumpOut()
+{
+	if (GET_ENTITY_SUBMERGED_LEVEL(playerPed) < 0.9f)
+		EnablePedResetFlag(playerPed, PRF_DisableShallowWaterBikeJumpOutThisFrame);
+	return;
+}
+
+static void DisableRecording()
+{
+	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING, false);
+	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING_SECONDARY, false);
+	REPLAY_PREVENT_RECORDING_THIS_FRAME();
+	return;
+}
+
 void SetPlayerFlags()
 {
 	if (iniFriendlyFire)
-		PED::SET_CAN_ATTACK_FRIENDLY(playerPed, true, true);
+		FriendlyFire();
 
 	if (iniPlayerCanJackFriendlyPeds)
 		EnablePedConfigFlag(playerPed, PCF_PlayerCanJackFriendlyPlayers);
+
+	if (iniDisarmPlayerWhenShot)
+		DisarmPlayerWhenShot();
 
 	if (iniSprintInsideInteriors)
 		EnablePedConfigFlag(playerPed, PCF_IgnoreInteriorCheckForSprinting);
@@ -325,11 +513,20 @@ void SetPlayerFlags()
 	if (iniAllowWeaponsInsideSafeHouse)
 		AllowWeaponsInsideSafeHouse();
 
+	if (iniToggleFPSWalking)
+		ToggleFPSWalking();
+
 	if (iniDisableCarMidAirAndRollControl)
 		DisableCarMidAirAndRollControl();
 
 	if (iniDisableForcedCarExplosionOnImpact)
 		DisableForcedCarExplosionOnImpact();
+
+	if (iniDisableEngineSmoke)
+		DisableEngineSmoke();
+
+	if (iniDisableEngineFire)
+		DisableEngineFire();
 
 	if (iniLeaveEngineOnWhenExitingVehicles)
 		LeaveEngineOnWhenExitingVehicles();
@@ -341,9 +538,15 @@ void SetPlayerFlags()
 		DisableRagdollOnVehicleRoof();
 
 	if (iniDisableShallowWaterBikeJumpOut)
-	{
-		if (GET_ENTITY_SUBMERGED_LEVEL(playerPed) < 0.9f)
-			EnablePedResetFlag(playerPed, PRF_DisableShallowWaterBikeJumpOutThisFrame);
-	}
+		DisableShallowWaterBikeJumpOut();
+
+	if (iniDisableRecording)
+		DisableRecording();
+
+
+	BEGIN_TEXT_COMMAND_PRINT("NUMBER");
+	ADD_TEXT_COMPONENT_INTEGER(GET_VEHICLE_ENGINE_HEALTH(GET_VEHICLE_PED_IS_USING(playerPed)));
+	END_TEXT_COMMAND_PRINT(1, 1);
+
 	return;
 }

@@ -1,9 +1,16 @@
 #pragma once
 
-void UpdateTimers();
-void SETTIMERC(int value);
-int TIMERC();
-void SETTIMERD(int value);
-int TIMERD();
-void SETTIMERE(int value);
-int TIMERE();
+class Timer {
+	int gameTimer = 0;
+public:
+	void Set(int value);
+	int Get();
+};
+
+extern Timer TimerA;
+extern Timer TimerB;
+extern Timer TimerC;
+extern Timer TimerD;
+extern Timer TimerE;
+extern Timer TimerF;
+//extern Timer TimerG;

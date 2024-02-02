@@ -23,18 +23,13 @@ static void update()
 	if (!ENTITY::DOES_ENTITY_EXIST(playerPed) || !IS_PLAYER_CONTROL_ON(player))
 		return;
 
-	UpdateTimers();	//Update extra timers (TIMERC etc.)
 	playerLoc = ENTITY::GET_ENTITY_COORDS(playerPed, false);
 	
 	//Set player options
 	SetPlayerFlags();
 
-	// Pool every 500ms to save on performance
-	if (TIMERA() > 500)
-	{
-		SETTIMERA(0);
-		SetPedsPoolFlags();
-	}
+	// Set ped pool every frame... was set to 500ms to save on performance but it's needed for ped disarm
+	SetPedsPoolFlags();
 	return;
 }
 

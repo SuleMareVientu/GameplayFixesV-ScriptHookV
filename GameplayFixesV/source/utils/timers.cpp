@@ -3,54 +3,22 @@
 //Custom
 #include "timers.h"
 
-//We could define a class here... but we also don't want to make it harder to convert to SC-CL
-static int timerC = 0;
-static int gameTimerC = 0;
-static int timerD = 0;
-static int gameTimerD = 0;
-static int timerE = 0;
-static int gameTimerE = 0;
-
-void UpdateTimers()
+//Custom implementation of TIMERA and TIMERB natives
+void Timer::Set(int value)
 {
-	timerC = GET_GAME_TIMER() - gameTimerC;
-	timerD = GET_GAME_TIMER() - gameTimerD;
-	timerE = GET_GAME_TIMER() - gameTimerE;
+	gameTimer = GET_GAME_TIMER() + value;
 	return;
 }
 
-void SETTIMERC(int value)
+int Timer::Get()
 {
-	gameTimerC = GET_GAME_TIMER() + value;
-	UpdateTimers();
-	return;
+	return (GET_GAME_TIMER() - gameTimer);
 }
 
-int TIMERC()
-{
-	return timerC;
-}
-
-void SETTIMERD(int value)
-{
-	gameTimerD = GET_GAME_TIMER() + value;
-	UpdateTimers();
-	return;
-}
-
-int TIMERD()
-{
-	return timerD;
-}
-
-void SETTIMERE(int value)
-{
-	gameTimerE = GET_GAME_TIMER() + value;
-	UpdateTimers();
-	return;
-}
-
-int TIMERE()
-{
-	return timerE;
-}
+Timer TimerA;
+Timer TimerB;
+Timer TimerC;
+Timer TimerD;
+Timer TimerE;
+Timer TimerF;
+//Timer TimerG;

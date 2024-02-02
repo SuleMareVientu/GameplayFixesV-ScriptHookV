@@ -123,7 +123,7 @@ namespace AUDIO
 	static void OVERRIDE_UNDERWATER_STREAM(const char* p0, bool p1) { invoke<Void>(0xF2A9CDABCEA04BD6, p0, p1); } // 0xF2A9CDABCEA04BD6 0x9A083B7E b323
 	static void SET_VARIABLE_ON_UNDER_WATER_STREAM(const char* variableName, float value) { invoke<Void>(0x733ADF241531E5C2, variableName, value); } // 0x733ADF241531E5C2 0x62D026BE b323
 	static bool HAS_SOUND_FINISHED(int soundId) { return invoke<bool>(0xFCBDCE714A7C88E5, soundId); } // 0xFCBDCE714A7C88E5 0xE85AEC2E b323
-	static void PLAY_PED_AMBIENT_SPEECH_NATIVE(Ped ped, const char* speechName, const char* speechParam, Any p3) { invoke<Void>(0x8E04FEDD28D42462, ped, speechName, speechParam, p3); } // 0x8E04FEDD28D42462 0x5C57B85D b323
+	static void PLAY_PED_AMBIENT_SPEECH_NATIVE(Ped ped, const char* speechName, const char* speechParam, bool p3) { invoke<Void>(0x8E04FEDD28D42462, ped, speechName, speechParam, p3); } // 0x8E04FEDD28D42462 0x5C57B85D b323
 	static void PLAY_PED_AMBIENT_SPEECH_AND_CLONE_NATIVE(Ped ped, const char* speechName, const char* speechParam, Any p3) { invoke<Void>(0xC6941B4A3A8FBBB9, ped, speechName, speechParam, p3); } // 0xC6941B4A3A8FBBB9 0x444180DB b323
 	static void PLAY_PED_AMBIENT_SPEECH_WITH_VOICE_NATIVE(Ped ped, const char* speechName, const char* voiceName, const char* speechParam, bool p4) { invoke<Void>(0x3523634255FC3318, ped, speechName, voiceName, speechParam, p4); } // 0x3523634255FC3318 0x8386AE28 b323
 	static void PLAY_AMBIENT_SPEECH_FROM_POSITION_NATIVE(const char* speechName, const char* voiceName, float x, float y, float z, const char* speechParam) { invoke<Void>(0xED640017ED337E45, speechName, voiceName, x, y, z, speechParam); } // 0xED640017ED337E45 0xA1A1402E b323
