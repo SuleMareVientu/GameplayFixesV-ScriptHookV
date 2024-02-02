@@ -24,14 +24,18 @@ This mod is **does not** patch the game directly, and should thus last more with
 **Player:**
 - Enable friendly fire
 - Allow player to jack friendly peds vehicles
+- Allows enemies that hit the player's weapon (or hands) to disarm the player, similar to RDR and GTA:IV
 - Sprint inside interiors
     - Works in b1180 & later, but doesn't in b372. Don't know in between
 - Allow weapons inside safehouse
     -  **Could (and probably will) break some story missions**, but shouldn't otherwise have problems in normal freeroam
+- Toggle walking for first person by pressing (and not holding) the sprint button (X on PS / A on XBOX)
+- Disables the replay recording feature completely
 
 **Player Vehicle:**
 - Disable mid-air car controls and the ability to rotate the player's vehicle while stuck/upside down
 - Disable the automatic explosion after the players vehicle collides with something at high speeds
+- Disable engine fire/smoke
 - Leave engine on when exiting vehicle unless the player keeps the exit vehicle button pressed for 250ms. Similar to GTA:IV
 - Disable the auto-centering of the player vehicle's wheels on exit. 
     - While this is universally compatible, **it could cause some issues** with mission vehicles. Disable if necessary
@@ -43,6 +47,7 @@ This mod is **does not** patch the game directly, and should thus last more with
 - Block peds from entering the "writhe" state and consequently dying
 - Blocks peds from entering the "hurt" state when shot while standing and consequently dying (or entering writhe)
     - Should be enabled in tandem with "DisableWritheWhenInjured", makes shootouts last much longer 
+- Allows enemies that hit the ped's weapon (or hands) to disarm the ped
 - Allow mission peds to be damaged by other entities' and not only the player
 - Make (most) sitting peds behave normally when shot, instead of dying instantly
 - Disable dead peds from jumping out of the vehicle they are in
