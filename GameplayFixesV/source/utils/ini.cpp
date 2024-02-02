@@ -27,7 +27,7 @@ bool iniDisableRecording = false;
 bool iniDisableWrithe = true;
 bool iniDisableHurt = true;
 bool iniDisarmPedWhenShot = true;
-int iniDisarmChance = 20;
+int iniDisarmChance = 35;
 bool iniDisarmIncludeLeftHand = false;
 bool iniDisablePedOnlyDamagedByPlayer = true;
 bool iniDisableSittingPedsInstantDeath = true;
@@ -66,7 +66,7 @@ void ReadINI()
 	iniDisableWrithe = ini.GetBoolValue(pedsGroup, "DisableWrithe", true);
 	iniDisableHurt = ini.GetBoolValue(pedsGroup, "DisableHurt", true);
 	iniDisarmPedWhenShot = ini.GetBoolValue(pedsGroup, "DisarmPedWhenShot", true);
-	iniDisarmChance = ini.GetLongValue(playerGroup, "DisarmChance", 20);
+	iniDisarmChance = ini.GetLongValue(playerGroup, "DisarmChance", 35);
 	iniDisarmIncludeLeftHand = ini.GetBoolValue(pedsGroup, "DisarmIncludeLeftHand", false);
 	iniDisablePedOnlyDamagedByPlayer = ini.GetBoolValue(pedsGroup, "DisablePedOnlyDamagedByPlayer", true);
 	iniDisableSittingPedsInstantDeath = ini.GetBoolValue(pedsGroup, "DisableSittingPedsInstantDeath", true);
