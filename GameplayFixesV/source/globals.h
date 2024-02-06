@@ -8,7 +8,13 @@ extern bool iniPlayerCanJackFriendlyPeds;
 extern bool iniDisarmPlayerWhenShot;
 extern bool iniSprintInsideInteriors;
 extern bool iniAllowWeaponsInsideSafeHouse;
+//Player Controls
 extern bool iniToggleFPSWalking;
+extern bool iniCamFollowVehicleDuringHandbrake;
+extern int iniCamFollowVehDelay;
+extern bool iniDisableRecording;
+extern bool iniDisableMobilePhone;
+//Player Vehicle
 extern bool iniDisableCarMidAirAndRollControl;
 extern bool iniDisableForcedCarExplosionOnImpact;
 extern bool iniDisableEngineSmoke;
@@ -18,15 +24,16 @@ extern bool iniDisableWheelsAutoCenterOnCarExit;
 extern bool iniDisableRagdollOnVehicleRoof;
 extern float iniMaxVehicleSpeed;
 extern bool iniDisableShallowWaterBikeJumpOut;
-extern bool iniDisableRecording;
+extern bool iniDisableStuntJumps;
+
 //Peds Settings
 extern bool iniDisableWrithe;
 extern bool iniDisableHurt;
+extern bool iniDisableSittingPedsInstantDeath;
 extern bool iniDisarmPedWhenShot;
 extern int iniDisarmChance;
 extern bool iniDisarmIncludeLeftHand;
 extern bool iniDisablePedOnlyDamagedByPlayer;
-extern bool iniDisableSittingPedsInstantDeath;
 extern bool iniDisableDeadPedsJumpOutOfVehicle;
 
 //Globals
@@ -35,19 +42,19 @@ extern Ped playerPed;
 extern Vector3 playerLoc;
 
 //Constants
-const int PLAYER_CONTROL = 0;
-const int HUD_WANTED_STARS = 1;
-const int strp3off = 1585083310;
-const Hash WEAPON_UNARMED = -1569615261;
-const Hash WEAPON_STUNGUN = 911657153;
-const float ENGINE_DAMAGE_RADBURST = 400.0f;
-const float ENGINE_DAMAGE_ONFIRE = 0.0f;
+constexpr int PLAYER_CONTROL = 0;
+constexpr int HUD_WANTED_STARS = 1;
+constexpr int strp3off = 1585083310;
+constexpr Hash WEAPON_UNARMED = -1569615261;
+constexpr Hash WEAPON_STUNGUN = 911657153;
+constexpr float ENGINE_DAMAGE_RADBURST = 400.0f;
+constexpr float ENGINE_DAMAGE_ONFIRE = 0.0f;
 
 //Ped move blend ratios
-const float PEDMOVEBLENDRATIO_STILL = 0.0f;
-const float PEDMOVEBLENDRATIO_WALK = 1.0f;
-const float PEDMOVEBLENDRATIO_RUN = 2.0f;
-const float PEDMOVEBLENDRATIO_SPRINT = 3.0f;
+constexpr float PEDMOVEBLENDRATIO_STILL = 0.0f;
+constexpr float PEDMOVEBLENDRATIO_WALK = 1.0f;
+constexpr float PEDMOVEBLENDRATIO_RUN = 2.0f;
+constexpr float PEDMOVEBLENDRATIO_SPRINT = 3.0f;
 
 //Enums
 enum eControlAction {
@@ -610,7 +617,7 @@ enum eVehicleSearchFlag {
 	VEHICLE_SEARCH_FLAG_ALLOW_SUBMARINES = 524288	// allow submarines to be included
 };
 
-const int defaultVSF = (
+constexpr int defaultVSF = (
 	VEHICLE_SEARCH_FLAG_RETURN_LAW_ENFORCER_VEHICLES | VEHICLE_SEARCH_FLAG_RETURN_MISSION_VEHICLES |
 	VEHICLE_SEARCH_FLAG_RETURN_RANDOM_VEHICLES | VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_GROUP_MEMBERS |
 	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_A_PLAYER | VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_A_DEAD_OR_DYING_PED |

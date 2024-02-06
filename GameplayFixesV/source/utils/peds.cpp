@@ -5,9 +5,9 @@
 #include "../globals.h"
 #include "functions.h"
 
-static const int arrSizePedFuncs = 10;
+static constexpr int arrSizePedFuncs = 10;
 static pedFunc arrPedFuncs[arrSizePedFuncs];
-static int countPedFuncs = -1;	//Start with -1 for array
+static int countPedFuncs = NULL;
 
 static void DisableWrithe(Ped ped)
 {
@@ -28,12 +28,16 @@ static void DisableHurt(Ped ped)
 	return;
 }
 
-//Inspired by jedijosh920 implementation of "Disarm"
-static bool CanDisarmPed(Ped ped)
+static void DisableSittingPedsInstantDeath(Ped ped)
 {
-	int bone = NULL;
-	GET_PED_LAST_DAMAGE_BONE(ped, &bone);
+	if (PED::GET_PED_CONFIG_FLAG(ped, PCF_IsSitting, false))
+		SET_PED_SUFFERS_CRITICAL_HITS(ped, false);	//Same thing as setting CPED_CONFIG_FLAG_NoCriticalHits
+	return;
+}
 
+//Inspired by jedijosh920 implementation of "Disarm"
+static bool CanDisarmPed(Ped ped, int bone)
+{
 	if (bone == NULL)
 		return false;
 	if (iniDisarmIncludeLeftHand)
@@ -80,16 +84,22 @@ static void DisarmPedWhenShot(Ped ped)
 	if (IS_ENTITY_DEAD(ped, false))
 		return;
 
+	//Check if ped has a weapon and can be disarmed
 	Hash weapon = NULL;
 	GET_CURRENT_PED_WEAPON(ped, &weapon, false);
 	if (weapon == WEAPON_UNARMED)
 		return;
 
-	//We don't want peds to always drop their weapons, because they can't pick them back up. So do this probability trick
-	SET_RANDOM_SEED(GET_GAME_TIMER());
-	int randomInt = GET_RANDOM_INT_IN_RANGE(0, 100);
-	bool rand = (iniDisarmChance >= randomInt);
-	if (HAS_ENTITY_BEEN_DAMAGED_BY_WEAPON(ped, WEAPON_STUNGUN, 0) || (rand && CanDisarmPed(ped)))
+	int bone = NULL;
+	GET_PED_LAST_DAMAGE_BONE(ped, &bone);
+	if (bone == NULL)
+	{
+		CLEAR_PED_LAST_DAMAGE_BONE(ped);
+		return;
+	}
+
+	//We don't want peds to always drop their weapons, because they can't pick them back up. So do this probability trick (GetWeightedBool)
+	if (HAS_ENTITY_BEEN_DAMAGED_BY_WEAPON(ped, WEAPON_STUNGUN, 0) || (GetWeightedBool(iniDisarmChance) && CanDisarmPed(ped, bone)))
 	{
 		if (!IS_AMBIENT_SPEECH_PLAYING(ped))
 			PLAY_PED_AMBIENT_SPEECH_NATIVE(ped, "GENERIC_CURSE_MED", "SPEECH_PARAMS_FORCE", false);
@@ -97,22 +107,15 @@ static void DisarmPedWhenShot(Ped ped)
 		SET_PED_DROPS_WEAPON(ped);
 		SET_CAN_PED_SELECT_ALL_WEAPONS(ped, true);
 		SET_PED_CAN_SWITCH_WEAPON(ped, true);
-		CLEAR_PED_LAST_DAMAGE_BONE(ped);
-		CLEAR_ENTITY_LAST_WEAPON_DAMAGE(ped);
 	}
+	CLEAR_PED_LAST_DAMAGE_BONE(ped);
+	CLEAR_ENTITY_LAST_WEAPON_DAMAGE(ped);
 	return;
 }
 
 static void DisablePedOnlyDamagedByPlayer(Ped ped)
 {
 	SET_ENTITY_ONLY_DAMAGED_BY_PLAYER(ped, false);
-	return;
-}
-
-static void DisableSittingPedsInstantDeath(Ped ped)
-{
-	if (PED::GET_PED_CONFIG_FLAG(ped, PCF_IsSitting, false))
-		SET_PED_SUFFERS_CRITICAL_HITS(ped, false);	//Same thing as setting CPED_CONFIG_FLAG_NoCriticalHits
 	return;
 }
 
@@ -138,20 +141,22 @@ static void AddPedFuncToArr(pedFunc func)
 //Using an array of functions saves us from checking ini bools for every ped
 void SetupPedFunctions()
 {
+	countPedFuncs = -1;	//Start with -1 for array
+
 	if (iniDisableWrithe)
 		AddPedFuncToArr(DisableWrithe);
 
 	if (iniDisableHurt)
 		AddPedFuncToArr(DisableHurt);
 
+	if (iniDisableSittingPedsInstantDeath)
+		AddPedFuncToArr(DisableSittingPedsInstantDeath);
+
 	if (iniDisarmPedWhenShot)
 		AddPedFuncToArr(DisarmPedWhenShot);
 
 	if (iniDisablePedOnlyDamagedByPlayer)
 		AddPedFuncToArr(DisablePedOnlyDamagedByPlayer);
-
-	if (iniDisableSittingPedsInstantDeath)
-		AddPedFuncToArr(DisableSittingPedsInstantDeath);
 
 	if (iniDisableDeadPedsJumpOutOfVehicle)
 		AddPedFuncToArr(DisableDeadPedsJumpOutOfVehicle);

@@ -5,14 +5,6 @@
 #include "..\globals.h"
 #include "timers.h"
 
-static bool isFakeWanted = false;
-static Weapon lastPlayerWeapon = NULL;
-static Vehicle lastVeh = NULL;
-static Vehicle tmpVeh = NULL;
-static bool wasSetAsMissionEntity = false;
-static bool isWalking = false;
-static float playerLastMoveBlend = 0.0f;
-
 void EnablePedConfigFlag(Ped ped, int flag)
 {
 	if (!PED::GET_PED_CONFIG_FLAG(ped, flag, false))
@@ -39,6 +31,13 @@ void DisablePedResetFlag(Ped ped, int flag)
 	if (PED::GET_PED_RESET_FLAG(ped, flag))
 		PED::SET_PED_RESET_FLAG(ped, flag, false);
 	return;
+}
+
+bool GetWeightedBool(int chance, int startRange, int endRange)
+{
+	SET_RANDOM_SEED(GET_GAME_TIMER());
+	bool rand = (chance >= GET_RANDOM_INT_IN_RANGE(startRange, endRange));
+	return rand;
 }
 
 static void FriendlyFire()
@@ -69,7 +68,10 @@ static bool CanDisarmPlayer()
 	GET_PED_LAST_DAMAGE_BONE(playerPed, &bone);
 
 	if (bone == NULL)
+	{
+		CLEAR_PED_LAST_DAMAGE_BONE(playerPed);
 		return false;
+	}
 
 	switch (bone)
 	{
@@ -81,8 +83,11 @@ static bool CanDisarmPlayer()
 	case SkelLeftFinger02:	case SkelLeftFinger10:	case SkelLeftFinger11:	case SkelLeftFinger12:	case SkelLeftFinger20:
 	case SkelLeftFinger21:	case SkelLeftFinger22:	case SkelLeftFinger30:	case SkelLeftFinger31:	case SkelLeftFinger32:
 	case SkelLeftFinger40:	case SkelLeftFinger41:	case SkelLeftFinger42:
+		CLEAR_PED_LAST_DAMAGE_BONE(playerPed);
 		return true;
+
 	default:
+		CLEAR_PED_LAST_DAMAGE_BONE(playerPed);
 		return false;
 	}
 }
@@ -100,15 +105,14 @@ static void DisarmPlayerWhenShot()
 			PLAY_PED_AMBIENT_SPEECH_NATIVE(playerPed, "GENERIC_CURSE_MED", "SPEECH_PARAMS_FORCE", false);
 
 		SET_PED_DROPS_WEAPON(playerPed);
-		CLEAR_PED_LAST_DAMAGE_BONE(playerPed);
-		CLEAR_ENTITY_LAST_WEAPON_DAMAGE(playerPed);
 	}
+	CLEAR_ENTITY_LAST_WEAPON_DAMAGE(playerPed);
 	return;
 }
 
 static bool IsPlayerInsideSafehouse(Ped playerPed, Vector3 playerLoc)
 {
-	const int arrSize = 5;
+	constexpr int arrSize = 5;
 	int safehouses[arrSize] = {
 		GET_INTERIOR_AT_COORDS_WITH_TYPE(playerLoc.x, playerLoc.y, playerLoc.z, "v_franklins"),
 		GET_INTERIOR_AT_COORDS_WITH_TYPE(playerLoc.x, playerLoc.y, playerLoc.z, "v_franklinshouse"),
@@ -146,6 +150,7 @@ static void SetDispatchServices(bool toggle)
 	return;
 }
 
+static bool isFakeWanted = false;
 static void SetFakeWanted(Player player, bool toggle)
 {
 	Vector3 fakeCoords{ 7000.0f, NULL, 7000.0f, NULL, 0.0f, NULL };
@@ -195,6 +200,7 @@ static void SetFakeWanted(Player player, bool toggle)
 //MUST BE CALLED EVERY FRAME
 //A different and more aggressive approach would be to terminate these scripts, which are responsible for the family scenes
 //inside the safehouses and disable the player's control: family_scene_f0, family_scene_f1, family_scene_m, family_scene_t0, family_scene_t1
+static Weapon lastPlayerWeapon = NULL;
 static void AllowWeaponsInsideSafeHouse()
 {
 	//Force selected player weapon for 1000ms upon exit/enter of safehouse - USES TIMERB
@@ -252,6 +258,8 @@ static void AllowWeaponsInsideSafeHouse()
 	return;
 }
 
+static bool isWalking = false;
+static float playerLastMoveBlend = 0.0f;
 static void ToggleFPSWalking()
 {
 	if (!IS_PED_ON_FOOT(playerPed) || !IS_CONTROL_ENABLED(PLAYER_CONTROL, INPUT_SPRINT) ||
@@ -300,6 +308,77 @@ static void ToggleFPSWalking()
 	return;
 }
 
+static float handbrakeCamHeadingMin = 0.0f;
+static float handbrakeCamHeadingMax = 0.0f;
+static void SetCamSmoothHeadingLimit()
+{
+	const float frametimeMultiplier = TIMESTEP() * 275.0f;
+	const float heading = GET_GAMEPLAY_CAM_RELATIVE_HEADING();
+	if (heading > 0.0f)
+	{
+		handbrakeCamHeadingMax = heading - frametimeMultiplier;
+		if (handbrakeCamHeadingMax < 0.0f)
+			handbrakeCamHeadingMax = 0.0f;
+
+		handbrakeCamHeadingMin = 0.0f;
+	}
+	else
+	{
+		handbrakeCamHeadingMin = heading + frametimeMultiplier;
+		if (handbrakeCamHeadingMin > 0.0f)
+			handbrakeCamHeadingMin = 0.0f;
+
+		handbrakeCamHeadingMax = 0.0f;
+	}
+	return;
+}
+
+static void CamFollowVehicleDuringHandbrake()
+{
+	const int timePressed = iniCamFollowVehDelay;
+	constexpr int delay = 300;
+
+	if (!IS_PED_IN_ANY_VEHICLE(playerPed, false))
+		return;
+
+	if (timePressed > 0)
+	{
+		if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
+			TimerG.Set(0);
+		else if (TimerG.Get() > timePressed && IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
+		{
+			SetCamSmoothHeadingLimit();
+			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
+		}
+		else if (TimerG.Get() > timePressed && IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
+		{
+			TimerH.Set(0);
+			SetCamSmoothHeadingLimit();
+			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
+		}
+		else if (TimerH.Get() < delay)
+		{
+			SetCamSmoothHeadingLimit();
+			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
+		}
+	}
+	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
+	{
+		SetCamSmoothHeadingLimit();
+		SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
+	}
+	return;
+}
+
+static void DisableRecording()
+{
+	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING, false);
+	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING_SECONDARY, false);
+	REPLAY_PREVENT_RECORDING_THIS_FRAME();
+	return;
+}
+
+static Vehicle lastVeh = NULL;
 static void DisableCarMidAirAndRollControl()
 {
 	Vehicle veh = GET_VEHICLE_PED_IS_IN(playerPed, true);
@@ -311,7 +390,7 @@ static void DisableCarMidAirAndRollControl()
 		REMOVE_VEHICLE_STUCK_CHECK(veh);
 
 	//Check if veh is car and is driveable then proceed
-	const int time = 100;
+	constexpr int time = 100;
 	Hash vehModel = GET_ENTITY_MODEL(veh);
 	if (IS_THIS_MODEL_A_CAR(vehModel) && vehModel != 1483171323 /*deluxo*/)
 	{
@@ -335,12 +414,13 @@ static void DisableCarMidAirAndRollControl()
 			DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_VEH_MOVE_DOWN, false);
 
 			//Still enable player to change steering angle  - Control normal must be inverted
-			SET_VEHICLE_STEER_BIAS(veh, -GET_DISABLED_CONTROL_UNBOUND_NORMAL(PLAYER_CONTROL, INPUT_VEH_MOVE_LR));
+			SET_VEHICLE_STEER_BIAS(veh, -0.5f * GET_DISABLED_CONTROL_UNBOUND_NORMAL(PLAYER_CONTROL, INPUT_VEH_MOVE_LR));
 		}
 	}
 	return;
 }
 
+static bool wasSetAsMissionEntity = false;
 static void DisableForcedCarExplosionOnImpact()
 {
 	Vehicle veh = GET_VEHICLE_PED_IS_IN(playerPed, true);
@@ -359,8 +439,7 @@ static void DisableForcedCarExplosionOnImpact()
 		if (TimerD.Get() > 500 && IS_ENTITY_A_MISSION_ENTITY(veh) && wasSetAsMissionEntity)
 		{
 			wasSetAsMissionEntity = false;
-			SET_VEHICLE_AS_NO_LONGER_NEEDED(&veh);
-			SET_ALLOW_VEHICLE_EXPLODES_ON_CONTACT(veh, true);
+			SET_ENTITY_AS_NO_LONGER_NEEDED(&veh);
 		}
 		return;
 	}
@@ -370,7 +449,6 @@ static void DisableForcedCarExplosionOnImpact()
 	{
 		wasSetAsMissionEntity = true;
 		SET_ENTITY_AS_MISSION_ENTITY(veh, true, false);
-		SET_ALLOW_VEHICLE_EXPLODES_ON_CONTACT(veh, false);
 	}
 	return;
 }
@@ -381,25 +459,44 @@ static void DisableEngineSmoke()
 	if (veh == NULL)
 		return;
 
-	if (GET_VEHICLE_ENGINE_HEALTH(veh) <= ENGINE_DAMAGE_RADBURST)
-	{
-		SET_VEHICLE_ENGINE_HEALTH(veh, ENGINE_DAMAGE_RADBURST + 5.0f);
-		SET_VEHICLE_ENGINE_CAN_DEGRADE(veh, false);
-	}
+	constexpr float limit = ENGINE_DAMAGE_RADBURST + 50.0f;
+	if (GET_VEHICLE_ENGINE_HEALTH(veh) <= limit)
+		SET_VEHICLE_ENGINE_HEALTH(veh, limit);
+
 	return;
 }
 
+static Vehicle lastVehEngine = NULL;
 static void DisableEngineFire()
 {
 	Vehicle veh = GET_VEHICLE_PED_IS_USING(playerPed);
 	if (veh == NULL)
 		return;
 
-	if (GET_VEHICLE_ENGINE_HEALTH(veh) <= ENGINE_DAMAGE_ONFIRE)
+	//Check if vehicle is a car/bike/quad and adjust engine health limit
+	Hash vehModel = GET_ENTITY_MODEL(veh);
+	if (!IS_THIS_MODEL_A_CAR(vehModel) && !IS_THIS_MODEL_A_BIKE(vehModel) && !IS_THIS_MODEL_A_QUADBIKE(vehModel))
+		return;
+
+	//Engine health safeguard
+	constexpr float limit = ENGINE_DAMAGE_ONFIRE + 50.0f;
+	if (GET_VEHICLE_ENGINE_HEALTH(veh) <= limit)
+		SET_VEHICLE_ENGINE_HEALTH(veh, limit);
+
+	//Check if we have already disabled engine fire on this vehicle)
+	if (veh == lastVehEngine)
+		return;
+
+	lastVehEngine = veh;
+	if (!IS_ENTITY_A_MISSION_ENTITY(veh))
 	{
-		SET_VEHICLE_ENGINE_HEALTH(veh, ENGINE_DAMAGE_ONFIRE + 5.0f);
-		SET_VEHICLE_ENGINE_CAN_DEGRADE(veh, false);
+		SET_ENTITY_AS_MISSION_ENTITY(veh, true, false);
+		SET_DISABLE_VEHICLE_ENGINE_FIRES(veh, true);
+		SET_ENTITY_AS_NO_LONGER_NEEDED(&veh);
 	}
+	else
+		SET_DISABLE_VEHICLE_ENGINE_FIRES(veh, true);
+
 	return;
 }
 
@@ -408,7 +505,7 @@ static void DisableRagdollOnVehicleRoof()
 	//Velocity Unit -> Km/h
 	if (iniMaxVehicleSpeed > 0.0f)
 	{
-		const float speed = GET_ENTITY_SPEED(playerPed) * 3.6f;	//m\s to Km\h
+		const float speed = GET_ENTITY_SPEED(playerPed) * 3.6f;	// m\s to Km\h
 		if (speed > iniMaxVehicleSpeed)
 			return;
 	}
@@ -423,7 +520,7 @@ static void LeaveEngineOnWhenExitingVehicles()
 	if (veh == NULL)
 		return;
 
-	const int TURN_OFF_ENGINE_DURATION = 250;
+	constexpr int TURN_OFF_ENGINE_DURATION = 250;
 	SET_VEHICLE_KEEP_ENGINE_ON_WHEN_ABANDONED(veh, true);
 	//EnablePedConfigFlag(playerPed, PCF_LeaveEngineOnWhenExitingVehicles);
 	if (IS_DISABLED_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT))
@@ -438,11 +535,12 @@ static void LeaveEngineOnWhenExitingVehicles()
 //When a vehicle is physically attached to another vehicle it retains the same steering on exit (thanks to RAGE constraints)
 //Only problem is that the vehicle now inherits most veh flags from parent. 
 //Don't know if this could cause issues, but better then patching memory
+static Vehicle tmpVeh = NULL;
 static void DisableWheelsAutoCenterOnCarExit()
 {
 	if (!DOES_ENTITY_EXIST(tmpVeh))
 	{
-		const Hash caddy2 = -537896628;	//hash for "caddy2", smallest vehicle that did the job. DO NOT USE NON-CAR VEHICLES
+		constexpr Hash caddy2 = -537896628;	//hash for "caddy2", smallest vehicle that did the job. DO NOT USE NON-CAR VEHICLES
 		if (!HAS_MODEL_LOADED(caddy2))
 		{
 			REQUEST_MODEL(caddy2);
@@ -488,14 +586,6 @@ static void DisableShallowWaterBikeJumpOut()
 	return;
 }
 
-static void DisableRecording()
-{
-	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING, false);
-	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING_SECONDARY, false);
-	REPLAY_PREVENT_RECORDING_THIS_FRAME();
-	return;
-}
-
 void SetPlayerFlags()
 {
 	if (iniFriendlyFire)
@@ -513,9 +603,20 @@ void SetPlayerFlags()
 	if (iniAllowWeaponsInsideSafeHouse)
 		AllowWeaponsInsideSafeHouse();
 
+	//////////////////////////////////////Player Controls//////////////////////////////////
 	if (iniToggleFPSWalking)
 		ToggleFPSWalking();
 
+	if (iniCamFollowVehicleDuringHandbrake)
+		CamFollowVehicleDuringHandbrake();
+
+	if (iniDisableRecording)
+		DisableRecording();
+
+	if (iniDisableMobilePhone)
+		DESTROY_MOBILE_PHONE();
+
+	//////////////////////////////////////Player Vehicle///////////////////////////////////
 	if (iniDisableCarMidAirAndRollControl)
 		DisableCarMidAirAndRollControl();
 
@@ -540,13 +641,8 @@ void SetPlayerFlags()
 	if (iniDisableShallowWaterBikeJumpOut)
 		DisableShallowWaterBikeJumpOut();
 
-	if (iniDisableRecording)
-		DisableRecording();
-
-
-	BEGIN_TEXT_COMMAND_PRINT("NUMBER");
-	ADD_TEXT_COMPONENT_INTEGER(GET_VEHICLE_ENGINE_HEALTH(GET_VEHICLE_PED_IS_USING(playerPed)));
-	END_TEXT_COMMAND_PRINT(1, 1);
+	if (iniDisableStuntJumps)
+		SET_STUNT_JUMPS_CAN_TRIGGER(false);
 
 	return;
 }

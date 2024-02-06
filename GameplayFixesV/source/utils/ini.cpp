@@ -11,7 +11,13 @@ bool iniPlayerCanJackFriendlyPeds = true;
 bool iniDisarmPlayerWhenShot = true;
 bool iniSprintInsideInteriors = true;
 bool iniAllowWeaponsInsideSafeHouse = false;
+//Player Controls
 bool iniToggleFPSWalking = true;
+bool iniCamFollowVehicleDuringHandbrake = false;
+int iniCamFollowVehDelay = 200;
+bool iniDisableRecording = false;
+bool iniDisableMobilePhone = false;
+//Player Vehicle
 bool iniDisableCarMidAirAndRollControl = true;
 bool iniDisableForcedCarExplosionOnImpact = true;
 bool iniDisableEngineSmoke = false;
@@ -21,16 +27,16 @@ bool iniDisableWheelsAutoCenterOnCarExit = true;
 bool iniDisableRagdollOnVehicleRoof = true;
 float iniMaxVehicleSpeed = 90.0f;
 bool iniDisableShallowWaterBikeJumpOut = true;
-bool iniDisableRecording = false;
+bool iniDisableStuntJumps = false;
 
 //Peds Settings
 bool iniDisableWrithe = true;
 bool iniDisableHurt = true;
+bool iniDisableSittingPedsInstantDeath = true;
 bool iniDisarmPedWhenShot = true;
-int iniDisarmChance = 35;
+int iniDisarmChance = 50;
 bool iniDisarmIncludeLeftHand = false;
 bool iniDisablePedOnlyDamagedByPlayer = true;
-bool iniDisableSittingPedsInstantDeath = true;
 bool iniDisableDeadPedsJumpOutOfVehicle = true;
 
 void ReadINI()
@@ -42,13 +48,20 @@ void ReadINI()
 		return;
 
 	//////////////////////////////////////Player//////////////////////////////////////////
-	
 	iniFriendlyFire = ini.GetBoolValue(playerGroup, "FriendlyFire", true);
 	iniPlayerCanJackFriendlyPeds = ini.GetBoolValue(playerGroup, "PlayerCanJackFriendlyPeds", true);
 	iniDisarmPlayerWhenShot = ini.GetBoolValue(playerGroup, "DisarmPlayerWhenShot", true);
 	iniSprintInsideInteriors = ini.GetBoolValue(playerGroup, "SprintInsideInteriors", true);
 	iniAllowWeaponsInsideSafeHouse = ini.GetBoolValue(playerGroup, "AllowWeaponsInsideSafeHouse", false);
+	
+	//////////////////////////////////////Player Controls//////////////////////////////////
 	iniToggleFPSWalking = ini.GetBoolValue(playerGroup, "ToggleFPSWalking", true);
+	iniCamFollowVehicleDuringHandbrake = ini.GetBoolValue(playerGroup, "CamFollowVehicleDuringHandbrake", false);
+	iniCamFollowVehDelay = ini.GetLongValue(playerGroup, "CamFollowVehDelay", 200);
+	iniDisableRecording = ini.GetBoolValue(playerGroup, "DisableRecording", false);
+	iniDisableMobilePhone = ini.GetBoolValue(playerGroup, "DisableMobilePhone", false);
+
+	//////////////////////////////////////Player Vehicle///////////////////////////////////
 	iniDisableCarMidAirAndRollControl = ini.GetBoolValue(playerGroup, "DisableCarMidAirAndRollControl", true);
 	iniDisableForcedCarExplosionOnImpact = ini.GetBoolValue(playerGroup, "DisableForcedCarExplosionOnImpact", true);
 	iniDisableEngineSmoke = ini.GetBoolValue(playerGroup, "DisableEngineSmoke", false);
@@ -59,17 +72,16 @@ void ReadINI()
 	#pragma warning(suppress: 4244)
 	iniMaxVehicleSpeed = ini.GetDoubleValue(playerGroup, "MaxVehicleSpeed", 90.0f);
 	iniDisableShallowWaterBikeJumpOut = ini.GetBoolValue(playerGroup, "DisableShallowWaterBikeJumpOut", true);
-	iniDisableRecording = ini.GetBoolValue(playerGroup, "DisableRecording", false);
+	iniDisableStuntJumps = ini.GetBoolValue(playerGroup, "DisableStuntJumps", false);
 
-	//////////////////////////////////////Peds//////////////////////////////////////
-
+	//////////////////////////////////////Peds/////////////////////////////////////////////
 	iniDisableWrithe = ini.GetBoolValue(pedsGroup, "DisableWrithe", true);
 	iniDisableHurt = ini.GetBoolValue(pedsGroup, "DisableHurt", true);
+	iniDisableSittingPedsInstantDeath = ini.GetBoolValue(pedsGroup, "DisableSittingPedsInstantDeath", true);
 	iniDisarmPedWhenShot = ini.GetBoolValue(pedsGroup, "DisarmPedWhenShot", true);
-	iniDisarmChance = ini.GetLongValue(playerGroup, "DisarmChance", 35);
+	iniDisarmChance = ini.GetLongValue(playerGroup, "DisarmChance", 50);
 	iniDisarmIncludeLeftHand = ini.GetBoolValue(pedsGroup, "DisarmIncludeLeftHand", false);
 	iniDisablePedOnlyDamagedByPlayer = ini.GetBoolValue(pedsGroup, "DisablePedOnlyDamagedByPlayer", true);
-	iniDisableSittingPedsInstantDeath = ini.GetBoolValue(pedsGroup, "DisableSittingPedsInstantDeath", true);
 	iniDisableDeadPedsJumpOutOfVehicle = ini.GetBoolValue(pedsGroup, "DisableDeadPedsJumpOutOfVehicle", true);
 	return;
 }

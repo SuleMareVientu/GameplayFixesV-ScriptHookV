@@ -13,4 +13,5 @@ extern Timer TimerC;
 extern Timer TimerD;
 extern Timer TimerE;
 extern Timer TimerF;
-//extern Timer TimerG;
+extern Timer TimerG;
+extern Timer TimerH;
