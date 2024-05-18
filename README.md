@@ -8,18 +8,6 @@ This mod is **does not** patch the game directly, and should thus last more with
 
 **Requires [ScriptHookV](http://www.dev-c.com/gtav/scripthookv/)**
 
-**v1.1** - Changelog:
-- DisarmPlayerWhenShot / DisarmPedWhenShot - Allows enemies that hit the player's weapon (or hands) to disarm the player, similar to RDR and GTA:IV. Adjust DisarmChance and DisarmIncludeLeftHand at your liking. Inspired by jedijosh920's [Disarm](https://www.gta5-mods.com/scripts/disarm)
-- ToggleFPSWalking - Allow player to toggle between jogging and walking in FPS mode. Inspired by chinagreenelvis's [Walk Toggle](https://www.gta5-mods.com/scripts/walk-toggle)
-- DisableEngineFire - Disables engine fires when engine healts reaches below 0. Also disables automatic vehicle explosion after engine healt reaches -4000
-- DisableEngineSmoke - Same as DisableEngineFire, but the threshold is set to 400. Prevents the engine from smoking and catching fire
-- DisableRecording - Disables the replay recording feature completely  
-**Fixes:**
-- Improved friendly fire code allowing player to perform melee lockon on friendly peds
-- Allow player to still have control of wheel steering when vehicle is stuck
-- Allow player to switch characters while inside the safehouse (AllowWeaponsInsideSafeHouse is now disabled by default)
-- Made the LeaveEngineOnWhenExitingVehicles option more similar to GTA:IV's
-
 ## Features
 **Player:**
 - Enable friendly fire
@@ -29,8 +17,12 @@ This mod is **does not** patch the game directly, and should thus last more with
     - Works in b1180 & later, but doesn't in b372. Don't know in between
 - Allow weapons inside safehouse
     -  **Could (and probably will) break some story missions**, but shouldn't otherwise have problems in normal freeroam
+
+**Player Controls:**
 - Toggle walking for first person by pressing (and not holding) the sprint button (X on PS / A on XBOX)
-- Disables the replay recording feature completely
+- Force the gameplay camera to follow the vehicle when using the handbrake
+- Disable the replay recording feature completely
+- Disable the player's mobile phone
 
 **Player Vehicle:**
 - Disable mid-air car controls and the ability to rotate the player's vehicle while stuck/upside down
@@ -42,15 +34,36 @@ This mod is **does not** patch the game directly, and should thus last more with
 - Block player from entering ragdoll when standing on car roofs
     - The max speed the player can reach before entering ragdoll is customizable inside the INI
 - Disable the forced jump out when entering a water body with a bike (player will still jump out if completely submerged)
+- Disable all stunt jumps around the map
 
 **Peds:**
 - Block peds from entering the "writhe" state and consequently dying
-- Blocks peds from entering the "hurt" state when shot while standing and consequently dying (or entering writhe)
+- Block peds from entering the "hurt" state when shot while standing and consequently dying (or entering writhe)
     - Should be enabled in tandem with "DisableWritheWhenInjured", makes shootouts last much longer 
-- Allows enemies that hit the ped's weapon (or hands) to disarm the ped
+- Allow enemies that hit the ped's weapon (or hands) to disarm NPCs
 - Allow mission peds to be damaged by other entities' and not only the player
 - Make (most) sitting peds behave normally when shot, instead of dying instantly
 - Disable dead peds from jumping out of the vehicle they are in
+
+## Changelog:
+### **v1.2**
+- CamFollowVehicleDuringHandbrake / CamFollowVehDelay - Force gameplay camera to follow the vehicle when using the handbrake
+- DisableStuntJumps - Disables all stunt jumps around the map
+- DisableMobilePhone - Disables the player's mobile phone  
+**Fixes:**  
+DisableEngineSmoke and DisableEngineFire now work as intended
+
+### **v1.1**
+- DisarmPlayerWhenShot / DisarmPedWhenShot - Allows enemies that hit the player's weapon (or hands) to disarm the player, similar to RDR and GTA:IV. Adjust DisarmChance and DisarmIncludeLeftHand at your liking. Inspired by jedijosh920's [Disarm](https://www.gta5-mods.com/scripts/disarm)
+- ToggleFPSWalking - Allow player to toggle between jogging and walking in FPS mode. Inspired by chinagreenelvis's [Walk Toggle](https://www.gta5-mods.com/scripts/walk-toggle)
+- DisableEngineFire - Disables engine fires when engine healts reaches below 0. Also disables automatic vehicle explosion after engine healt reaches -4000
+- DisableEngineSmoke - Same as DisableEngineFire, but the threshold is set to 400. Prevents the engine from smoking and catching fire
+- DisableRecording - Disables the replay recording feature completely  
+**Fixes:**  
+- Improved friendly fire code allowing player to perform melee lockon on friendly peds
+- Allow player to still have control of wheel steering when vehicle is stuck
+- Allow player to switch characters while inside the safehouse (AllowWeaponsInsideSafeHouse is now disabled by default)
+- Made the LeaveEngineOnWhenExitingVehicles option more similar to GTA:IV's
 
 ## Credits:
 - The modding community for giving ideas and finding the first methods to circument some of the issues listed here
