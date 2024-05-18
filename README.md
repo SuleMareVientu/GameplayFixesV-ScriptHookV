@@ -45,26 +45,6 @@ This mod is **does not** patch the game directly, and should thus last more with
 - Make (most) sitting peds behave normally when shot, instead of dying instantly
 - Disable dead peds from jumping out of the vehicle they are in
 
-## Changelog:
-### **v1.2**
-- CamFollowVehicleDuringHandbrake / CamFollowVehDelay - Force gameplay camera to follow the vehicle when using the handbrake
-- DisableStuntJumps - Disables all stunt jumps around the map
-- DisableMobilePhone - Disables the player's mobile phone  
-**Fixes:**  
-DisableEngineSmoke and DisableEngineFire now work as intended
-
-### **v1.1**
-- DisarmPlayerWhenShot / DisarmPedWhenShot - Allows enemies that hit the player's weapon (or hands) to disarm the player, similar to RDR and GTA:IV. Adjust DisarmChance and DisarmIncludeLeftHand to your liking. Inspired by jedijosh920's [Disarm](https://www.gta5-mods.com/scripts/disarm)
-- ToggleFPSWalking - Allow player to toggle between jogging and walking in FPS mode. Inspired by chinagreenelvis's [Walk Toggle](https://www.gta5-mods.com/scripts/walk-toggle)
-- DisableEngineFire - Disables engine fires when engine health reaches below 0. Also disables automatic vehicle explosion after engine health reaches -4000
-- DisableEngineSmoke - Same as DisableEngineFire, but the threshold is 400. It prevents the engine from smoking and catching fire
-- DisableRecording - Disables the replay recording feature completely  
-**Fixes:**  
-- Improved friendly fire code allowing the player to perform melee lock on friendly peds
-- Allow player to have control of wheel steering still when a vehicle is stuck
-- Allow player to switch characters while inside the safehouse (AllowWeaponsInsideSafeHouse is now disabled by default)
-- Made the LeaveEngineOnWhenExitingVehicles option more similar to GTA:IV's
-
 ## Credits:
 - The modding community for giving ideas and finding the first methods to circumvent some of the issues listed here
 - DurtyFree - [GTA V Data Dumps](https://github.com/DurtyFree/gta-v-data-dumps)
