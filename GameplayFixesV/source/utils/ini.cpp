@@ -11,6 +11,9 @@ bool iniPlayerCanJackFriendlyPeds = true;
 bool iniDisarmPlayerWhenShot = true;
 bool iniSprintInsideInteriors = true;
 bool iniAllowWeaponsInsideSafeHouse = false;
+//HUD
+bool iniReplaceArmourBarWithStamina = false;
+bool iniMergeHealthAndArmour = true;
 //Player Controls
 bool iniToggleFPSWalking = true;
 bool iniCamFollowVehicleDuringHandbrake = false;
@@ -54,6 +57,10 @@ void ReadINI()
 	iniSprintInsideInteriors = ini.GetBoolValue(playerGroup, "SprintInsideInteriors", true);
 	iniAllowWeaponsInsideSafeHouse = ini.GetBoolValue(playerGroup, "AllowWeaponsInsideSafeHouse", false);
 	
+	//////////////////////////////////////HUD//////////////////////////////////////////////
+	iniReplaceArmourBarWithStamina = ini.GetBoolValue(playerGroup, "ReplaceArmourBarWithStamina", false);
+	iniMergeHealthAndArmour = ini.GetBoolValue(playerGroup, "MergeHealthAndArmour", true);
+
 	//////////////////////////////////////Player Controls//////////////////////////////////
 	iniToggleFPSWalking = ini.GetBoolValue(playerGroup, "ToggleFPSWalking", true);
 	iniCamFollowVehicleDuringHandbrake = ini.GetBoolValue(playerGroup, "CamFollowVehicleDuringHandbrake", false);

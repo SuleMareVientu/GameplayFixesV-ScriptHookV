@@ -8,6 +8,9 @@ extern bool iniPlayerCanJackFriendlyPeds;
 extern bool iniDisarmPlayerWhenShot;
 extern bool iniSprintInsideInteriors;
 extern bool iniAllowWeaponsInsideSafeHouse;
+//HUD
+extern bool iniReplaceArmourBarWithStamina;
+extern bool iniMergeHealthAndArmour;
 //Player Controls
 extern bool iniToggleFPSWalking;
 extern bool iniCamFollowVehicleDuringHandbrake;

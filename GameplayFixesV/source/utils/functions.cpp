@@ -258,6 +258,31 @@ static void AllowWeaponsInsideSafeHouse()
 	return;
 }
 
+static void ReplaceArmourBarWithStamina()
+{
+	if (iniMergeHealthAndArmour)
+	{
+		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100 + GET_PLAYER_MAX_ARMOUR(player);					// We need to subtract 100 because the player fatal healt is 100 not 0
+		int health = GET_ENTITY_HEALTH(playerPed) - 100 + GET_PED_ARMOUR(playerPed);
+		float healthPercentage = TO_FLOAT(health) * 90.0f / TO_FLOAT(maxHealth) + 10.0f;						// Always ensure a 10% offset to fix hud ratio
+		float staminaPercentage = 100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(player);							// GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
+		SET_HEALTH_HUD_DISPLAY_VALUES(ROUND(healthPercentage * 10.0f), ROUND(staminaPercentage * 10.0f), true); // We set 1000 as max and multiply by 10 to get more precision
+		SET_MAX_HEALTH_HUD_DISPLAY(1000);
+		SET_MAX_ARMOUR_HUD_DISPLAY(1000);
+	}
+	else
+	{
+		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100;											// We need to subtract 100 because the player fatal healt is 100 not 0
+		int health = GET_ENTITY_HEALTH(playerPed) - 100;
+		float healthPercentage = TO_FLOAT(health) * 90.0f / TO_FLOAT(maxHealth) + 10.0f;				// Always ensure a 10% offset to fix hud ratio
+		float staminaPercentage = 100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(player);					// GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
+		SET_HEALTH_HUD_DISPLAY_VALUES(ROUND(health * 10.0f), ROUND(staminaPercentage * 10.0f), true);	// We set 1000 as max and multiply by 10 to get more precision
+		SET_MAX_HEALTH_HUD_DISPLAY(1000);
+		SET_MAX_ARMOUR_HUD_DISPLAY(1000);
+	}
+	return;
+}
+
 static bool isWalking = false;
 static float playerLastMoveBlend = 0.0f;
 static void ToggleFPSWalking()
@@ -602,6 +627,10 @@ void SetPlayerFlags()
 
 	if (iniAllowWeaponsInsideSafeHouse)
 		AllowWeaponsInsideSafeHouse();
+
+	///////////////////////////////////////////HUD/////////////////////////////////////////
+	if (iniReplaceArmourBarWithStamina)
+		ReplaceArmourBarWithStamina();
 
 	//////////////////////////////////////Player Controls//////////////////////////////////
 	if (iniToggleFPSWalking)
