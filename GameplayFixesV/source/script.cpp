@@ -8,7 +8,6 @@
 #include "utils\ini.h"
 #include "utils\functions.h"
 #include "utils\peds.h"
-#include "utils\timers.h"
 
 Player player = NULL;
 Ped playerPed = NULL;

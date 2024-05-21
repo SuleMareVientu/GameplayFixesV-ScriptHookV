@@ -1,9 +1,21 @@
 //ScriptHook
 #include <natives.h>
+// #include <types.h> //Already included in globals.h
 //Custom
 #include "functions.h"
 #include "..\globals.h"
-#include "timers.h"
+
+//Custom implementation of TIMERA and TIMERB natives
+void Timer::Set(int value)
+{
+	gameTimer = GET_GAME_TIMER() + value;
+	return;
+}
+
+int Timer::Get()
+{
+	return (GET_GAME_TIMER() - gameTimer);
+}
 
 void EnablePedConfigFlag(Ped ped, int flag)
 {
@@ -40,6 +52,69 @@ bool GetWeightedBool(int chance, int startRange, int endRange)
 	return rand;
 }
 
+void Print(char* string, int ms = 1)
+{
+	BEGIN_TEXT_COMMAND_PRINT("STRING");
+	ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(string);
+	END_TEXT_COMMAND_PRINT(ms, 1);
+	return;
+}
+
+////////////////////////////////////////Local Functions//////////////////////////////////////////
+
+static int minimapScaleformIndex = NULL;
+static int RequestMinimapScaleform()
+{
+	if (!HAS_SCALEFORM_MOVIE_LOADED(minimapScaleformIndex))
+	{
+		minimapScaleformIndex = REQUEST_SCALEFORM_MOVIE("MINIMAP");
+		CALL_SCALEFORM_MOVIE_METHOD(minimapScaleformIndex, "INITIALISE");
+		return NULL;
+	}
+	return minimapScaleformIndex;
+}
+
+/*
+static bool RequestScaleform(const char* name, int* handle)
+{
+	if (HAS_SCALEFORM_MOVIE_LOADED(*handle))
+		return true;
+
+	*handle = REQUEST_SCALEFORM_MOVIE(name);
+	return false;
+}
+*/
+
+static bool IsPedMainCharacter(Ped ped)
+{
+	switch (GET_ENTITY_MODEL(ped))
+	{
+	case 225514697:		//joaat(Michael)
+	case -1692214353:	//joaat(Franklin)
+	case -1686040670:	//joaat(Trevor)
+		return true;	break;
+	}
+	return false;
+}
+
+static bool HasPlayerVehicleAbility()
+{
+	Vehicle veh = GET_VEHICLE_PED_IS_USING(playerPed);
+	if (veh != NULL && (GET_VEHICLE_HAS_KERS(veh) || GET_HAS_ROCKET_BOOST(veh) || GET_CAR_HAS_JUMP(veh)))
+		return true;
+
+	return false;
+}
+
+static void SetHealthHudDisplayValues(int healthPercentage, int staminaPercentage)
+{
+	SET_HEALTH_HUD_DISPLAY_VALUES(healthPercentage, staminaPercentage, true);
+	SET_MAX_HEALTH_HUD_DISPLAY(200);
+	SET_MAX_ARMOUR_HUD_DISPLAY(100);
+	return;
+}
+
+/////////////////////////////////////////////Player//////////////////////////////////////////////
 static void FriendlyFire()
 {
 	PED::SET_CAN_ATTACK_FRIENDLY(playerPed, true, true);
@@ -201,6 +276,8 @@ static void SetFakeWanted(Player player, bool toggle)
 //A different and more aggressive approach would be to terminate these scripts, which are responsible for the family scenes
 //inside the safehouses and disable the player's control: family_scene_f0, family_scene_f1, family_scene_m, family_scene_t0, family_scene_t1
 static Weapon lastPlayerWeapon = NULL;
+static Timer TimerB;
+static Timer TimerF;
 static void AllowWeaponsInsideSafeHouse()
 {
 	//Force selected player weapon for 1000ms upon exit/enter of safehouse - USES TIMERB
@@ -258,33 +335,10 @@ static void AllowWeaponsInsideSafeHouse()
 	return;
 }
 
-static void ReplaceArmourBarWithStamina()
-{
-	if (iniMergeHealthAndArmour)
-	{
-		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100 + GET_PLAYER_MAX_ARMOUR(player);					// We need to subtract 100 because the player fatal healt is 100 not 0
-		int health = GET_ENTITY_HEALTH(playerPed) - 100 + GET_PED_ARMOUR(playerPed);
-		float healthPercentage = TO_FLOAT(health) * 90.0f / TO_FLOAT(maxHealth) + 10.0f;						// Always ensure a 10% offset to fix hud ratio
-		float staminaPercentage = 100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(player);							// GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
-		SET_HEALTH_HUD_DISPLAY_VALUES(ROUND(healthPercentage * 10.0f), ROUND(staminaPercentage * 10.0f), true); // We set 1000 as max and multiply by 10 to get more precision
-		SET_MAX_HEALTH_HUD_DISPLAY(1000);
-		SET_MAX_ARMOUR_HUD_DISPLAY(1000);
-	}
-	else
-	{
-		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100;											// We need to subtract 100 because the player fatal healt is 100 not 0
-		int health = GET_ENTITY_HEALTH(playerPed) - 100;
-		float healthPercentage = TO_FLOAT(health) * 90.0f / TO_FLOAT(maxHealth) + 10.0f;				// Always ensure a 10% offset to fix hud ratio
-		float staminaPercentage = 100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(player);					// GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
-		SET_HEALTH_HUD_DISPLAY_VALUES(ROUND(health * 10.0f), ROUND(staminaPercentage * 10.0f), true);	// We set 1000 as max and multiply by 10 to get more precision
-		SET_MAX_HEALTH_HUD_DISPLAY(1000);
-		SET_MAX_ARMOUR_HUD_DISPLAY(1000);
-	}
-	return;
-}
-
+///////////////////////////////////////////////Player Controls///////////////////////////////////////////////
 static bool isWalking = false;
 static float playerLastMoveBlend = 0.0f;
+static Timer TimerA;
 static void ToggleFPSWalking()
 {
 	if (!IS_PED_ON_FOOT(playerPed) || !IS_CONTROL_ENABLED(PLAYER_CONTROL, INPUT_SPRINT) ||
@@ -358,6 +412,8 @@ static void SetCamSmoothHeadingLimit()
 	return;
 }
 
+static Timer TimerG;
+static Timer TimerH;
 static void CamFollowVehicleDuringHandbrake()
 {
 	const int timePressed = iniCamFollowVehDelay;
@@ -403,6 +459,7 @@ static void DisableRecording()
 	return;
 }
 
+///////////////////////////////////////////////Player Vehicle/////////////////////////////////////////////////
 static Vehicle lastVeh = NULL;
 static void DisableCarMidAirAndRollControl()
 {
@@ -446,6 +503,7 @@ static void DisableCarMidAirAndRollControl()
 }
 
 static bool wasSetAsMissionEntity = false;
+static Timer TimerD;
 static void DisableForcedCarExplosionOnImpact()
 {
 	Vehicle veh = GET_VEHICLE_PED_IS_IN(playerPed, true);
@@ -539,6 +597,7 @@ static void DisableRagdollOnVehicleRoof()
 	return;
 }
 
+static Timer TimerC;
 static void LeaveEngineOnWhenExitingVehicles()
 {
 	Vehicle veh = GET_VEHICLE_PED_IS_IN(playerPed, true);
@@ -561,6 +620,7 @@ static void LeaveEngineOnWhenExitingVehicles()
 //Only problem is that the vehicle now inherits most veh flags from parent. 
 //Don't know if this could cause issues, but better then patching memory
 static Vehicle tmpVeh = NULL;
+static Timer TimerE;
 static void DisableWheelsAutoCenterOnCarExit()
 {
 	if (!DOES_ENTITY_EXIST(tmpVeh))
@@ -611,6 +671,64 @@ static void DisableShallowWaterBikeJumpOut()
 	return;
 }
 
+
+///////////////////////////////////////////////HUD///////////////////////////////////////////////
+static void HideMinimapBars()
+{
+	BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SETUP_HEALTH_ARMOUR");
+	SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(3);
+	END_SCALEFORM_MOVIE_METHOD();
+	return;
+}
+
+static void HideAbilityBarForNonMainCharacters()
+{
+	if (IsPedMainCharacter(playerPed) || HasPlayerVehicleAbility())
+	{
+		BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "MULTIPLAYER_IS_ACTIVE");
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+		END_SCALEFORM_MOVIE_METHOD();
+	}
+	else
+	{
+		BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER");
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+		END_SCALEFORM_MOVIE_METHOD();
+	}
+	return;
+}
+
+static void AlwaysHideAbilityBar()
+{
+	BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER");
+	SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+	END_SCALEFORM_MOVIE_METHOD();
+	return;
+}
+
+static void ReplaceArmourBarWithStamina()
+{
+	int handle = RequestMinimapScaleform();
+	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(player));		// GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
+
+	if (iniMergeHealthAndArmour)
+	{
+		int health = GET_ENTITY_HEALTH(playerPed) - 100 + GET_PED_ARMOUR(playerPed);			// We need to subtract 100 because the player fatal healt is 100 not 0
+		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100 + GET_PLAYER_MAX_ARMOUR(player);
+		int healthPercentage = ROUND(health * 100.0f / maxHealth) + 100;						// Always ensure a 100 offset to fix hud ratio
+		SetHealthHudDisplayValues(healthPercentage, staminaPercentage);
+	}
+	else
+	{
+		int health = GET_ENTITY_HEALTH(playerPed) - 100;
+		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100;
+		int healthPercentage = ROUND(health * 100.0f / maxHealth) + 100;
+		SetHealthHudDisplayValues(healthPercentage, staminaPercentage);
+	}
+	return;
+}
+
 void SetPlayerFlags()
 {
 	if (iniFriendlyFire)
@@ -629,8 +747,19 @@ void SetPlayerFlags()
 		AllowWeaponsInsideSafeHouse();
 
 	///////////////////////////////////////////HUD/////////////////////////////////////////
-	if (iniReplaceArmourBarWithStamina)
-		ReplaceArmourBarWithStamina();
+	if (iniHideMinimapBars)
+		HideMinimapBars();
+	else
+	{
+		if (iniHideAbilityBarForNonMainCharacters && !iniAlwaysHideAbilityBar)
+			HideAbilityBarForNonMainCharacters();
+
+		if (iniAlwaysHideAbilityBar)
+			AlwaysHideAbilityBar();
+
+		if (iniReplaceArmourBarWithStamina)
+			ReplaceArmourBarWithStamina();
+	}
 
 	//////////////////////////////////////Player Controls//////////////////////////////////
 	if (iniToggleFPSWalking)

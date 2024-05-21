@@ -9,6 +9,9 @@ extern bool iniDisarmPlayerWhenShot;
 extern bool iniSprintInsideInteriors;
 extern bool iniAllowWeaponsInsideSafeHouse;
 //HUD
+extern bool iniHideMinimapBars;
+extern bool iniHideAbilityBarForNonMainCharacters;
+extern bool iniAlwaysHideAbilityBar;
 extern bool iniReplaceArmourBarWithStamina;
 extern bool iniMergeHealthAndArmour;
 //Player Controls

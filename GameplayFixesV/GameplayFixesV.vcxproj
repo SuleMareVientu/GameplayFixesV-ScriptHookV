@@ -13,14 +13,12 @@
     <ClCompile Include="source\utils\ini.cpp" />
     <ClCompile Include="source\utils\functions.cpp" />
     <ClCompile Include="source\utils\peds.cpp" />
-    <ClCompile Include="source\utils\timers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\script.h" />
     <ClInclude Include="source\utils\ini.h" />
     <ClInclude Include="source\utils\functions.h" />
     <ClInclude Include="source\utils\peds.h" />
-    <ClInclude Include="source\utils\timers.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8D82F34A-1D64-465B-84B1-37F89AD3D20B}</ProjectGuid>

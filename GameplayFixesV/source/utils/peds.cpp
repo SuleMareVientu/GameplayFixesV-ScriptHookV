@@ -1,5 +1,6 @@
 //ScriptHook
 #include <natives.h>
+// #include <types.h> //Already included in globals.h
 //Custom
 #include "peds.h"
 #include "../globals.h"
