@@ -131,11 +131,9 @@ static void AddPedFuncToArr(pedFunc func)
 	countPedFuncs++;
 
 	//Check that the number of functions doesn't exceed the size of the array
-	if (arrSizePedFuncs < countPedFuncs)
-		return;
+	if (countPedFuncs < arrSizePedFuncs)
+		arrPedFuncs[countPedFuncs] = func;
 
-	#pragma warning(suppress: 6386)
-	arrPedFuncs[countPedFuncs] = func;
 	return;
 }
 

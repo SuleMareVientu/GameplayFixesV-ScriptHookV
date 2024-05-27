@@ -60,7 +60,33 @@ void Print(char* string, int ms = 1)
 	return;
 }
 
+void PrintInt(int value, int ms = 1)
+{
+	BEGIN_TEXT_COMMAND_PRINT("NUMBER");
+	ADD_TEXT_COMPONENT_INTEGER(value);
+	END_TEXT_COMMAND_PRINT(ms, 1);
+	return;
+}
+
+void PrintFloat(float value, int ms = 1)
+{
+	BEGIN_TEXT_COMMAND_PRINT("NUMBER");
+	ADD_TEXT_COMPONENT_FLOAT(value, 4);
+	END_TEXT_COMMAND_PRINT(ms, 1);
+	return;
+}
+
 ////////////////////////////////////////Local Functions//////////////////////////////////////////
+
+// TimerA	ToggleFPSWalking
+// TimerB	AllowWeaponsInsideSafeHouse
+// TimerC	LeaveEngineOnWhenExitingVehicles
+// TimerD	DisableForcedCarExplosionOnImpact
+// TimerE	DisableWheelsAutoCenterOnCarExit
+// TimerF	AllowWeaponsInsideSafeHouse
+// TimerG	CamFollowVehicleDuringHandbrake
+// TimerH	CamFollowVehicleDuringHandbrake
+// TimerI	ReplaceArmourBarWithStamina
 
 static int minimapScaleformIndex = NULL;
 static int RequestMinimapScaleform()
@@ -106,9 +132,9 @@ static bool HasPlayerVehicleAbility()
 	return false;
 }
 
-static void SetHealthHudDisplayValues(int healthPercentage, int staminaPercentage)
+static void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool showDamage = true)
 {
-	SET_HEALTH_HUD_DISPLAY_VALUES(healthPercentage, staminaPercentage, true);
+	SET_HEALTH_HUD_DISPLAY_VALUES(healthPercentage + 100, armourPercentage, showDamage);
 	SET_MAX_HEALTH_HUD_DISPLAY(200);
 	SET_MAX_ARMOUR_HUD_DISPLAY(100);
 	return;
@@ -671,7 +697,6 @@ static void DisableShallowWaterBikeJumpOut()
 	return;
 }
 
-
 ///////////////////////////////////////////////HUD///////////////////////////////////////////////
 static void HideMinimapBars()
 {
@@ -707,23 +732,39 @@ static void AlwaysHideAbilityBar()
 	return;
 }
 
+static Timer TimerI;
+constexpr int flashHealthInterval = 400;
 static void ReplaceArmourBarWithStamina()
 {
-	int handle = RequestMinimapScaleform();
-	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(player));		// GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
-
+	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(player));		//GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
 	if (iniMergeHealthAndArmour)
 	{
-		int health = GET_ENTITY_HEALTH(playerPed) - 100 + GET_PED_ARMOUR(playerPed);			// We need to subtract 100 because the player fatal healt is 100 not 0
+		int health = GET_ENTITY_HEALTH(playerPed) - 100 + GET_PED_ARMOUR(playerPed);			//We need to subtract 100 because the player fatal healt is 100 not 0
 		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100 + GET_PLAYER_MAX_ARMOUR(player);
-		int healthPercentage = ROUND(health * 100.0f / maxHealth) + 100;						// Always ensure a 100 offset to fix hud ratio
-		SetHealthHudDisplayValues(healthPercentage, staminaPercentage);
+		int newHealthPercentage = ROUND(health * 100.0f / maxHealth);							//Always ensure a 100 offset to fix hud ratio
+		int realHealthPercentage = ROUND((GET_ENTITY_HEALTH(playerPed) - 100.0f) * 100.0f / (GET_ENTITY_MAX_HEALTH(playerPed) - 100.0f));
+
+		//Flash health bar every 400ms if health is below 25%
+		if (realHealthPercentage > 25 || TimerI.Get() > flashHealthInterval)
+		{
+			if (TimerI.Get() > (flashHealthInterval * 2))
+				TimerI.Set(0);
+
+			SetHealthHudDisplayValues(newHealthPercentage, staminaPercentage);
+		}
+		else if (realHealthPercentage <= 25 && GET_PED_ARMOUR(playerPed) > 10)
+		{
+			if (TimerI.Get() <= flashHealthInterval)
+				SetHealthHudDisplayValues(realHealthPercentage, staminaPercentage);
+			else
+				SetHealthHudDisplayValues(newHealthPercentage, staminaPercentage);
+		}
 	}
 	else
 	{
 		int health = GET_ENTITY_HEALTH(playerPed) - 100;
 		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100;
-		int healthPercentage = ROUND(health * 100.0f / maxHealth) + 100;
+		int healthPercentage = ROUND(health * 100.0f / maxHealth);
 		SetHealthHudDisplayValues(healthPercentage, staminaPercentage);
 	}
 	return;
