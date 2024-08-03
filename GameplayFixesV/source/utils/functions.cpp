@@ -5,18 +5,7 @@
 #include "functions.h"
 #include "..\globals.h"
 
-//Custom implementation of TIMERA and TIMERB natives
-void Timer::Set(int value)
-{
-	gameTimer = GET_GAME_TIMER() + value;
-	return;
-}
-
-int Timer::Get()
-{
-	return (GET_GAME_TIMER() - gameTimer);
-}
-
+#pragma region Ped Flags
 void EnablePedConfigFlag(Ped ped, int flag)
 {
 	if (!PED::GET_PED_CONFIG_FLAG(ped, flag, false))
@@ -44,14 +33,9 @@ void DisablePedResetFlag(Ped ped, int flag)
 		PED::SET_PED_RESET_FLAG(ped, flag, false);
 	return;
 }
+#pragma endregion
 
-bool GetWeightedBool(int chance, int startRange, int endRange)
-{
-	SET_RANDOM_SEED(GET_GAME_TIMER());
-	bool rand = (chance >= GET_RANDOM_INT_IN_RANGE(startRange, endRange));
-	return rand;
-}
-
+#pragma region Print
 void Print(char* string, int ms = 1)
 {
 	BEGIN_TEXT_COMMAND_PRINT("STRING");
@@ -75,6 +59,62 @@ void PrintFloat(float value, int ms = 1)
 	END_TEXT_COMMAND_PRINT(ms, 1);
 	return;
 }
+#pragma endregion
+
+#pragma region Misc
+bool ArrayContains(int value, const int a[], int n)
+{
+	int i = 0;
+	while (i < n && a[i] != value) i++;
+	return i == n ? false : true;
+}
+
+bool GetWeightedBool(int chance, int startRange, int endRange)
+{
+	endRange++;
+	SET_RANDOM_SEED(GET_GAME_TIMER());
+	bool rand = (chance >= GET_RANDOM_INT_IN_RANGE(startRange, endRange));
+	return rand;
+}
+
+Vehicle GetVehiclePedIsIn(Ped ped, bool includeEntering)
+{
+	if (IS_PED_IN_ANY_VEHICLE(ped, includeEntering))
+	{
+		return GET_VEHICLE_PED_IS_USING(playerPed);
+	}
+
+	return NULL;
+}
+
+//Inspired by jedijosh920 implementation of "Disarm"
+bool CanDisarmPed(Ped ped, bool includeLeftHand)
+{
+	int bone = NULL;
+	if (!GET_PED_LAST_DAMAGE_BONE(ped, &bone))
+	{
+		CLEAR_PED_LAST_DAMAGE_BONE(ped);
+		return false;
+	}
+
+	CLEAR_PED_LAST_DAMAGE_BONE(ped);
+
+	if (bone == NULL)
+		return false;
+
+	if (includeLeftHand)
+	{
+		if (ArrayContains(bone, AllHandsBonetags, AllHandsBonetagsSize))
+			return true;
+	}
+	else
+	{
+		if (ArrayContains(bone, RightHandBonetags, RightHandBonetagsSize))
+			return true;
+	}
+	return false;
+}
+#pragma endregion
 
 ////////////////////////////////////////Local Functions//////////////////////////////////////////
 
@@ -115,9 +155,9 @@ static bool IsPedMainCharacter(Ped ped)
 {
 	switch (GET_ENTITY_MODEL(ped))
 	{
-	case 225514697:		//joaat(Michael)
-	case -1692214353:	//joaat(Franklin)
-	case -1686040670:	//joaat(Trevor)
+	case MichaelPed:
+	case FranklinPed:
+	case TrevorPed:
 		return true;	break;
 	}
 	return false;
@@ -125,7 +165,7 @@ static bool IsPedMainCharacter(Ped ped)
 
 static bool HasPlayerVehicleAbility()
 {
-	Vehicle veh = GET_VEHICLE_PED_IS_USING(playerPed);
+	Vehicle veh = GetVehiclePedIsIn(playerPed);
 	if (veh != NULL && (GET_VEHICLE_HAS_KERS(veh) || GET_HAS_ROCKET_BOOST(veh) || GET_CAR_HAS_JUMP(veh)))
 		return true;
 
@@ -143,7 +183,7 @@ static void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage
 /////////////////////////////////////////////Player//////////////////////////////////////////////
 static void FriendlyFire()
 {
-	PED::SET_CAN_ATTACK_FRIENDLY(playerPed, true, true);
+	SET_CAN_ATTACK_FRIENDLY(playerPed, true, true);	// Sets PCF_CanAttackFriendly, PCF_AllowLockonToFriendlyPlayers
 
 	Ped ped = NULL;
 	SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);
@@ -151,14 +191,21 @@ static void FriendlyFire()
 		return;
 
 	int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(playerPed, ped);
-	if (relationship == 0 || relationship == 1)
+	if (relationship == ACQUAINTANCE_TYPE_PED_RESPECT || relationship == ACQUAINTANCE_TYPE_PED_LIKE)
 	{
-		SET_PED_CAN_RAGDOLL(ped, true);
 		SET_PED_CAN_BE_TARGETTED(ped, true);
 		SET_PED_CAN_BE_TARGETTED_BY_PLAYER(ped, player, true);
 		SET_PED_CAN_BE_TARGETED_WHEN_INJURED(ped, true);
+		SET_ALLOW_LOCKON_TO_PED_IF_FRIENDLY(ped, true);
+		SET_PED_CAN_RAGDOLL(ped, true);
+		CLEAR_RAGDOLL_BLOCKING_FLAGS(ped, RBF_MELEE);
+		CLEAR_RAGDOLL_BLOCKING_FLAGS(ped, RBF_PLAYER_IMPACT);
+		//CLEAR_RAGDOLL_BLOCKING_FLAGS(ped, RBF_BULLET_IMPACT);
+		SET_PED_DIES_WHEN_INJURED(ped, true);
+		SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, false);
+		DisablePedConfigFlag(ped, PCF_PreventAllMeleeTaunts);
 		DisablePedConfigFlag(ped, PCF_NeverEverTargetThisPed);
-		CAN_PED_IN_COMBAT_SEE_TARGET(playerPed, ped);
+		EnablePedConfigFlag(ped, PCF_AllowPlayerLockOnIfFriendly);
 	}
 	return;
 }
@@ -176,20 +223,21 @@ static bool CanDisarmPlayer()
 
 	switch (bone)
 	{
-	case SkelRightHand:		case PHRightHand:		case IKRightHand:		case SkelRightFinger00:	case SkelRightFinger01:
-	case SkelRightFinger02:	case SkelRightFinger10:	case SkelRightFinger11:	case SkelRightFinger12:	case SkelRightFinger20:
-	case SkelRightFinger21:	case SkelRightFinger22:	case SkelRightFinger30:	case SkelRightFinger31:	case SkelRightFinger32:
-	case SkelRightFinger40:	case SkelRightFinger41:	case SkelRightFinger42:
-	case SkelLeftHand:		case PHLeftHand:		case IKLeftHand:		case SkelLeftFinger00:	case SkelLeftFinger01:
-	case SkelLeftFinger02:	case SkelLeftFinger10:	case SkelLeftFinger11:	case SkelLeftFinger12:	case SkelLeftFinger20:
-	case SkelLeftFinger21:	case SkelLeftFinger22:	case SkelLeftFinger30:	case SkelLeftFinger31:	case SkelLeftFinger32:
-	case SkelLeftFinger40:	case SkelLeftFinger41:	case SkelLeftFinger42:
+	case BONETAG_R_HAND:		case BONETAG_R_FINGER0:		case BONETAG_R_FINGER01:	case BONETAG_R_FINGER02:
+	case BONETAG_R_FINGER1:		case BONETAG_R_FINGER11:	case BONETAG_R_FINGER12:	case BONETAG_R_FINGER2:
+	case BONETAG_R_FINGER21:	case BONETAG_R_FINGER22:	case BONETAG_R_FINGER3:		case BONETAG_R_FINGER31:
+	case BONETAG_R_FINGER32:	case BONETAG_R_FINGER4:		case BONETAG_R_FINGER41:	case BONETAG_R_FINGER42:
+
+	case BONETAG_L_HAND:		case BONETAG_L_FINGER0:		case BONETAG_L_FINGER01:	case BONETAG_L_FINGER02:
+	case BONETAG_L_FINGER1:		case BONETAG_L_FINGER11:	case BONETAG_L_FINGER12:	case BONETAG_L_FINGER2:
+	case BONETAG_L_FINGER21:	case BONETAG_L_FINGER22:	case BONETAG_L_FINGER3:		case BONETAG_L_FINGER31:
+	case BONETAG_L_FINGER32:	case BONETAG_L_FINGER4:		case BONETAG_L_FINGER41:	case BONETAG_L_FINGER42:
 		CLEAR_PED_LAST_DAMAGE_BONE(playerPed);
-		return true;
+		return true; break;
 
 	default:
 		CLEAR_PED_LAST_DAMAGE_BONE(playerPed);
-		return false;
+		return false; break;
 	}
 }
 
@@ -200,7 +248,7 @@ static void DisarmPlayerWhenShot()
 	if (weapon == WEAPON_UNARMED)
 		return;
 
-	if (HAS_ENTITY_BEEN_DAMAGED_BY_WEAPON(playerPed, WEAPON_STUNGUN, 0) || CanDisarmPlayer())
+	if (HAS_ENTITY_BEEN_DAMAGED_BY_WEAPON(playerPed, WEAPON_STUNGUN, 0) || CanDisarmPed(playerPed, true))
 	{
 		if (!IS_AMBIENT_SPEECH_PLAYING(playerPed))
 			PLAY_PED_AMBIENT_SPEECH_NATIVE(playerPed, "GENERIC_CURSE_MED", "SPEECH_PARAMS_FORCE", false);
@@ -489,7 +537,7 @@ static void DisableRecording()
 static Vehicle lastVeh = NULL;
 static void DisableCarMidAirAndRollControl()
 {
-	Vehicle veh = GET_VEHICLE_PED_IS_IN(playerPed, true);
+	Vehicle veh = GetVehiclePedIsIn(playerPed);
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
@@ -500,7 +548,7 @@ static void DisableCarMidAirAndRollControl()
 	//Check if veh is car and is driveable then proceed
 	constexpr int time = 100;
 	Hash vehModel = GET_ENTITY_MODEL(veh);
-	if (IS_THIS_MODEL_A_CAR(vehModel) && vehModel != 1483171323 /*deluxo*/)
+	if (IS_THIS_MODEL_A_CAR(vehModel) && vehModel != 0x586765FB /*deluxo*/)
 	{
 		if (!DOES_VEHICLE_HAVE_STUCK_VEHICLE_CHECK(veh))
 			ADD_VEHICLE_STUCK_CHECK_WITH_WARP(veh, 0.1f, time, false, false, false, -1);
@@ -532,7 +580,7 @@ static bool wasSetAsMissionEntity = false;
 static Timer TimerD;
 static void DisableForcedCarExplosionOnImpact()
 {
-	Vehicle veh = GET_VEHICLE_PED_IS_IN(playerPed, true);
+	Vehicle veh = GetVehiclePedIsIn(playerPed);
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
@@ -564,7 +612,7 @@ static void DisableForcedCarExplosionOnImpact()
 
 static void DisableEngineSmoke()
 {
-	Vehicle veh = GET_VEHICLE_PED_IS_USING(playerPed);
+	Vehicle veh = GetVehiclePedIsIn(playerPed);
 	if (veh == NULL)
 		return;
 
@@ -578,7 +626,7 @@ static void DisableEngineSmoke()
 static Vehicle lastVehEngine = NULL;
 static void DisableEngineFire()
 {
-	Vehicle veh = GET_VEHICLE_PED_IS_USING(playerPed);
+	Vehicle veh = GetVehiclePedIsIn(playerPed);
 	if (veh == NULL)
 		return;
 
@@ -626,7 +674,7 @@ static void DisableRagdollOnVehicleRoof()
 static Timer TimerC;
 static void LeaveEngineOnWhenExitingVehicles()
 {
-	Vehicle veh = GET_VEHICLE_PED_IS_IN(playerPed, true);
+	Vehicle veh = GetVehiclePedIsIn(playerPed);
 	if (veh == NULL)
 		return;
 
@@ -645,46 +693,72 @@ static void LeaveEngineOnWhenExitingVehicles()
 //When a vehicle is physically attached to another vehicle it retains the same steering on exit (thanks to RAGE constraints)
 //Only problem is that the vehicle now inherits most veh flags from parent. 
 //Don't know if this could cause issues, but better then patching memory
-static Vehicle tmpVeh = NULL;
 static Timer TimerE;
+static Vehicle tmpVeh = NULL;
+static bool shouldAttachVeh = false;
+static constexpr float maxVehSpeedDetach = 10.0f;
 static void DisableWheelsAutoCenterOnCarExit()
 {
-	if (!DOES_ENTITY_EXIST(tmpVeh))
+	const Vehicle veh = GetVehiclePedIsIn(playerPed);
+	if (!DOES_ENTITY_EXIST(veh))
+		return;
+	
+	const int vehHash = GET_ENTITY_MODEL(veh);	//Disable for bikes and bicycles, can cause issues
+	if (!IS_THIS_MODEL_A_CAR(vehHash) || !IS_VEHICLE_DRIVEABLE(veh, false) || GET_ENTITY_SUBMERGED_LEVEL(playerPed) > 0.7f)
+		return;
+
+	const int tmpVehHash = GET_ENTITY_MODEL(tmpVeh);
+	if (tmpVehHash != vehHash)
 	{
-		constexpr Hash caddy2 = -537896628;	//hash for "caddy2", smallest vehicle that did the job. DO NOT USE NON-CAR VEHICLES
-		if (!HAS_MODEL_LOADED(caddy2))
+		if (DOES_ENTITY_EXIST(tmpVeh))
 		{
-			REQUEST_MODEL(caddy2);
+			if (IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh))
+				DETACH_ENTITY(veh, false, false);
+
+			SET_ENTITY_AS_MISSION_ENTITY(tmpVeh, false, true);
+			DELETE_ENTITY(&tmpVeh);
+			SET_MODEL_AS_NO_LONGER_NEEDED(tmpVehHash);
+			tmpVeh = NULL;
+		}
+
+		if (!HAS_MODEL_LOADED(vehHash))
+		{
+			REQUEST_MODEL(vehHash);
 			return;
 		}
-		tmpVeh = CREATE_VEHICLE(caddy2, 0.0f, 0.0f, 0.0f, 0.0f, false, false, true);
-		SET_ENTITY_AS_MISSION_ENTITY(tmpVeh, true, true);
+		tmpVeh = CREATE_VEHICLE(vehHash, 0.0f, 0.0f, -100.0f, 0.0f, false, false, true);
+		SET_ENTITY_AS_MISSION_ENTITY(tmpVeh, false, true);
 		SET_ENTITY_VISIBLE(tmpVeh, false, false);
 		FREEZE_ENTITY_POSITION(tmpVeh, true);
 		return;
 	}
 
-	Vehicle veh = GET_VEHICLE_PED_IS_USING(playerPed);
-	if (!DOES_ENTITY_EXIST(veh))
-		return;
+	if (GET_IS_TASK_ACTIVE(playerPed, 2) || TimerE.Get() > 2000 || GET_ENTITY_SPEED(veh) > maxVehSpeedDetach)	//CTaskExitVehicle
+		shouldAttachVeh = false;
 
-	//Disable for bikes and bicycles, can cause issues
-	Hash vehModel = GET_ENTITY_MODEL(veh);
-	if (!IS_THIS_MODEL_A_CAR(vehModel) && !IS_THIS_MODEL_A_QUADBIKE(vehModel))
-		return;
+	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && IS_PED_IN_ANY_VEHICLE(playerPed, false)
+		&& !IS_VEHICLE_ATTACHED_TO_TRAILER(veh))
+	{ shouldAttachVeh = true; }
 
-	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && IS_PED_IN_ANY_VEHICLE(playerPed, false) && !IS_VEHICLE_ATTACHED_TO_TRAILER(veh) && GET_ENTITY_SPEED(veh) < 7.0f)
+	if (shouldAttachVeh && !IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh) && GET_ENTITY_SPEED(veh) < maxVehSpeedDetach)
 	{
 		TimerE.Set(0);
-		ATTACH_ENTITY_TO_ENTITY_PHYSICALLY(veh, tmpVeh, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, false, false, false, true, 2);
+
+		float yOffset = 100.0f;
+		if (GET_ENTITY_SPEED_VECTOR(veh, true).y < 0.0f)
+			yOffset *= -1.0f;
+
+		const Vector3 tmpOffset = GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(veh, 0.0f, yOffset, 0.0f);
+		SET_ENTITY_COORDS_NO_OFFSET(tmpVeh, tmpOffset.x, tmpOffset.y, GET_ENTITY_COORDS(tmpVeh, false).z, true, true, false);
+
+		ATTACH_ENTITY_TO_ENTITY_PHYSICALLY(veh, tmpVeh, NULL, NULL, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, false, false, false, true, 2);
 		return;
 	}
-
-	//Detach veh after 1500ms 
-	if (IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh) && TimerE.Get() > 1500)
+		
+	//Detach veh 
+	if (IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh) && !shouldAttachVeh)
 	{
 		DETACH_ENTITY(veh, false, false);
-		DETACH_ENTITY(tmpVeh, false, false);
 		return;
 	}
 	return;
