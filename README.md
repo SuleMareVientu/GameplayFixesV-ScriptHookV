@@ -1,4 +1,4 @@
-# GameplayFixesV-ScriptHookV [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
+# GameplayFixesV-ScriptHookV [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa] [![GitHub all releases](https://img.shields.io/github/downloads/SuleMareVientu/GameplayFixesV-ScriptHookV/total?label=Total%20Downloads&logo=GitHub)](https://github.com/SuleMareVientu/GameplayFixesV-ScriptHookV/releases/latest)
 ![Screenshot](https://github.com/SuleMareVientu/GameplayFixesV-ScriptHookV/blob/images/GameplayFixesV.png?raw=true)
 Open-source script that aims to address some of the numerous issues GTA:V has.
 
