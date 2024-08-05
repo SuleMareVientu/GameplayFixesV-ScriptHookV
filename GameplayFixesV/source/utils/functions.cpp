@@ -116,72 +116,10 @@ bool CanDisarmPed(Ped ped, bool includeLeftHand)
 }
 #pragma endregion
 
-////////////////////////////////////////Local Functions//////////////////////////////////////////
-
-// TimerA	ToggleFPSWalking
-// TimerB	AllowWeaponsInsideSafeHouse
-// TimerC	LeaveEngineOnWhenExitingVehicles
-// TimerD	DisableForcedCarExplosionOnImpact
-// TimerE	DisableWheelsAutoCenterOnCarExit
-// TimerF	AllowWeaponsInsideSafeHouse
-// TimerG	CamFollowVehicleDuringHandbrake
-// TimerH	CamFollowVehicleDuringHandbrake
-// TimerI	ReplaceArmourBarWithStamina
-
-static int minimapScaleformIndex = NULL;
-static int RequestMinimapScaleform()
-{
-	if (!HAS_SCALEFORM_MOVIE_LOADED(minimapScaleformIndex))
-	{
-		minimapScaleformIndex = REQUEST_SCALEFORM_MOVIE("MINIMAP");
-		CALL_SCALEFORM_MOVIE_METHOD(minimapScaleformIndex, "INITIALISE");
-		return NULL;
-	}
-	return minimapScaleformIndex;
-}
-
-/*
-static bool RequestScaleform(const char* name, int* handle)
-{
-	if (HAS_SCALEFORM_MOVIE_LOADED(*handle))
-		return true;
-
-	*handle = REQUEST_SCALEFORM_MOVIE(name);
-	return false;
-}
-*/
-
-static bool IsPedMainCharacter(Ped ped)
-{
-	switch (GET_ENTITY_MODEL(ped))
-	{
-	case MichaelPed:
-	case FranklinPed:
-	case TrevorPed:
-		return true;	break;
-	}
-	return false;
-}
-
-static bool HasPlayerVehicleAbility()
-{
-	Vehicle veh = GetVehiclePedIsIn(playerPed);
-	if (veh != NULL && (GET_VEHICLE_HAS_KERS(veh) || GET_HAS_ROCKET_BOOST(veh) || GET_CAR_HAS_JUMP(veh)))
-		return true;
-
-	return false;
-}
-
-static void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool showDamage = true)
-{
-	SET_HEALTH_HUD_DISPLAY_VALUES(healthPercentage + 100, armourPercentage, showDamage);
-	SET_MAX_HEALTH_HUD_DISPLAY(200);
-	SET_MAX_ARMOUR_HUD_DISPLAY(100);
-	return;
-}
-
 /////////////////////////////////////////////Player//////////////////////////////////////////////
-static void FriendlyFire()
+namespace nGeneral
+{
+void FriendlyFire()
 {
 	SET_CAN_ATTACK_FRIENDLY(playerPed, true, true);	// Sets PCF_CanAttackFriendly, PCF_AllowLockonToFriendlyPlayers
 
@@ -210,38 +148,7 @@ static void FriendlyFire()
 	return;
 }
 
-static bool CanDisarmPlayer()
-{
-	int bone = NULL;
-	GET_PED_LAST_DAMAGE_BONE(playerPed, &bone);
-
-	if (bone == NULL)
-	{
-		CLEAR_PED_LAST_DAMAGE_BONE(playerPed);
-		return false;
-	}
-
-	switch (bone)
-	{
-	case BONETAG_R_HAND:		case BONETAG_R_FINGER0:		case BONETAG_R_FINGER01:	case BONETAG_R_FINGER02:
-	case BONETAG_R_FINGER1:		case BONETAG_R_FINGER11:	case BONETAG_R_FINGER12:	case BONETAG_R_FINGER2:
-	case BONETAG_R_FINGER21:	case BONETAG_R_FINGER22:	case BONETAG_R_FINGER3:		case BONETAG_R_FINGER31:
-	case BONETAG_R_FINGER32:	case BONETAG_R_FINGER4:		case BONETAG_R_FINGER41:	case BONETAG_R_FINGER42:
-
-	case BONETAG_L_HAND:		case BONETAG_L_FINGER0:		case BONETAG_L_FINGER01:	case BONETAG_L_FINGER02:
-	case BONETAG_L_FINGER1:		case BONETAG_L_FINGER11:	case BONETAG_L_FINGER12:	case BONETAG_L_FINGER2:
-	case BONETAG_L_FINGER21:	case BONETAG_L_FINGER22:	case BONETAG_L_FINGER3:		case BONETAG_L_FINGER31:
-	case BONETAG_L_FINGER32:	case BONETAG_L_FINGER4:		case BONETAG_L_FINGER41:	case BONETAG_L_FINGER42:
-		CLEAR_PED_LAST_DAMAGE_BONE(playerPed);
-		return true; break;
-
-	default:
-		CLEAR_PED_LAST_DAMAGE_BONE(playerPed);
-		return false; break;
-	}
-}
-
-static void DisarmPlayerWhenShot()
+void DisarmPlayerWhenShot()
 {
 	Hash weapon = NULL;
 	GET_CURRENT_PED_WEAPON(playerPed, &weapon, false);
@@ -259,7 +166,7 @@ static void DisarmPlayerWhenShot()
 	return;
 }
 
-static bool IsPlayerInsideSafehouse(Ped playerPed, Vector3 playerLoc)
+bool IsPlayerInsideSafehouse(Ped playerPed, Vector3 playerLoc)
 {
 	constexpr int arrSize = 5;
 	int safehouses[arrSize] = {
@@ -283,7 +190,7 @@ static bool IsPlayerInsideSafehouse(Ped playerPed, Vector3 playerLoc)
 	return false;
 }
 
-static void SetDispatchServices(bool toggle)
+void SetDispatchServices(bool toggle)
 {
 	ENABLE_DISPATCH_SERVICE(DT_POLICE_AUTOMOBILE, toggle);
 	ENABLE_DISPATCH_SERVICE(DT_POLICE_HELICOPTER, toggle);
@@ -299,8 +206,8 @@ static void SetDispatchServices(bool toggle)
 	return;
 }
 
-static bool isFakeWanted = false;
-static void SetFakeWanted(Player player, bool toggle)
+bool isFakeWanted = false;
+void SetFakeWanted(Player player, bool toggle)
 {
 	Vector3 fakeCoords{ 7000.0f, NULL, 7000.0f, NULL, 0.0f, NULL };
 	switch (toggle)
@@ -349,24 +256,24 @@ static void SetFakeWanted(Player player, bool toggle)
 //MUST BE CALLED EVERY FRAME
 //A different and more aggressive approach would be to terminate these scripts, which are responsible for the family scenes
 //inside the safehouses and disable the player's control: family_scene_f0, family_scene_f1, family_scene_m, family_scene_t0, family_scene_t1
-static Weapon lastPlayerWeapon = NULL;
-static Timer TimerB;
-static Timer TimerF;
-static void AllowWeaponsInsideSafeHouse()
+Weapon lastPlayerWeapon = NULL;
+Timer timerLastPlayerWeapon;
+Timer timerCharacterSwitch;
+void AllowWeaponsInsideSafeHouse()
 {
-	//Force selected player weapon for 1000ms upon exit/enter of safehouse - USES TIMERB
-	if (TimerB.Get() < 1000 && lastPlayerWeapon != WEAPON_UNARMED)
+	//Force selected player weapon for 1000ms upon exit/enter of safehouse
+	if (timerLastPlayerWeapon.Get() < 1000 && lastPlayerWeapon != WEAPON_UNARMED)
 		SET_CURRENT_PED_WEAPON(playerPed, lastPlayerWeapon, true);
 
 	//Checks if player is inside valid interior
 	int playerInterior = GET_INTERIOR_FROM_ENTITY(playerPed);
 	if (!IS_VALID_INTERIOR(playerInterior) ||
 		//reset fakewanted also if player is inside the strip club but not inside the office
-		(GET_INTERIOR_AT_COORDS(113.53f, -1287.61f, 28.64f)  == playerInterior /*v_strip3*/ && GET_ROOM_KEY_FROM_ENTITY(playerPed) != strp3off))
+		(GET_INTERIOR_AT_COORDS(113.53f, -1287.61f, 28.64f) == playerInterior /*v_strip3*/ && GET_ROOM_KEY_FROM_ENTITY(playerPed) != strp3off))
 	{
 		if (isFakeWanted)
 		{
-			TimerB.Set(0);
+			timerLastPlayerWeapon.Set(0);
 			SetFakeWanted(player, false);
 		}
 		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(playerPed);
@@ -378,29 +285,29 @@ static void AllowWeaponsInsideSafeHouse()
 		return;
 
 	//Allow player to switch characters while inside the safehouse
-	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_CHARACTER_WHEEL)				||
-		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_MICHAEL)		||
-		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_FRANKLIN)	||
+	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_CHARACTER_WHEEL) ||
+		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_MICHAEL) ||
+		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_FRANKLIN) ||
 		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_TREVOR))
 	{
-		TimerF.Set(0);
+		timerCharacterSwitch.Set(0);
 	}
-	else if (TimerF.Get() > 250 &&
-		(IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_CHARACTER_WHEEL)				||
-			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_MICHAEL)	||
-			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_FRANKLIN)	||
+	else if (timerCharacterSwitch.Get() > 250 &&
+		(IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_CHARACTER_WHEEL) ||
+			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_MICHAEL) ||
+			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_FRANKLIN) ||
 			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_TREVOR)))
 	{
 		if (isFakeWanted)
 			SetFakeWanted(player, false);
 
-		TimerB.Set(0);
+		timerLastPlayerWeapon.Set(0);
 		return;
 	}
 
 	//Reset weapon timer
 	if (!isFakeWanted)
-		TimerB.Set(0);
+		timerLastPlayerWeapon.Set(0);
 	else
 		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(playerPed);
 
@@ -408,12 +315,143 @@ static void AllowWeaponsInsideSafeHouse()
 	SetFakeWanted(player, true);
 	return;
 }
+}	//END nGeneral
+
+///////////////////////////////////////////////HUD///////////////////////////////////////////////
+namespace nHUD
+{
+int minimapScaleformIndex = NULL;
+int RequestMinimapScaleform()
+{
+	if (!HAS_SCALEFORM_MOVIE_LOADED(minimapScaleformIndex))
+	{
+		minimapScaleformIndex = REQUEST_SCALEFORM_MOVIE("MINIMAP");
+		CALL_SCALEFORM_MOVIE_METHOD(minimapScaleformIndex, "INITIALISE");
+		return NULL;
+	}
+	return minimapScaleformIndex;
+}
+
+/*
+static bool RequestScaleform(const char* name, int* handle)
+{
+	if (HAS_SCALEFORM_MOVIE_LOADED(*handle))
+		return true;
+
+	*handle = REQUEST_SCALEFORM_MOVIE(name);
+	return false;
+}
+*/
+
+bool IsPedMainCharacter(Ped ped)
+{
+	switch (GET_ENTITY_MODEL(ped))
+	{
+	case MichaelPed:
+	case FranklinPed:
+	case TrevorPed:
+		return true;	break;
+	}
+	return false;
+}
+
+bool HasPlayerVehicleAbility()
+{
+	Vehicle veh = GetVehiclePedIsIn(playerPed);
+	if (veh != NULL && (GET_VEHICLE_HAS_KERS(veh) || GET_HAS_ROCKET_BOOST(veh) || GET_CAR_HAS_JUMP(veh)))
+		return true;
+
+	return false;
+}
+
+void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool showDamage = true)
+{
+	SET_HEALTH_HUD_DISPLAY_VALUES(healthPercentage + 100, armourPercentage, showDamage);
+	SET_MAX_HEALTH_HUD_DISPLAY(200);
+	SET_MAX_ARMOUR_HUD_DISPLAY(100);
+	return;
+}
+
+void HideMinimapBars()
+{
+	BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SETUP_HEALTH_ARMOUR");
+	SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(3);
+	END_SCALEFORM_MOVIE_METHOD();
+	return;
+}
+
+void HideAbilityBarForNonMainCharacters()
+{
+	if (IsPedMainCharacter(playerPed) || HasPlayerVehicleAbility())
+	{
+		BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "MULTIPLAYER_IS_ACTIVE");
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+		END_SCALEFORM_MOVIE_METHOD();
+	}
+	else
+	{
+		BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER");
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+		END_SCALEFORM_MOVIE_METHOD();
+	}
+	return;
+}
+
+void AlwaysHideAbilityBar()
+{
+	BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER");
+	SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+	END_SCALEFORM_MOVIE_METHOD();
+	return;
+}
+
+Timer timerFlashHealth;
+constexpr int flashHealthInterval = 400;
+void ReplaceArmourBarWithStamina()
+{
+	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(player));		//GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
+	if (iniMergeHealthAndArmour)
+	{
+		int health = GET_ENTITY_HEALTH(playerPed) - 100 + GET_PED_ARMOUR(playerPed);			//We need to subtract 100 because the player fatal healt is 100 not 0
+		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100 + GET_PLAYER_MAX_ARMOUR(player);
+		int newHealthPercentage = ROUND(health * 100.0f / maxHealth);							//Always ensure a 100 offset to fix hud ratio
+		int realHealthPercentage = ROUND((GET_ENTITY_HEALTH(playerPed) - 100.0f) * 100.0f / (GET_ENTITY_MAX_HEALTH(playerPed) - 100.0f));
+
+		//Flash health bar every 400ms if health is below 25%
+		if (realHealthPercentage > 25 || timerFlashHealth.Get() > flashHealthInterval)
+		{
+			if (timerFlashHealth.Get() > (flashHealthInterval * 2))
+				timerFlashHealth.Set(0);
+
+			SetHealthHudDisplayValues(newHealthPercentage, staminaPercentage);
+		}
+		else if (realHealthPercentage <= 25 && GET_PED_ARMOUR(playerPed) > 10)
+		{
+			if (timerFlashHealth.Get() <= flashHealthInterval)
+				SetHealthHudDisplayValues(realHealthPercentage, staminaPercentage);
+			else
+				SetHealthHudDisplayValues(newHealthPercentage, staminaPercentage);
+		}
+	}
+	else
+	{
+		int health = GET_ENTITY_HEALTH(playerPed) - 100;
+		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100;
+		int healthPercentage = ROUND(health * 100.0f / maxHealth);
+		SetHealthHudDisplayValues(healthPercentage, staminaPercentage);
+	}
+	return;
+}
+}	//END nHUD
 
 ///////////////////////////////////////////////Player Controls///////////////////////////////////////////////
-static bool isWalking = false;
-static float playerLastMoveBlend = 0.0f;
-static Timer TimerA;
-static void ToggleFPSWalking()
+namespace nControls
+{
+bool isWalking = false;
+float playerLastMoveBlend = 0.0f;
+Timer timerToggleFPSWalking;
+void ToggleFPSWalking()
 {
 	if (!IS_PED_ON_FOOT(playerPed) || !IS_CONTROL_ENABLED(PLAYER_CONTROL, INPUT_SPRINT) ||
 		GET_FOLLOW_PED_CAM_VIEW_MODE() != CAM_VIEW_MODE_FIRST_PERSON)
@@ -429,11 +467,11 @@ static void ToggleFPSWalking()
 	//Walk Toggle
 	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SPRINT))
 	{
-		TimerA.Set(0);
+		timerToggleFPSWalking.Set(0);
 		playerLastMoveBlend = GET_PED_DESIRED_MOVE_BLEND_RATIO(playerPed);
 		SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, playerLastMoveBlend);
 	}
-	else if (TimerA.Get() < 250)
+	else if (timerToggleFPSWalking.Get() < 250)
 	{
 		if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_SPRINT))
 		{
@@ -461,9 +499,9 @@ static void ToggleFPSWalking()
 	return;
 }
 
-static float handbrakeCamHeadingMin = 0.0f;
-static float handbrakeCamHeadingMax = 0.0f;
-static void SetCamSmoothHeadingLimit()
+float handbrakeCamHeadingMin = 0.0f;
+float handbrakeCamHeadingMax = 0.0f;
+void SetCamSmoothHeadingLimit()
 {
 	const float frametimeMultiplier = TIMESTEP() * 275.0f;
 	const float heading = GET_GAMEPLAY_CAM_RELATIVE_HEADING();
@@ -486,9 +524,9 @@ static void SetCamSmoothHeadingLimit()
 	return;
 }
 
-static Timer TimerG;
-static Timer TimerH;
-static void CamFollowVehicleDuringHandbrake()
+Timer TimerG;
+Timer TimerH;
+void CamFollowVehicleDuringHandbrake()
 {
 	const int timePressed = iniCamFollowVehDelay;
 	constexpr int delay = 300;
@@ -525,17 +563,20 @@ static void CamFollowVehicleDuringHandbrake()
 	return;
 }
 
-static void DisableRecording()
+void DisableRecording()
 {
 	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING, false);
 	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING_SECONDARY, false);
 	REPLAY_PREVENT_RECORDING_THIS_FRAME();
 	return;
 }
+}	//END nControls
 
 ///////////////////////////////////////////////Player Vehicle/////////////////////////////////////////////////
-static Vehicle lastVeh = NULL;
-static void DisableCarMidAirAndRollControl()
+namespace nVehicle
+{
+Vehicle lastVeh = NULL;
+void DisableCarMidAirAndRollControl()
 {
 	Vehicle veh = GetVehiclePedIsIn(playerPed);
 	if (!DOES_ENTITY_EXIST(veh))
@@ -576,9 +617,9 @@ static void DisableCarMidAirAndRollControl()
 	return;
 }
 
-static bool wasSetAsMissionEntity = false;
-static Timer TimerD;
-static void DisableForcedCarExplosionOnImpact()
+bool wasSetAsMissionEntity = false;
+Timer timerCarExplosion;
+void DisableForcedCarExplosionOnImpact()
 {
 	Vehicle veh = GetVehiclePedIsIn(playerPed);
 	if (!DOES_ENTITY_EXIST(veh))
@@ -593,7 +634,7 @@ static void DisableForcedCarExplosionOnImpact()
 	if (!IS_ENTITY_IN_AIR(veh) || GET_ENTITY_SPEED(veh) < 10.0f)
 	{
 		//Wait 500ms before setting vehicle as no longer needed
-		if (TimerD.Get() > 500 && IS_ENTITY_A_MISSION_ENTITY(veh) && wasSetAsMissionEntity)
+		if (timerCarExplosion.Get() > 500 && IS_ENTITY_A_MISSION_ENTITY(veh) && wasSetAsMissionEntity)
 		{
 			wasSetAsMissionEntity = false;
 			SET_ENTITY_AS_NO_LONGER_NEEDED(&veh);
@@ -601,7 +642,7 @@ static void DisableForcedCarExplosionOnImpact()
 		return;
 	}
 
-	TimerD.Set(0);
+	timerCarExplosion.Set(0);
 	if (!IS_ENTITY_A_MISSION_ENTITY(veh))
 	{
 		wasSetAsMissionEntity = true;
@@ -610,7 +651,7 @@ static void DisableForcedCarExplosionOnImpact()
 	return;
 }
 
-static void DisableEngineSmoke()
+void DisableEngineSmoke()
 {
 	Vehicle veh = GetVehiclePedIsIn(playerPed);
 	if (veh == NULL)
@@ -623,8 +664,8 @@ static void DisableEngineSmoke()
 	return;
 }
 
-static Vehicle lastVehEngine = NULL;
-static void DisableEngineFire()
+Vehicle lastVehEngine = NULL;
+void DisableEngineFire()
 {
 	Vehicle veh = GetVehiclePedIsIn(playerPed);
 	if (veh == NULL)
@@ -657,7 +698,7 @@ static void DisableEngineFire()
 	return;
 }
 
-static void DisableRagdollOnVehicleRoof()
+void DisableRagdollOnVehicleRoof()
 {
 	//Velocity Unit -> Km/h
 	if (iniMaxVehicleSpeed > 0.0f)
@@ -671,8 +712,8 @@ static void DisableRagdollOnVehicleRoof()
 	return;
 }
 
-static Timer TimerC;
-static void LeaveEngineOnWhenExitingVehicles()
+Timer timerEngineControl;
+void LeaveEngineOnWhenExitingVehicles()
 {
 	Vehicle veh = GetVehiclePedIsIn(playerPed);
 	if (veh == NULL)
@@ -682,10 +723,10 @@ static void LeaveEngineOnWhenExitingVehicles()
 	SET_VEHICLE_KEEP_ENGINE_ON_WHEN_ABANDONED(veh, true);
 	//EnablePedConfigFlag(playerPed, PCF_LeaveEngineOnWhenExitingVehicles);
 	if (IS_DISABLED_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT))
-		TimerC.Set(0);
-	else if (IS_DISABLED_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_EXIT) && TimerC.Get() > TURN_OFF_ENGINE_DURATION)
+		timerEngineControl.Set(0);
+	else if (IS_DISABLED_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_EXIT) && timerEngineControl.Get() > TURN_OFF_ENGINE_DURATION)
 		SET_VEHICLE_ENGINE_ON(veh, false, true, false);
-	 
+
 	return;
 }
 
@@ -693,16 +734,17 @@ static void LeaveEngineOnWhenExitingVehicles()
 //When a vehicle is physically attached to another vehicle it retains the same steering on exit (thanks to RAGE constraints)
 //Only problem is that the vehicle now inherits most veh flags from parent. 
 //Don't know if this could cause issues, but better then patching memory
-static Timer TimerE;
-static Vehicle tmpVeh = NULL;
-static bool shouldAttachVeh = false;
-static constexpr float maxVehSpeedDetach = 10.0f;
-static void DisableWheelsAutoCenterOnCarExit()
+Timer timerWheelsAutoCenter;
+Vehicle tmpVeh = NULL;
+bool shouldAttachVeh = false;
+void DisableWheelsAutoCenterOnCarExit()
 {
+	constexpr float maxVehSpeedDetach = 10.0f;
+
 	const Vehicle veh = GetVehiclePedIsIn(playerPed);
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
-	
+
 	const int vehHash = GET_ENTITY_MODEL(veh);	//Disable for bikes and bicycles, can cause issues
 	if (!IS_THIS_MODEL_A_CAR(vehHash) || !IS_VEHICLE_DRIVEABLE(veh, false) || GET_ENTITY_SUBMERGED_LEVEL(playerPed) > 0.7f)
 		return;
@@ -733,16 +775,18 @@ static void DisableWheelsAutoCenterOnCarExit()
 		return;
 	}
 
-	if (GET_IS_TASK_ACTIVE(playerPed, 2) || TimerE.Get() > 2000 || GET_ENTITY_SPEED(veh) > maxVehSpeedDetach)	//CTaskExitVehicle
+	if (GET_IS_TASK_ACTIVE(playerPed, 2) || timerWheelsAutoCenter.Get() > 2000 || GET_ENTITY_SPEED(veh) > maxVehSpeedDetach)	//CTaskExitVehicle
 		shouldAttachVeh = false;
 
 	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && IS_PED_IN_ANY_VEHICLE(playerPed, false)
 		&& !IS_VEHICLE_ATTACHED_TO_TRAILER(veh))
-	{ shouldAttachVeh = true; }
+	{
+		shouldAttachVeh = true;
+	}
 
 	if (shouldAttachVeh && !IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh) && GET_ENTITY_SPEED(veh) < maxVehSpeedDetach)
 	{
-		TimerE.Set(0);
+		timerWheelsAutoCenter.Set(0);
 
 		float yOffset = 100.0f;
 		if (GET_ENTITY_SPEED_VECTOR(veh, true).y < 0.0f)
@@ -754,7 +798,7 @@ static void DisableWheelsAutoCenterOnCarExit()
 		ATTACH_ENTITY_TO_ENTITY_PHYSICALLY(veh, tmpVeh, NULL, NULL, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, false, false, false, true, 2);
 		return;
 	}
-		
+
 	//Detach veh 
 	if (IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh) && !shouldAttachVeh)
 	{
@@ -764,155 +808,83 @@ static void DisableWheelsAutoCenterOnCarExit()
 	return;
 }
 
-static void DisableShallowWaterBikeJumpOut()
+void DisableShallowWaterBikeJumpOut()
 {
-	if (GET_ENTITY_SUBMERGED_LEVEL(playerPed) < 0.9f)
+	if (GET_ENTITY_SUBMERGED_LEVEL(playerPed) < 0.7f)
 		EnablePedResetFlag(playerPed, PRF_DisableShallowWaterBikeJumpOutThisFrame);
 	return;
 }
-
-///////////////////////////////////////////////HUD///////////////////////////////////////////////
-static void HideMinimapBars()
-{
-	BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SETUP_HEALTH_ARMOUR");
-	SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(3);
-	END_SCALEFORM_MOVIE_METHOD();
-	return;
-}
-
-static void HideAbilityBarForNonMainCharacters()
-{
-	if (IsPedMainCharacter(playerPed) || HasPlayerVehicleAbility())
-	{
-		BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "MULTIPLAYER_IS_ACTIVE");
-		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
-		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
-		END_SCALEFORM_MOVIE_METHOD();
-	}
-	else
-	{
-		BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER");
-		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
-		END_SCALEFORM_MOVIE_METHOD();
-	}
-	return;
-}
-
-static void AlwaysHideAbilityBar()
-{
-	BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER");
-	SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
-	END_SCALEFORM_MOVIE_METHOD();
-	return;
-}
-
-static Timer TimerI;
-constexpr int flashHealthInterval = 400;
-static void ReplaceArmourBarWithStamina()
-{
-	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(player));		//GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
-	if (iniMergeHealthAndArmour)
-	{
-		int health = GET_ENTITY_HEALTH(playerPed) - 100 + GET_PED_ARMOUR(playerPed);			//We need to subtract 100 because the player fatal healt is 100 not 0
-		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100 + GET_PLAYER_MAX_ARMOUR(player);
-		int newHealthPercentage = ROUND(health * 100.0f / maxHealth);							//Always ensure a 100 offset to fix hud ratio
-		int realHealthPercentage = ROUND((GET_ENTITY_HEALTH(playerPed) - 100.0f) * 100.0f / (GET_ENTITY_MAX_HEALTH(playerPed) - 100.0f));
-
-		//Flash health bar every 400ms if health is below 25%
-		if (realHealthPercentage > 25 || TimerI.Get() > flashHealthInterval)
-		{
-			if (TimerI.Get() > (flashHealthInterval * 2))
-				TimerI.Set(0);
-
-			SetHealthHudDisplayValues(newHealthPercentage, staminaPercentage);
-		}
-		else if (realHealthPercentage <= 25 && GET_PED_ARMOUR(playerPed) > 10)
-		{
-			if (TimerI.Get() <= flashHealthInterval)
-				SetHealthHudDisplayValues(realHealthPercentage, staminaPercentage);
-			else
-				SetHealthHudDisplayValues(newHealthPercentage, staminaPercentage);
-		}
-	}
-	else
-	{
-		int health = GET_ENTITY_HEALTH(playerPed) - 100;
-		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100;
-		int healthPercentage = ROUND(health * 100.0f / maxHealth);
-		SetHealthHudDisplayValues(healthPercentage, staminaPercentage);
-	}
-	return;
-}
+}	//END nVehicle
 
 void SetPlayerFlags()
 {
 	if (iniFriendlyFire)
-		FriendlyFire();
+		nGeneral::FriendlyFire();
 
 	if (iniPlayerCanJackFriendlyPeds)
 		EnablePedConfigFlag(playerPed, PCF_PlayerCanJackFriendlyPlayers);
 
 	if (iniDisarmPlayerWhenShot)
-		DisarmPlayerWhenShot();
+		nGeneral::DisarmPlayerWhenShot();
 
 	if (iniSprintInsideInteriors)
 		EnablePedConfigFlag(playerPed, PCF_IgnoreInteriorCheckForSprinting);
 
 	if (iniAllowWeaponsInsideSafeHouse)
-		AllowWeaponsInsideSafeHouse();
+		nGeneral::AllowWeaponsInsideSafeHouse();
 
 	///////////////////////////////////////////HUD/////////////////////////////////////////
 	if (iniHideMinimapBars)
-		HideMinimapBars();
+		nHUD::HideMinimapBars();
 	else
 	{
 		if (iniHideAbilityBarForNonMainCharacters && !iniAlwaysHideAbilityBar)
-			HideAbilityBarForNonMainCharacters();
+			nHUD::HideAbilityBarForNonMainCharacters();
 
 		if (iniAlwaysHideAbilityBar)
-			AlwaysHideAbilityBar();
+			nHUD::AlwaysHideAbilityBar();
 
 		if (iniReplaceArmourBarWithStamina)
-			ReplaceArmourBarWithStamina();
+			nHUD::ReplaceArmourBarWithStamina();
 	}
 
 	//////////////////////////////////////Player Controls//////////////////////////////////
 	if (iniToggleFPSWalking)
-		ToggleFPSWalking();
+		nControls::ToggleFPSWalking();
 
 	if (iniCamFollowVehicleDuringHandbrake)
-		CamFollowVehicleDuringHandbrake();
+		nControls::CamFollowVehicleDuringHandbrake();
 
 	if (iniDisableRecording)
-		DisableRecording();
+		nControls::DisableRecording();
 
 	if (iniDisableMobilePhone)
 		DESTROY_MOBILE_PHONE();
 
 	//////////////////////////////////////Player Vehicle///////////////////////////////////
 	if (iniDisableCarMidAirAndRollControl)
-		DisableCarMidAirAndRollControl();
+		nVehicle::DisableCarMidAirAndRollControl();
 
 	if (iniDisableForcedCarExplosionOnImpact)
-		DisableForcedCarExplosionOnImpact();
+		nVehicle::DisableForcedCarExplosionOnImpact();
 
 	if (iniDisableEngineSmoke)
-		DisableEngineSmoke();
+		nVehicle::DisableEngineSmoke();
 
 	if (iniDisableEngineFire)
-		DisableEngineFire();
+		nVehicle::DisableEngineFire();
 
 	if (iniLeaveEngineOnWhenExitingVehicles)
-		LeaveEngineOnWhenExitingVehicles();
+		nVehicle::LeaveEngineOnWhenExitingVehicles();
 
 	if (iniDisableWheelsAutoCenterOnCarExit)
-		DisableWheelsAutoCenterOnCarExit();
+		nVehicle::DisableWheelsAutoCenterOnCarExit();
 
 	if (iniDisableRagdollOnVehicleRoof)
-		DisableRagdollOnVehicleRoof();
+		nVehicle::DisableRagdollOnVehicleRoof();
 
 	if (iniDisableShallowWaterBikeJumpOut)
-		DisableShallowWaterBikeJumpOut();
+		nVehicle::DisableShallowWaterBikeJumpOut();
 
 	if (iniDisableStuntJumps)
 		SET_STUNT_JUMPS_CAN_TRIGGER(false);
