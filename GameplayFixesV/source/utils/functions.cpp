@@ -317,134 +317,6 @@ void AllowWeaponsInsideSafeHouse()
 }
 }	//END nGeneral
 
-///////////////////////////////////////////////HUD///////////////////////////////////////////////
-namespace nHUD
-{
-int minimapScaleformIndex = NULL;
-int RequestMinimapScaleform()
-{
-	if (!HAS_SCALEFORM_MOVIE_LOADED(minimapScaleformIndex))
-	{
-		minimapScaleformIndex = REQUEST_SCALEFORM_MOVIE("MINIMAP");
-		CALL_SCALEFORM_MOVIE_METHOD(minimapScaleformIndex, "INITIALISE");
-		return NULL;
-	}
-	return minimapScaleformIndex;
-}
-
-/*
-static bool RequestScaleform(const char* name, int* handle)
-{
-	if (HAS_SCALEFORM_MOVIE_LOADED(*handle))
-		return true;
-
-	*handle = REQUEST_SCALEFORM_MOVIE(name);
-	return false;
-}
-*/
-
-bool IsPedMainCharacter(Ped ped)
-{
-	switch (GET_ENTITY_MODEL(ped))
-	{
-	case MichaelPed:
-	case FranklinPed:
-	case TrevorPed:
-		return true;	break;
-	}
-	return false;
-}
-
-bool HasPlayerVehicleAbility()
-{
-	Vehicle veh = GetVehiclePedIsIn(playerPed);
-	if (veh != NULL && (GET_VEHICLE_HAS_KERS(veh) || GET_HAS_ROCKET_BOOST(veh) || GET_CAR_HAS_JUMP(veh)))
-		return true;
-
-	return false;
-}
-
-void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool showDamage = true)
-{
-	SET_HEALTH_HUD_DISPLAY_VALUES(healthPercentage + 100, armourPercentage, showDamage);
-	SET_MAX_HEALTH_HUD_DISPLAY(200);
-	SET_MAX_ARMOUR_HUD_DISPLAY(100);
-	return;
-}
-
-void HideMinimapBars()
-{
-	BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SETUP_HEALTH_ARMOUR");
-	SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(3);
-	END_SCALEFORM_MOVIE_METHOD();
-	return;
-}
-
-void HideAbilityBarForNonMainCharacters()
-{
-	if (IsPedMainCharacter(playerPed) || HasPlayerVehicleAbility())
-	{
-		BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "MULTIPLAYER_IS_ACTIVE");
-		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
-		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
-		END_SCALEFORM_MOVIE_METHOD();
-	}
-	else
-	{
-		BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER");
-		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
-		END_SCALEFORM_MOVIE_METHOD();
-	}
-	return;
-}
-
-void AlwaysHideAbilityBar()
-{
-	BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER");
-	SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
-	END_SCALEFORM_MOVIE_METHOD();
-	return;
-}
-
-Timer timerFlashHealth;
-constexpr int flashHealthInterval = 400;
-void ReplaceArmourBarWithStamina()
-{
-	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(player));		//GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
-	if (iniMergeHealthAndArmour)
-	{
-		int health = GET_ENTITY_HEALTH(playerPed) - 100 + GET_PED_ARMOUR(playerPed);			//We need to subtract 100 because the player fatal healt is 100 not 0
-		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100 + GET_PLAYER_MAX_ARMOUR(player);
-		int newHealthPercentage = ROUND(health * 100.0f / maxHealth);							//Always ensure a 100 offset to fix hud ratio
-		int realHealthPercentage = ROUND((GET_ENTITY_HEALTH(playerPed) - 100.0f) * 100.0f / (GET_ENTITY_MAX_HEALTH(playerPed) - 100.0f));
-
-		//Flash health bar every 400ms if health is below 25%
-		if (realHealthPercentage > 25 || timerFlashHealth.Get() > flashHealthInterval)
-		{
-			if (timerFlashHealth.Get() > (flashHealthInterval * 2))
-				timerFlashHealth.Set(0);
-
-			SetHealthHudDisplayValues(newHealthPercentage, staminaPercentage);
-		}
-		else if (realHealthPercentage <= 25 && GET_PED_ARMOUR(playerPed) > 10)
-		{
-			if (timerFlashHealth.Get() <= flashHealthInterval)
-				SetHealthHudDisplayValues(realHealthPercentage, staminaPercentage);
-			else
-				SetHealthHudDisplayValues(newHealthPercentage, staminaPercentage);
-		}
-	}
-	else
-	{
-		int health = GET_ENTITY_HEALTH(playerPed) - 100;
-		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100;
-		int healthPercentage = ROUND(health * 100.0f / maxHealth);
-		SetHealthHudDisplayValues(healthPercentage, staminaPercentage);
-	}
-	return;
-}
-}	//END nHUD
-
 ///////////////////////////////////////////////Player Controls///////////////////////////////////////////////
 namespace nControls
 {
@@ -524,8 +396,8 @@ void SetCamSmoothHeadingLimit()
 	return;
 }
 
-Timer TimerG;
-Timer TimerH;
+Timer timerVehCamA;
+Timer timerVehCamB;
 void CamFollowVehicleDuringHandbrake()
 {
 	const int timePressed = iniCamFollowVehDelay;
@@ -537,19 +409,19 @@ void CamFollowVehicleDuringHandbrake()
 	if (timePressed > 0)
 	{
 		if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
-			TimerG.Set(0);
-		else if (TimerG.Get() > timePressed && IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
+			timerVehCamA.Set(0);
+		else if (timerVehCamA.Get() > timePressed && IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
 		{
 			SetCamSmoothHeadingLimit();
 			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
 		}
-		else if (TimerG.Get() > timePressed && IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
+		else if (timerVehCamA.Get() > timePressed && IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
 		{
-			TimerH.Set(0);
+			timerVehCamB.Set(0);
 			SetCamSmoothHeadingLimit();
 			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
 		}
-		else if (TimerH.Get() < delay)
+		else if (timerVehCamB.Get() < delay)
 		{
 			SetCamSmoothHeadingLimit();
 			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
@@ -568,6 +440,17 @@ void DisableRecording()
 	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING, false);
 	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING_SECONDARY, false);
 	REPLAY_PREVENT_RECORDING_THIS_FRAME();
+	return;
+}
+
+void DisableMobilePhone()
+{
+	IS_MOBILE_PHONE_CALL_ONGOING() ? STOP_SCRIPTED_CONVERSATION(false) : void();
+	IS_PED_RINGTONE_PLAYING(playerPed) ? STOP_PED_RINGTONE(playerPed) : void();
+	DESTROY_MOBILE_PHONE();
+	EnablePedConfigFlag(playerPed, PCF_PhoneDisableTextingAnimations);
+	EnablePedConfigFlag(playerPed, PCF_PhoneDisableTalkingAnimations);
+	EnablePedConfigFlag(playerPed, PCF_PhoneDisableCameraAnimations);
 	return;
 }
 }	//END nControls
@@ -816,22 +699,164 @@ void DisableShallowWaterBikeJumpOut()
 }
 }	//END nVehicle
 
+///////////////////////////////////////////////HUD///////////////////////////////////////////////
+namespace nHUD
+{
+int minimapScaleformIndex = NULL;
+int RequestMinimapScaleform()
+{
+	if (!HAS_SCALEFORM_MOVIE_LOADED(minimapScaleformIndex))
+	{
+		minimapScaleformIndex = REQUEST_SCALEFORM_MOVIE("MINIMAP");
+		CALL_SCALEFORM_MOVIE_METHOD(minimapScaleformIndex, "INITIALISE");
+		return NULL;
+	}
+	return minimapScaleformIndex;
+}
+
+/*
+static bool RequestScaleform(const char* name, int* handle)
+{
+	if (HAS_SCALEFORM_MOVIE_LOADED(*handle))
+		return true;
+
+	*handle = REQUEST_SCALEFORM_MOVIE(name);
+	return false;
+}
+*/
+
+bool IsPedMainCharacter(Ped ped)
+{
+	switch (GET_ENTITY_MODEL(ped))
+	{
+	case MichaelPed:
+	case FranklinPed:
+	case TrevorPed:
+		return true;	break;
+	}
+	return false;
+}
+
+bool HasPlayerVehicleAbility()
+{
+	Vehicle veh = GetVehiclePedIsIn(playerPed);
+	if (veh != NULL && (GET_VEHICLE_HAS_KERS(veh) || GET_HAS_ROCKET_BOOST(veh) || GET_CAR_HAS_JUMP(veh)))
+		return true;
+
+	return false;
+}
+
+void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool showDamage = true)
+{
+	SET_HEALTH_HUD_DISPLAY_VALUES(healthPercentage + 100, armourPercentage, showDamage);
+	SET_MAX_HEALTH_HUD_DISPLAY(200);
+	SET_MAX_ARMOUR_HUD_DISPLAY(100);
+	return;
+}
+
+void HideMinimapBars()
+{
+	BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SETUP_HEALTH_ARMOUR");
+	SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(3);
+	END_SCALEFORM_MOVIE_METHOD();
+	return;
+}
+
+void HideAbilityBarForNonMainCharacters()
+{
+	if (IsPedMainCharacter(playerPed) || HasPlayerVehicleAbility())
+	{
+		BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "MULTIPLAYER_IS_ACTIVE");
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+		END_SCALEFORM_MOVIE_METHOD();
+	}
+	else
+	{
+		BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER");
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+		END_SCALEFORM_MOVIE_METHOD();
+	}
+	return;
+}
+
+void AlwaysHideAbilityBar()
+{
+	BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER");
+	SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+	END_SCALEFORM_MOVIE_METHOD();
+	return;
+}
+
+Timer timerFlashHealth;
+constexpr int flashHealthInterval = 400;
+void ReplaceArmourBarWithStamina()
+{
+	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(player));		//GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
+	if (iniMergeHealthAndArmour)
+	{
+		int health = GET_ENTITY_HEALTH(playerPed) - 100 + GET_PED_ARMOUR(playerPed);			//We need to subtract 100 because the player fatal healt is 100 not 0
+		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100 + GET_PLAYER_MAX_ARMOUR(player);
+		int newHealthPercentage = ROUND(health * 100.0f / maxHealth);							//Always ensure a 100 offset to fix hud ratio
+		int realHealthPercentage = ROUND((GET_ENTITY_HEALTH(playerPed) - 100.0f) * 100.0f / (GET_ENTITY_MAX_HEALTH(playerPed) - 100.0f));
+
+		//Flash health bar every 400ms if health is below 25%
+		if (realHealthPercentage > 25 || timerFlashHealth.Get() > flashHealthInterval)
+		{
+			if (timerFlashHealth.Get() > (flashHealthInterval * 2))
+				timerFlashHealth.Set(0);
+
+			SetHealthHudDisplayValues(newHealthPercentage, staminaPercentage);
+		}
+		else if (realHealthPercentage <= 25 && GET_PED_ARMOUR(playerPed) > 10)
+		{
+			if (timerFlashHealth.Get() <= flashHealthInterval)
+				SetHealthHudDisplayValues(realHealthPercentage, staminaPercentage);
+			else
+				SetHealthHudDisplayValues(newHealthPercentage, staminaPercentage);
+		}
+	}
+	else
+	{
+		int health = GET_ENTITY_HEALTH(playerPed) - 100;
+		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100;
+		int healthPercentage = ROUND(health * 100.0f / maxHealth);
+		SetHealthHudDisplayValues(healthPercentage, staminaPercentage);
+	}
+	return;
+}
+}	//END nHUD
+
+///////////////////////////////////////////////Audio///////////////////////////////////////////////
+namespace nAudio
+{
+
+}	//END nAudio
+
 void SetPlayerFlags()
 {
-	if (iniFriendlyFire)
-		nGeneral::FriendlyFire();
+	iniFriendlyFire ? nGeneral::FriendlyFire() : void();
+	iniPlayerCanJackFriendlyPeds ? EnablePedConfigFlag(playerPed, PCF_PlayerCanJackFriendlyPlayers) : void();
+	iniDisarmPlayerWhenShot ? nGeneral::DisarmPlayerWhenShot() : void();
+	iniSprintInsideInteriors ? EnablePedConfigFlag(playerPed, PCF_IgnoreInteriorCheckForSprinting) : void();
+	iniAllowWeaponsInsideSafeHouse ? nGeneral::AllowWeaponsInsideSafeHouse() : void();
 
-	if (iniPlayerCanJackFriendlyPeds)
-		EnablePedConfigFlag(playerPed, PCF_PlayerCanJackFriendlyPlayers);
+	//////////////////////////////////////Player Controls//////////////////////////////////
+	iniToggleFPSWalking ? nControls::ToggleFPSWalking() : void();
+	iniCamFollowVehicleDuringHandbrake ? nControls::CamFollowVehicleDuringHandbrake() : void();
+	iniDisableRecording ? nControls::DisableRecording() : void();
+	iniDisableMobilePhone ? nControls::DisableMobilePhone() : void();
 
-	if (iniDisarmPlayerWhenShot)
-		nGeneral::DisarmPlayerWhenShot();
-
-	if (iniSprintInsideInteriors)
-		EnablePedConfigFlag(playerPed, PCF_IgnoreInteriorCheckForSprinting);
-
-	if (iniAllowWeaponsInsideSafeHouse)
-		nGeneral::AllowWeaponsInsideSafeHouse();
+	//////////////////////////////////////Player Vehicle///////////////////////////////////
+	iniDisableCarMidAirAndRollControl ? nVehicle::DisableCarMidAirAndRollControl() : void();
+	iniDisableForcedCarExplosionOnImpact ? nVehicle::DisableForcedCarExplosionOnImpact() : void();
+	iniDisableEngineSmoke ? nVehicle::DisableEngineSmoke() : void();
+	iniDisableEngineFire ? nVehicle::DisableEngineFire() : void();
+	iniLeaveEngineOnWhenExitingVehicles ? nVehicle::LeaveEngineOnWhenExitingVehicles() : void();
+	iniDisableWheelsAutoCenterOnCarExit ? nVehicle::DisableWheelsAutoCenterOnCarExit() : void();
+	iniDisableRagdollOnVehicleRoof ? nVehicle::DisableRagdollOnVehicleRoof() : void();
+	iniDisableShallowWaterBikeJumpOut ? nVehicle::DisableShallowWaterBikeJumpOut() : void();
+	iniDisableStuntJumps ? SET_STUNT_JUMPS_CAN_TRIGGER(false) : void();
 
 	///////////////////////////////////////////HUD/////////////////////////////////////////
 	if (iniHideMinimapBars)
@@ -841,53 +866,13 @@ void SetPlayerFlags()
 		if (iniHideAbilityBarForNonMainCharacters && !iniAlwaysHideAbilityBar)
 			nHUD::HideAbilityBarForNonMainCharacters();
 
-		if (iniAlwaysHideAbilityBar)
-			nHUD::AlwaysHideAbilityBar();
-
-		if (iniReplaceArmourBarWithStamina)
-			nHUD::ReplaceArmourBarWithStamina();
+		iniAlwaysHideAbilityBar ? nHUD::AlwaysHideAbilityBar() : void();
+		iniReplaceArmourBarWithStamina ? nHUD::ReplaceArmourBarWithStamina() : void();
 	}
 
-	//////////////////////////////////////Player Controls//////////////////////////////////
-	if (iniToggleFPSWalking)
-		nControls::ToggleFPSWalking();
-
-	if (iniCamFollowVehicleDuringHandbrake)
-		nControls::CamFollowVehicleDuringHandbrake();
-
-	if (iniDisableRecording)
-		nControls::DisableRecording();
-
-	if (iniDisableMobilePhone)
-		DESTROY_MOBILE_PHONE();
-
-	//////////////////////////////////////Player Vehicle///////////////////////////////////
-	if (iniDisableCarMidAirAndRollControl)
-		nVehicle::DisableCarMidAirAndRollControl();
-
-	if (iniDisableForcedCarExplosionOnImpact)
-		nVehicle::DisableForcedCarExplosionOnImpact();
-
-	if (iniDisableEngineSmoke)
-		nVehicle::DisableEngineSmoke();
-
-	if (iniDisableEngineFire)
-		nVehicle::DisableEngineFire();
-
-	if (iniLeaveEngineOnWhenExitingVehicles)
-		nVehicle::LeaveEngineOnWhenExitingVehicles();
-
-	if (iniDisableWheelsAutoCenterOnCarExit)
-		nVehicle::DisableWheelsAutoCenterOnCarExit();
-
-	if (iniDisableRagdollOnVehicleRoof)
-		nVehicle::DisableRagdollOnVehicleRoof();
-
-	if (iniDisableShallowWaterBikeJumpOut)
-		nVehicle::DisableShallowWaterBikeJumpOut();
-
-	if (iniDisableStuntJumps)
-		SET_STUNT_JUMPS_CAN_TRIGGER(false);
-
+	//////////////////////////////////////////Audio////////////////////////////////////////
+	iniDisableWantedMusic ? SET_AUDIO_FLAG("WantedMusicDisabled", true) : void();
+	iniDisablePoliceScanner ? SET_AUDIO_FLAG("PoliceScannerDisabled", true) : void();
+	iniDisableFlyingMusic ? SET_AUDIO_FLAG("DisableFlightMusic", true) : void();
 	return;
 }

@@ -2,9 +2,10 @@
 #include "ini.h"
 #include "../globals.h"
 
-static const char* playerGroup = "Player";
-static const char* HUDGroup = "HUD";
-static const char* pedsGroup = "Peds";
+static constexpr char* playerGroup = "Player";
+static constexpr char* HUDGroup = "HUD";
+static constexpr char* AudioGroup = "Audio";
+static constexpr char* pedsGroup = "Peds";
 
 //Player Settings
 bool iniFriendlyFire = true;
@@ -12,12 +13,6 @@ bool iniPlayerCanJackFriendlyPeds = true;
 bool iniDisarmPlayerWhenShot = true;
 bool iniSprintInsideInteriors = true;
 bool iniAllowWeaponsInsideSafeHouse = false;
-//HUD
-bool iniHideMinimapBars = false;
-bool iniHideAbilityBarForNonMainCharacters = true;
-bool iniAlwaysHideAbilityBar = false;
-bool iniReplaceArmourBarWithStamina = false;
-bool iniMergeHealthAndArmour = true;
 //Player Controls
 bool iniToggleFPSWalking = true;
 bool iniCamFollowVehicleDuringHandbrake = false;
@@ -35,6 +30,16 @@ bool iniDisableRagdollOnVehicleRoof = true;
 float iniMaxVehicleSpeed = 90.0f;
 bool iniDisableShallowWaterBikeJumpOut = true;
 bool iniDisableStuntJumps = false;
+//HUD
+bool iniHideMinimapBars = false;
+bool iniHideAbilityBarForNonMainCharacters = true;
+bool iniAlwaysHideAbilityBar = false;
+bool iniReplaceArmourBarWithStamina = false;
+bool iniMergeHealthAndArmour = true;
+//Audio
+bool iniDisableWantedMusic = false;
+bool iniDisablePoliceScanner = false;
+bool iniDisableFlyingMusic = false;
 
 //Peds Settings
 bool iniDisableWrithe = true;
@@ -87,6 +92,11 @@ void ReadINI()
 	iniAlwaysHideAbilityBar = ini.GetBoolValue(HUDGroup, "AlwaysHideAbilityBar", iniAlwaysHideAbilityBar);
 	iniReplaceArmourBarWithStamina = ini.GetBoolValue(HUDGroup, "ReplaceArmourBarWithStamina", iniReplaceArmourBarWithStamina);
 	iniMergeHealthAndArmour = ini.GetBoolValue(HUDGroup, "MergeHealthAndArmour", iniMergeHealthAndArmour);
+
+	/////////////////////////////////////Audio/////////////////////////////////////////////
+	iniDisableWantedMusic = ini.GetBoolValue(AudioGroup, "DisableWantedMusic", iniDisableWantedMusic);
+	iniDisablePoliceScanner = ini.GetBoolValue(AudioGroup, "DisablePoliceScanner", iniDisablePoliceScanner);
+	iniDisableFlyingMusic = ini.GetBoolValue(AudioGroup, "DisableFlyingMusic", iniDisableFlyingMusic);
 
 	//////////////////////////////////////Peds/////////////////////////////////////////////
 	iniDisableWrithe = ini.GetBoolValue(pedsGroup, "DisableWrithe", iniDisableWrithe);

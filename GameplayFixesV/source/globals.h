@@ -8,12 +8,6 @@ extern bool iniPlayerCanJackFriendlyPeds;
 extern bool iniDisarmPlayerWhenShot;
 extern bool iniSprintInsideInteriors;
 extern bool iniAllowWeaponsInsideSafeHouse;
-//HUD
-extern bool iniHideMinimapBars;
-extern bool iniHideAbilityBarForNonMainCharacters;
-extern bool iniAlwaysHideAbilityBar;
-extern bool iniReplaceArmourBarWithStamina;
-extern bool iniMergeHealthAndArmour;
 //Player Controls
 extern bool iniToggleFPSWalking;
 extern bool iniCamFollowVehicleDuringHandbrake;
@@ -31,6 +25,16 @@ extern bool iniDisableRagdollOnVehicleRoof;
 extern float iniMaxVehicleSpeed;
 extern bool iniDisableShallowWaterBikeJumpOut;
 extern bool iniDisableStuntJumps;
+//HUD
+extern bool iniHideMinimapBars;
+extern bool iniHideAbilityBarForNonMainCharacters;
+extern bool iniAlwaysHideAbilityBar;
+extern bool iniReplaceArmourBarWithStamina;
+extern bool iniMergeHealthAndArmour;
+//Audio
+extern bool iniDisableWantedMusic;
+extern bool iniDisablePoliceScanner;
+extern bool iniDisableFlyingMusic;
 
 //Peds Settings
 extern bool iniDisableWrithe;
@@ -95,6 +99,9 @@ enum ePedFlag {
 	PCF_HasHurtStarted = 187,
 	PCF_DisableHurt = 188,						//Will prevent the peds go into hurt combat mode
 	PCF_LeaveEngineOnWhenExitingVehicles = 241,	//The player will leave the engine running when leaving vehicles
+	PCF_PhoneDisableTextingAnimations = 242,
+	PCF_PhoneDisableTalkingAnimations = 243,
+	PCF_PhoneDisableCameraAnimations = 244,
 	PCF_PlayerCanJackFriendlyPlayers = 252,		//If a friendly player is driving the vehicle, if the player taps to enter, they will enter as a passenger, if they hold, they'll jack the driver
 	PCF_AllowPlayerLockOnIfFriendly = 266,		//If this ped is friendly with the player, this will allow the ped to lockon
 	PCF_DisableGoToWritheWhenInjured = 281,		//If set, CPed::DAMAGED_GOTOWRITHE will no longer get set.  In particular, tazer hits wil no longer kill this ped in one hit.
