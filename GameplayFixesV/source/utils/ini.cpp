@@ -40,6 +40,8 @@ bool iniMergeHealthAndArmour = true;
 bool iniDisableWantedMusic = false;
 bool iniDisablePoliceScanner = false;
 bool iniDisableFlyingMusic = false;
+bool iniDisableRadioInterruptions = false;
+bool iniDefaultVehicleRadioOff = false;
 
 //Peds Settings
 bool iniDisableWrithe = true;
@@ -97,6 +99,8 @@ void ReadINI()
 	iniDisableWantedMusic = ini.GetBoolValue(AudioGroup, "DisableWantedMusic", iniDisableWantedMusic);
 	iniDisablePoliceScanner = ini.GetBoolValue(AudioGroup, "DisablePoliceScanner", iniDisablePoliceScanner);
 	iniDisableFlyingMusic = ini.GetBoolValue(AudioGroup, "DisableFlyingMusic", iniDisableFlyingMusic);
+	iniDisableRadioInterruptions = ini.GetBoolValue(AudioGroup, "DisableRadioInterruptions", iniDisableRadioInterruptions);
+	iniDefaultVehicleRadioOff = ini.GetBoolValue(AudioGroup, "DefaultVehicleRadioOff", iniDefaultVehicleRadioOff);
 
 	//////////////////////////////////////Peds/////////////////////////////////////////////
 	iniDisableWrithe = ini.GetBoolValue(pedsGroup, "DisableWrithe", iniDisableWrithe);

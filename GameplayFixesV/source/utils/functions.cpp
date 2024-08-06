@@ -445,12 +445,33 @@ void DisableRecording()
 
 void DisableMobilePhone()
 {
+	if (DOES_SCRIPT_EXIST("cellphone_controller"))
+		TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME("cellphone_controller");
+
 	IS_MOBILE_PHONE_CALL_ONGOING() ? STOP_SCRIPTED_CONVERSATION(false) : void();
 	IS_PED_RINGTONE_PLAYING(playerPed) ? STOP_PED_RINGTONE(playerPed) : void();
 	DESTROY_MOBILE_PHONE();
+
 	EnablePedConfigFlag(playerPed, PCF_PhoneDisableTextingAnimations);
 	EnablePedConfigFlag(playerPed, PCF_PhoneDisableTalkingAnimations);
 	EnablePedConfigFlag(playerPed, PCF_PhoneDisableCameraAnimations);
+
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_PHONE, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_UP, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_DOWN, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_LEFT, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_RIGHT, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_SELECT, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CANCEL, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_OPTION, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_EXTRA_OPTION, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_SCROLL_FORWARD, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_SCROLL_BACKWARD, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_FOCUS_LOCK, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_GRID, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_SELFIE, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_DOF, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_EXPRESSION, false);
 	return;
 }
 }	//END nControls
@@ -830,7 +851,34 @@ void ReplaceArmourBarWithStamina()
 ///////////////////////////////////////////////Audio///////////////////////////////////////////////
 namespace nAudio
 {
+Timer timerRadioMusic;
+void SetRadiosMusicOnly()
+{
+	if (timerRadioMusic.Get() > 10000)
+	{
+		LOOP(i, RadioStationsSize)
+		{
+			SET_RADIO_STATION_MUSIC_ONLY(RadioStations[i], true);
+		}
 
+		SET_RADIO_STATION_MUSIC_ONLY(GET_PLAYER_RADIO_STATION_NAME(), true);
+		timerRadioMusic.Set(0);
+	}
+	return;
+}
+
+Vehicle lastVehRadioOff = NULL;
+void DefaultVehicleRadioOff()
+{
+	Vehicle tmpVeh = GET_VEHICLE_PED_IS_USING(playerPed);
+	if (DOES_ENTITY_EXIST(tmpVeh) && tmpVeh != lastVehRadioOff)
+	{
+		lastVehRadioOff = tmpVeh;
+		if (!GET_IS_VEHICLE_ENGINE_RUNNING(tmpVeh))
+			SET_VEH_RADIO_STATION(lastVehRadioOff, "OFF");
+	}
+	return;
+}
 }	//END nAudio
 
 void SetPlayerFlags()
@@ -874,5 +922,7 @@ void SetPlayerFlags()
 	iniDisableWantedMusic ? SET_AUDIO_FLAG("WantedMusicDisabled", true) : void();
 	iniDisablePoliceScanner ? SET_AUDIO_FLAG("PoliceScannerDisabled", true) : void();
 	iniDisableFlyingMusic ? SET_AUDIO_FLAG("DisableFlightMusic", true) : void();
+	iniDisableRadioInterruptions ? nAudio::SetRadiosMusicOnly() : void();
+	iniDefaultVehicleRadioOff ? nAudio::DefaultVehicleRadioOff() : void();
 	return;
 }
