@@ -4,6 +4,7 @@
 //Custom
 #include "functions.h"
 #include "..\globals.h"
+#include <random>
 
 #pragma region Ped Flags
 void EnablePedConfigFlag(Ped ped, int flag)
@@ -36,7 +37,7 @@ void DisablePedResetFlag(Ped ped, int flag)
 #pragma endregion
 
 #pragma region Print
-void Print(char* string, int ms = 1)
+void Print(char* string, int ms)
 {
 	BEGIN_TEXT_COMMAND_PRINT("STRING");
 	ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(string);
@@ -44,7 +45,7 @@ void Print(char* string, int ms = 1)
 	return;
 }
 
-void PrintInt(int value, int ms = 1)
+void PrintInt(int value, int ms)
 {
 	BEGIN_TEXT_COMMAND_PRINT("NUMBER");
 	ADD_TEXT_COMPONENT_INTEGER(value);
@@ -52,11 +53,19 @@ void PrintInt(int value, int ms = 1)
 	return;
 }
 
-void PrintFloat(float value, int ms = 1)
+void PrintFloat(float value, int ms)
 {
 	BEGIN_TEXT_COMMAND_PRINT("NUMBER");
 	ADD_TEXT_COMPONENT_FLOAT(value, 4);
 	END_TEXT_COMMAND_PRINT(ms, 1);
+	return;
+}
+
+void PrintHelp(char* string, bool playSound, int overrideDuration)
+{
+	BEGIN_TEXT_COMMAND_DISPLAY_HELP("STRING");
+	ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(string);
+	END_TEXT_COMMAND_DISPLAY_HELP(NULL, false, playSound, overrideDuration);
 	return;
 }
 #pragma endregion
@@ -69,55 +78,64 @@ bool ArrayContains(int value, const int a[], int n)
 	return i == n ? false : true;
 }
 
-bool GetWeightedBool(int chance, int startRange, int endRange)
+bool GetWeightedBool(int chance)	//Chance out of 100
 {
-	endRange++;
-	SET_RANDOM_SEED(GET_GAME_TIMER());
-	bool rand = (chance >= GET_RANDOM_INT_IN_RANGE(startRange, endRange));
-	return rand;
+	if (chance <= 0) return false;
+	if (chance >= 100) return true;
+	const double n = chance * 0.01;
+	std::default_random_engine gen(GET_GAME_TIMER());
+	std::bernoulli_distribution dist(n);
+	return dist(gen);
 }
 
 Vehicle GetVehiclePedIsIn(Ped ped, bool includeEntering)
 {
 	if (IS_PED_IN_ANY_VEHICLE(ped, includeEntering))
-	{
 		return GET_VEHICLE_PED_IS_USING(playerPed);
-	}
 
 	return NULL;
+}
+
+/*
+bool HasEntityBeenDamagedByAnyPedThisFrame(Ped ped)
+{
+	const bool res = HAS_ENTITY_BEEN_DAMAGED_BY_ANY_PED(ped);
+	if (res) { CLEAR_ENTITY_LAST_DAMAGE_ENTITY(ped); }
+	return res;
+}
+*/
+
+bool HasEntityBeenDamagedByWeaponThisFrame(Ped ped, Hash weaponHash, int weaponType)
+{
+	const bool res = HAS_ENTITY_BEEN_DAMAGED_BY_WEAPON(ped, weaponHash, weaponType);
+	if (res) { CLEAR_ENTITY_LAST_WEAPON_DAMAGE(ped); /*CLEAR_ENTITY_LAST_DAMAGE_ENTITY(ped);*/ }
+	return res;
 }
 
 //Inspired by jedijosh920 implementation of "Disarm"
 bool CanDisarmPed(Ped ped, bool includeLeftHand)
 {
 	int bone = NULL;
-	if (!GET_PED_LAST_DAMAGE_BONE(ped, &bone))
+	if (!GET_PED_LAST_DAMAGE_BONE(ped, &bone) || bone == NULL)
+		return false;
+
+	if (bone == BONETAG_PH_R_HAND || bone == BONETAG_R_HAND)
 	{
 		CLEAR_PED_LAST_DAMAGE_BONE(ped);
-		return false;
+		return true;
 	}
-
-	CLEAR_PED_LAST_DAMAGE_BONE(ped);
-
-	if (bone == NULL)
-		return false;
-
-	if (includeLeftHand)
+	else if (includeLeftHand && (bone == BONETAG_PH_L_HAND || bone == BONETAG_L_HAND))
 	{
-		if (ArrayContains(bone, AllHandsBonetags, AllHandsBonetagsSize))
-			return true;
+		CLEAR_PED_LAST_DAMAGE_BONE(ped);
+		return true;
 	}
-	else
-	{
-		if (ArrayContains(bone, RightHandBonetags, RightHandBonetagsSize))
-			return true;
-	}
+
 	return false;
 }
 #pragma endregion
 
 /////////////////////////////////////////////Player//////////////////////////////////////////////
-namespace nGeneral
+namespace nGeneral	
 {
 void FriendlyFire()
 {
@@ -155,14 +173,14 @@ void DisarmPlayerWhenShot()
 	if (weapon == WEAPON_UNARMED)
 		return;
 
-	if (HAS_ENTITY_BEEN_DAMAGED_BY_WEAPON(playerPed, WEAPON_STUNGUN, 0) || CanDisarmPed(playerPed, true))
+	if ((CanDisarmPed(playerPed, true) && GetWeightedBool(70)) ||
+		HasEntityBeenDamagedByWeaponThisFrame(playerPed, WEAPON_STUNGUN, GENERALWEAPON_TYPE_INVALID))
 	{
 		if (!IS_AMBIENT_SPEECH_PLAYING(playerPed))
 			PLAY_PED_AMBIENT_SPEECH_NATIVE(playerPed, "GENERIC_CURSE_MED", "SPEECH_PARAMS_FORCE", false);
 
 		SET_PED_DROPS_WEAPON(playerPed);
 	}
-	CLEAR_ENTITY_LAST_WEAPON_DAMAGE(playerPed);
 	return;
 }
 
@@ -857,9 +875,7 @@ void SetRadiosMusicOnly()
 	if (timerRadioMusic.Get() > 10000)
 	{
 		LOOP(i, RadioStationsSize)
-		{
-			SET_RADIO_STATION_MUSIC_ONLY(RadioStations[i], true);
-		}
+		{ SET_RADIO_STATION_MUSIC_ONLY(RadioStations[i], true); }
 
 		SET_RADIO_STATION_MUSIC_ONLY(GET_PLAYER_RADIO_STATION_NAME(), true);
 		timerRadioMusic.Set(0);

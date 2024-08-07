@@ -6,17 +6,19 @@
 #include "../globals.h"
 #include "functions.h"
 
-static constexpr int arrSizePedFuncs = 10;
-static pedFunc arrPedFuncs[arrSizePedFuncs];
-static int countPedFuncs = NULL;
+namespace
+{
+constexpr int arrSizePedFuncs = 10;
+pedFunc arrPedFuncs[arrSizePedFuncs];
+int countPedFuncs = NULL;
 
-static inline void DisableWrithe(Ped ped)
+inline void DisableWrithe(const Ped ped)
 {
 	EnablePedConfigFlag(ped, PCF_DisableGoToWritheWhenInjured);
 	return;
 }
 
-static void DisableHurt(Ped ped)
+void DisableHurt(const Ped ped)
 {
 	EnablePedConfigFlag(ped, PCF_DisableHurt);
 	DisablePedConfigFlag(ped, PCF_ForceDieIfInjured);
@@ -29,14 +31,14 @@ static void DisableHurt(Ped ped)
 	return;
 }
 
-static void DisableSittingPedsInstantDeath(Ped ped)
+void DisableSittingPedsInstantDeath(const Ped ped)
 {
 	if (PED::GET_PED_CONFIG_FLAG(ped, PCF_IsSitting, false))
 		SET_PED_SUFFERS_CRITICAL_HITS(ped, false);	//Same thing as setting CPED_CONFIG_FLAG_NoCriticalHits
 	return;
 }
 
-static void DisarmPedWhenShot(Ped ped)
+void DisarmPedWhenShot(const Ped ped)
 {
 	if (IS_ENTITY_DEAD(ped, false))
 		return;
@@ -44,12 +46,21 @@ static void DisarmPedWhenShot(Ped ped)
 	//Check if ped has a weapon and can be disarmed
 	Hash weapon = NULL;
 	GET_CURRENT_PED_WEAPON(ped, &weapon, false);
-	if (weapon == WEAPON_UNARMED)
+	if (weapon == WEAPON_UNARMED || !HAS_ENTITY_BEEN_DAMAGED_BY_WEAPON(ped, NULL, GENERALWEAPON_TYPE_ANYWEAPON))
 		return;
 
 	//We don't want peds to always drop their weapons, because they can't pick them back up. So do this probability trick (GetWeightedBool)
-	if (HAS_ENTITY_BEEN_DAMAGED_BY_WEAPON(ped, WEAPON_STUNGUN, 0)
-		|| (GetWeightedBool(iniDisarmChance) && CanDisarmPed(ped, iniDisarmIncludeLeftHand)))
+	bool shoudDisarm = false;
+	if (HasEntityBeenDamagedByWeaponThisFrame(ped, WEAPON_STUNGUN, GENERALWEAPON_TYPE_INVALID))
+		shoudDisarm = true;
+	else if (CanDisarmPed(ped, iniDisarmIncludeLeftHand))
+	{
+		CLEAR_ENTITY_LAST_WEAPON_DAMAGE(ped);
+		if (GetWeightedBool(iniDisarmChance))
+			shoudDisarm = true;
+	}
+
+	if (shoudDisarm)
 	{
 		if (!IS_AMBIENT_SPEECH_PLAYING(ped))
 			PLAY_PED_AMBIENT_SPEECH_NATIVE(ped, "GENERIC_CURSE_MED", "SPEECH_PARAMS_FORCE", false);
@@ -59,37 +70,36 @@ static void DisarmPedWhenShot(Ped ped)
 		SET_PED_CAN_SWITCH_WEAPON(ped, true);
 		SET_PED_DROPS_WEAPON(ped);
 	}
-	CLEAR_ENTITY_LAST_WEAPON_DAMAGE(ped);
 	return;
 }
 
-static inline void DisablePedOnlyDamagedByPlayer(Ped ped)
+inline void DisablePedOnlyDamagedByPlayer(const Ped ped)
 {
 	SET_ENTITY_ONLY_DAMAGED_BY_PLAYER(ped, false);
 	return;
 }
 
-static inline void DisableDeadPedsJumpOutOfVehicle(Ped ped)
+inline void DisableDeadPedsJumpOutOfVehicle(const Ped ped)
 {
 	EnablePedConfigFlag(ped, PCF_ForceDieInCar);
 	return;
 }
 
-static void AddPedFuncToArr(pedFunc func)
+void AddPedFuncToArr(pedFunc func)
 {
-	countPedFuncs++;
-
 	//Check that the number of functions doesn't exceed the size of the array
 	if (countPedFuncs < arrSizePedFuncs)
 		arrPedFuncs[countPedFuncs] = func;
 
+	countPedFuncs++;
 	return;
+}
 }
 
 //Using an array of functions saves us from checking ini bools for every ped
 void SetupPedFunctions()
 {
-	countPedFuncs = -1;	//Start with -1 for array
+	countPedFuncs = 0;
 
 	if (iniDisableWrithe)
 		AddPedFuncToArr(DisableWrithe);
@@ -115,18 +125,17 @@ void SetupPedFunctions()
 void SetPedsPoolFlags()
 {
 	//Get all peds
-	Ped peds[512];
-	int count = worldGetAllPeds(peds, 512);
+	constexpr int ARR_SIZE = 1024;
+	Ped peds[ARR_SIZE];
+	const int count = worldGetAllPeds(peds, ARR_SIZE);
 
-	for (int i = 0; i < count; i++)
+	LOOP(i, count)
 	{
-		if (peds[i] == playerPed)
+		if (peds[i] == playerPed || !IS_ENTITY_A_PED(peds[i]) || !IS_PED_HUMAN(peds[i]) || IS_ENTITY_DEAD(peds[i], false))
 			continue;
 
-		for (int i2 = 0; i2 < countPedFuncs; i2++)
-		{
-			arrPedFuncs[i2](peds[i]);
-		}
+		LOOP(j, countPedFuncs)
+		{ arrPedFuncs[j](peds[i]); }
 	}
 	return;
 }
