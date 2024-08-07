@@ -466,8 +466,8 @@ void DisableMobilePhone()
 	if (DOES_SCRIPT_EXIST("cellphone_controller"))
 		TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME("cellphone_controller");
 
-	IS_MOBILE_PHONE_CALL_ONGOING() ? STOP_SCRIPTED_CONVERSATION(false) : void();
-	IS_PED_RINGTONE_PLAYING(playerPed) ? STOP_PED_RINGTONE(playerPed) : void();
+	if (IS_MOBILE_PHONE_CALL_ONGOING()) { STOP_SCRIPTED_CONVERSATION(false); }
+	if (IS_PED_RINGTONE_PLAYING(playerPed)) { STOP_PED_RINGTONE(playerPed); }
 	DESTROY_MOBILE_PHONE();
 
 	EnablePedConfigFlag(playerPed, PCF_PhoneDisableTextingAnimations);
@@ -899,28 +899,28 @@ void DefaultVehicleRadioOff()
 
 void SetPlayerFlags()
 {
-	iniFriendlyFire ? nGeneral::FriendlyFire() : void();
-	iniPlayerCanJackFriendlyPeds ? EnablePedConfigFlag(playerPed, PCF_PlayerCanJackFriendlyPlayers) : void();
-	iniDisarmPlayerWhenShot ? nGeneral::DisarmPlayerWhenShot() : void();
-	iniSprintInsideInteriors ? EnablePedConfigFlag(playerPed, PCF_IgnoreInteriorCheckForSprinting) : void();
-	iniAllowWeaponsInsideSafeHouse ? nGeneral::AllowWeaponsInsideSafeHouse() : void();
+	if (iniFriendlyFire) { nGeneral::FriendlyFire(); }
+	if (iniPlayerCanJackFriendlyPeds) { EnablePedConfigFlag(playerPed, PCF_PlayerCanJackFriendlyPlayers); }
+	if (iniDisarmPlayerWhenShot) { nGeneral::DisarmPlayerWhenShot(); }
+	if (iniSprintInsideInteriors) { EnablePedConfigFlag(playerPed, PCF_IgnoreInteriorCheckForSprinting); }
+	if (iniAllowWeaponsInsideSafeHouse) { nGeneral::AllowWeaponsInsideSafeHouse(); }
 
 	//////////////////////////////////////Player Controls//////////////////////////////////
-	iniToggleFPSWalking ? nControls::ToggleFPSWalking() : void();
-	iniCamFollowVehicleDuringHandbrake ? nControls::CamFollowVehicleDuringHandbrake() : void();
-	iniDisableRecording ? nControls::DisableRecording() : void();
-	iniDisableMobilePhone ? nControls::DisableMobilePhone() : void();
+	if (iniToggleFPSWalking) { nControls::ToggleFPSWalking(); }
+	if (iniCamFollowVehicleDuringHandbrake) { nControls::CamFollowVehicleDuringHandbrake(); }
+	if (iniDisableRecording) { nControls::DisableRecording(); }
+	if (iniDisableMobilePhone) { nControls::DisableMobilePhone(); }
 
 	//////////////////////////////////////Player Vehicle///////////////////////////////////
-	iniDisableCarMidAirAndRollControl ? nVehicle::DisableCarMidAirAndRollControl() : void();
-	iniDisableForcedCarExplosionOnImpact ? nVehicle::DisableForcedCarExplosionOnImpact() : void();
-	iniDisableEngineSmoke ? nVehicle::DisableEngineSmoke() : void();
-	iniDisableEngineFire ? nVehicle::DisableEngineFire() : void();
-	iniLeaveEngineOnWhenExitingVehicles ? nVehicle::LeaveEngineOnWhenExitingVehicles() : void();
-	iniDisableWheelsAutoCenterOnCarExit ? nVehicle::DisableWheelsAutoCenterOnCarExit() : void();
-	iniDisableRagdollOnVehicleRoof ? nVehicle::DisableRagdollOnVehicleRoof() : void();
-	iniDisableShallowWaterBikeJumpOut ? nVehicle::DisableShallowWaterBikeJumpOut() : void();
-	iniDisableStuntJumps ? SET_STUNT_JUMPS_CAN_TRIGGER(false) : void();
+	if (iniDisableCarMidAirAndRollControl) { nVehicle::DisableCarMidAirAndRollControl(); }
+	if (iniDisableForcedCarExplosionOnImpact) { nVehicle::DisableForcedCarExplosionOnImpact(); }
+	if (iniDisableEngineSmoke) { nVehicle::DisableEngineSmoke(); }
+	if (iniDisableEngineFire) { nVehicle::DisableEngineFire(); }
+	if (iniLeaveEngineOnWhenExitingVehicles) { nVehicle::LeaveEngineOnWhenExitingVehicles(); }
+	if (iniDisableWheelsAutoCenterOnCarExit) { nVehicle::DisableWheelsAutoCenterOnCarExit(); }
+	if (iniDisableRagdollOnVehicleRoof) { nVehicle::DisableRagdollOnVehicleRoof(); }
+	if (iniDisableShallowWaterBikeJumpOut) { nVehicle::DisableShallowWaterBikeJumpOut(); }
+	if (iniDisableStuntJumps) { SET_STUNT_JUMPS_CAN_TRIGGER(false); }
 
 	///////////////////////////////////////////HUD/////////////////////////////////////////
 	if (iniHideMinimapBars)
@@ -930,15 +930,15 @@ void SetPlayerFlags()
 		if (iniHideAbilityBarForNonMainCharacters && !iniAlwaysHideAbilityBar)
 			nHUD::HideAbilityBarForNonMainCharacters();
 
-		iniAlwaysHideAbilityBar ? nHUD::AlwaysHideAbilityBar() : void();
-		iniReplaceArmourBarWithStamina ? nHUD::ReplaceArmourBarWithStamina() : void();
+		if (iniAlwaysHideAbilityBar) { nHUD::AlwaysHideAbilityBar(); }
+		if (iniReplaceArmourBarWithStamina) { nHUD::ReplaceArmourBarWithStamina(); }
 	}
 
 	//////////////////////////////////////////Audio////////////////////////////////////////
-	iniDisableWantedMusic ? SET_AUDIO_FLAG("WantedMusicDisabled", true) : void();
-	iniDisablePoliceScanner ? SET_AUDIO_FLAG("PoliceScannerDisabled", true) : void();
-	iniDisableFlyingMusic ? SET_AUDIO_FLAG("DisableFlightMusic", true) : void();
-	iniDisableRadioInterruptions ? nAudio::SetRadiosMusicOnly() : void();
-	iniDefaultVehicleRadioOff ? nAudio::DefaultVehicleRadioOff() : void();
+	if (iniDisableWantedMusic) { SET_AUDIO_FLAG("WantedMusicDisabled", true); }
+	if (iniDisablePoliceScanner) { SET_AUDIO_FLAG("PoliceScannerDisabled", true); }
+	if (iniDisableFlyingMusic) { SET_AUDIO_FLAG("DisableFlightMusic", true); }
+	if (iniDisableRadioInterruptions) { nAudio::SetRadiosMusicOnly(); }
+	if (iniDefaultVehicleRadioOff) { nAudio::DefaultVehicleRadioOff(); }
 	return;
 }
