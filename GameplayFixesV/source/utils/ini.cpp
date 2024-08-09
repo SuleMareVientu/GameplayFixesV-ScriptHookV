@@ -34,6 +34,7 @@ bool iniDisableDragOutCar = false;
 bool iniDisableShallowWaterBikeJumpOut = true;
 bool iniDisableStuntJumps = false;
 //HUD
+bool iniHideMinimapSatNav = false;
 bool iniHideMinimapBars = false;
 bool iniHideAbilityBarForNonMainCharacters = true;
 bool iniAlwaysHideAbilityBar = false;
@@ -95,6 +96,7 @@ void ReadINI()
 	iniDisableStuntJumps = ini.GetBoolValue(playerGroup, "DisableStuntJumps", iniDisableStuntJumps);
 
 	//////////////////////////////////////HUD//////////////////////////////////////////////
+	iniHideMinimapSatNav = ini.GetBoolValue(HUDGroup, "HideMinimapSatNav", iniHideMinimapSatNav);
 	iniHideMinimapBars = ini.GetBoolValue(HUDGroup, "HideMinimapBars", iniHideMinimapBars);
 	iniHideAbilityBarForNonMainCharacters = ini.GetBoolValue(HUDGroup, "HideAbilityBarForNonMainCharacters", iniHideAbilityBarForNonMainCharacters);
 	iniAlwaysHideAbilityBar = ini.GetBoolValue(HUDGroup, "AlwaysHideAbilityBar", iniAlwaysHideAbilityBar);

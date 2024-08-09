@@ -763,6 +763,12 @@ static bool RequestScaleform(const char* name, int* handle)
 }
 */
 
+void HideSatNav()
+{
+	CALL_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "HIDE_SATNAV");
+	return;
+}
+
 bool IsPedMainCharacter(Ped ped)
 {
 	switch (GET_ENTITY_MODEL(ped))
@@ -794,9 +800,11 @@ void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool 
 
 void HideMinimapBars()
 {
-	BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SETUP_HEALTH_ARMOUR");
-	SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(3);
-	END_SCALEFORM_MOVIE_METHOD();
+	if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SETUP_HEALTH_ARMOUR"))
+	{
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(3);
+		END_SCALEFORM_MOVIE_METHOD();
+	}
 	return;
 }
 
@@ -804,14 +812,15 @@ void HideAbilityBarForNonMainCharacters()
 {
 	if (IsPedMainCharacter(playerPed) || HasPlayerVehicleAbility())
 	{
-		BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "MULTIPLAYER_IS_ACTIVE");
-		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
-		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
-		END_SCALEFORM_MOVIE_METHOD();
+		if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "MULTIPLAYER_IS_ACTIVE"))
+		{
+			SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+			SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+			END_SCALEFORM_MOVIE_METHOD();
+		}
 	}
-	else
+	else if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER"))
 	{
-		BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER");
 		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
 		END_SCALEFORM_MOVIE_METHOD();
 	}
@@ -820,9 +829,11 @@ void HideAbilityBarForNonMainCharacters()
 
 void AlwaysHideAbilityBar()
 {
-	BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER");
-	SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
-	END_SCALEFORM_MOVIE_METHOD();
+	if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER"))
+	{
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+		END_SCALEFORM_MOVIE_METHOD();
+	}
 	return;
 }
 
@@ -925,8 +936,8 @@ void SetPlayerFlags()
 	if (iniDisableStuntJumps) { SET_STUNT_JUMPS_CAN_TRIGGER(false); }
 
 	///////////////////////////////////////////HUD/////////////////////////////////////////
-	if (iniHideMinimapBars)
-		nHUD::HideMinimapBars();
+	if (iniHideMinimapSatNav) { nHUD::HideSatNav(); }
+	if (iniHideMinimapBars) nHUD::HideMinimapBars();
 	else
 	{
 		if (iniHideAbilityBarForNonMainCharacters && !iniAlwaysHideAbilityBar)

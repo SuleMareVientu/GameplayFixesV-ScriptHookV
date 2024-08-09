@@ -31,6 +31,7 @@ extern bool iniDisableDragOutCar;
 extern bool iniDisableShallowWaterBikeJumpOut;
 extern bool iniDisableStuntJumps;
 //HUD
+extern bool iniHideMinimapSatNav;
 extern bool iniHideMinimapBars;
 extern bool iniHideAbilityBarForNonMainCharacters;
 extern bool iniAlwaysHideAbilityBar;
