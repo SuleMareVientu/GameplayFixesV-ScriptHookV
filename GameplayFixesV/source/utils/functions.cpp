@@ -642,8 +642,7 @@ void LeaveEngineOnWhenExitingVehicles()
 		return;
 
 	constexpr int TURN_OFF_ENGINE_DURATION = 250;
-	SET_VEHICLE_KEEP_ENGINE_ON_WHEN_ABANDONED(veh, true);
-	//EnablePedConfigFlag(playerPed, PCF_LeaveEngineOnWhenExitingVehicles);
+	SET_VEHICLE_KEEP_ENGINE_ON_WHEN_ABANDONED(veh, true);	//Same thing as setting PCF_LeaveEngineOnWhenExitingVehicles
 	if (IS_DISABLED_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT))
 		timerEngineControl.Set(0);
 	else if (IS_DISABLED_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_EXIT) && timerEngineControl.Get() > TURN_OFF_ENGINE_DURATION)
@@ -900,7 +899,7 @@ void DefaultVehicleRadioOff()
 void SetPlayerFlags()
 {
 	if (iniFriendlyFire) { nGeneral::FriendlyFire(); }
-	if (iniPlayerCanJackFriendlyPeds) { EnablePedConfigFlag(playerPed, PCF_PlayerCanJackFriendlyPlayers); }
+	if (iniDisableActionMode) { EnablePedResetFlag(playerPed, PRF_DisableActionMode); }
 	if (iniDisarmPlayerWhenShot) { nGeneral::DisarmPlayerWhenShot(); }
 	if (iniSprintInsideInteriors) { EnablePedConfigFlag(playerPed, PCF_IgnoreInteriorCheckForSprinting); }
 	if (iniAllowWeaponsInsideSafeHouse) { nGeneral::AllowWeaponsInsideSafeHouse(); }
@@ -919,6 +918,9 @@ void SetPlayerFlags()
 	if (iniLeaveEngineOnWhenExitingVehicles) { nVehicle::LeaveEngineOnWhenExitingVehicles(); }
 	if (iniDisableWheelsAutoCenterOnCarExit) { nVehicle::DisableWheelsAutoCenterOnCarExit(); }
 	if (iniDisableRagdollOnVehicleRoof) { nVehicle::DisableRagdollOnVehicleRoof(); }
+	if (iniDisableFlyThroughWindscreen) { DisablePedConfigFlag(playerPed, PCF_WillFlyThroughWindscreen); }
+	if (iniDisableBikeKnockOff) { SET_PED_CAN_BE_KNOCKED_OFF_VEHICLE(playerPed, KNOCKOFFVEHICLE_NEVER); }
+	if (iniDisableDragOutCar) { SET_PED_CAN_BE_DRAGGED_OUT(playerPed, false); } //Same thing as setting CPED_CONFIG_FLAG_DontDragMeOutCar
 	if (iniDisableShallowWaterBikeJumpOut) { nVehicle::DisableShallowWaterBikeJumpOut(); }
 	if (iniDisableStuntJumps) { SET_STUNT_JUMPS_CAN_TRIGGER(false); }
 

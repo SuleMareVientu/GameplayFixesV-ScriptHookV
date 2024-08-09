@@ -6,7 +6,7 @@
 //INI variables
 //Player Settings
 extern bool iniFriendlyFire;
-extern bool iniPlayerCanJackFriendlyPeds;
+extern bool iniDisableActionMode;
 extern bool iniDisarmPlayerWhenShot;
 extern bool iniSprintInsideInteriors;
 extern bool iniAllowWeaponsInsideSafeHouse;
@@ -25,6 +25,9 @@ extern bool iniLeaveEngineOnWhenExitingVehicles;
 extern bool iniDisableWheelsAutoCenterOnCarExit;
 extern bool iniDisableRagdollOnVehicleRoof;
 extern float iniMaxVehicleSpeed;
+extern bool iniDisableFlyThroughWindscreen;
+extern bool iniDisableBikeKnockOff;
+extern bool iniDisableDragOutCar;
 extern bool iniDisableShallowWaterBikeJumpOut;
 extern bool iniDisableStuntJumps;
 //HUD
@@ -108,10 +111,14 @@ enum ePedFlag {
 	PCF_PlayerCanJackFriendlyPlayers = 252,		//If a friendly player is driving the vehicle, if the player taps to enter, they will enter as a passenger, if they hold, they'll jack the driver
 	PCF_AllowPlayerLockOnIfFriendly = 266,		//If this ped is friendly with the player, this will allow the ped to lockon
 	PCF_DisableGoToWritheWhenInjured = 281,		//If set, CPed::DAMAGED_GOTOWRITHE will no longer get set.  In particular, tazer hits wil no longer kill this ped in one hit.
+	PCF_DisableWritheShootFromGround = 327,
 	PCF_IgnoreInteriorCheckForSprinting = 427,
 
 	//Ped Reset Flags
 	PRF_HurtThisFrame = 127,					//The ped has entered the hurt state this frame
+	PRF_ShootFromGround = 140,
+	PRF_MakeHeadInvisble = 166,					// If set, scale the head of the ped to 0.001
+	PRF_DisableActionMode = 200,				// Disable combat anims for ped.
 	PRF_BlockRagdollFromVehicleFallOff = 274,	//Disables ped from ragdolling while ot top of vehicles
 	PRF_IsInVehicleChase = 338,
 	PRF_RemoveHelmet = 367,						//Forces a ped to remove its helmet.
@@ -208,6 +215,14 @@ enum eCombatAttribute {
 	CA_BLOCK_FIRE_FOR_VEHICLE_PASSENGER_MOUNTED_GUNS = 90
 };
 
+enum eKnockOffVehicle
+{
+	KNOCKOFFVEHICLE_DEFAULT,
+	KNOCKOFFVEHICLE_NEVER,
+	KNOCKOFFVEHICLE_EASY,
+	KNOCKOFFVEHICLE_HARD
+};
+
 enum eDispatchType {
 	DT_INVALID,
 	DT_POLICE_AUTOMOBILE,
@@ -275,8 +290,10 @@ constexpr int defaultVSF = (
 	VEHICLE_SEARCH_FLAG_RETURN_LAW_ENFORCER_VEHICLES | VEHICLE_SEARCH_FLAG_RETURN_MISSION_VEHICLES |
 	VEHICLE_SEARCH_FLAG_RETURN_RANDOM_VEHICLES | VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_GROUP_MEMBERS |
 	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_A_PLAYER | VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_A_DEAD_OR_DYING_PED |
-	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_WITH_PEDS_ENTERING_OR_EXITING | VEHICLE_SEARCH_FLAG_ALLOW_VEHICLE_OCCUPANTS_TO_BE_PERFORMING_A_NON_DEFAULT_TASK |
-	VEHICLE_SEARCH_FLAG_ALLOW_TRAILERS | VEHICLE_SEARCH_FLAG_ALLOW_BLIMPS | VEHICLE_SEARCH_FLAG_ALLOW_SUBMARINES);
+	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_WITH_PEDS_ENTERING_OR_EXITING |
+	VEHICLE_SEARCH_FLAG_ALLOW_VEHICLE_OCCUPANTS_TO_BE_PERFORMING_A_SCRIPTED_TASK |
+	VEHICLE_SEARCH_FLAG_ALLOW_VEHICLE_OCCUPANTS_TO_BE_PERFORMING_A_NON_DEFAULT_TASK | VEHICLE_SEARCH_FLAG_ALLOW_BLIMPS | 
+	VEHICLE_SEARCH_FLAG_ALLOW_SUBMARINES);
 
 enum eRagdollBlockingFlags
 {

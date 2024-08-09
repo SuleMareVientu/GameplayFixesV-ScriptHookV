@@ -9,14 +9,14 @@ static constexpr char* pedsGroup = "Peds";
 
 //Player Settings
 bool iniFriendlyFire = true;
-bool iniPlayerCanJackFriendlyPeds = true;
+bool iniDisableActionMode = false;
 bool iniDisarmPlayerWhenShot = true;
 bool iniSprintInsideInteriors = true;
 bool iniAllowWeaponsInsideSafeHouse = false;
 //Player Controls
 bool iniToggleFPSWalking = true;
 bool iniCamFollowVehicleDuringHandbrake = false;
-int iniCamFollowVehDelay = 200;
+int iniCamFollowVehDelay = 250;
 bool iniDisableRecording = false;
 bool iniDisableMobilePhone = false;
 //Player Vehicle
@@ -28,6 +28,9 @@ bool iniLeaveEngineOnWhenExitingVehicles = true;
 bool iniDisableWheelsAutoCenterOnCarExit = true;
 bool iniDisableRagdollOnVehicleRoof = true;
 float iniMaxVehicleSpeed = 90.0f;
+bool iniDisableFlyThroughWindscreen = false;
+bool iniDisableBikeKnockOff = false;
+bool iniDisableDragOutCar = false;
 bool iniDisableShallowWaterBikeJumpOut = true;
 bool iniDisableStuntJumps = false;
 //HUD
@@ -63,7 +66,7 @@ void ReadINI()
 
 	//////////////////////////////////////Player//////////////////////////////////////////
 	iniFriendlyFire = ini.GetBoolValue(playerGroup, "FriendlyFire", iniFriendlyFire);
-	iniPlayerCanJackFriendlyPeds = ini.GetBoolValue(playerGroup, "PlayerCanJackFriendlyPeds", iniPlayerCanJackFriendlyPeds);
+	iniDisableActionMode = ini.GetBoolValue(playerGroup, "DisableActionMode", iniDisableActionMode);
 	iniDisarmPlayerWhenShot = ini.GetBoolValue(playerGroup, "DisarmPlayerWhenShot", iniDisarmPlayerWhenShot);
 	iniSprintInsideInteriors = ini.GetBoolValue(playerGroup, "SprintInsideInteriors", iniSprintInsideInteriors);
 	iniAllowWeaponsInsideSafeHouse = ini.GetBoolValue(playerGroup, "AllowWeaponsInsideSafeHouse", iniAllowWeaponsInsideSafeHouse);
@@ -85,6 +88,9 @@ void ReadINI()
 	iniDisableRagdollOnVehicleRoof = ini.GetBoolValue(playerGroup, "DisableRagdollOnVehicleRoof", iniDisableRagdollOnVehicleRoof);
 	#pragma warning(suppress: 4244)
 	iniMaxVehicleSpeed = ini.GetDoubleValue(playerGroup, "MaxVehicleSpeed", iniMaxVehicleSpeed);
+	iniDisableFlyThroughWindscreen = ini.GetBoolValue(playerGroup, "DisableFlyThroughWindscreen", iniDisableFlyThroughWindscreen);
+	iniDisableBikeKnockOff = ini.GetBoolValue(playerGroup, "DisableBikeKnockOff", iniDisableBikeKnockOff);
+	iniDisableDragOutCar = ini.GetBoolValue(playerGroup, "DisableDragOutCar", iniDisableDragOutCar);
 	iniDisableShallowWaterBikeJumpOut = ini.GetBoolValue(playerGroup, "DisableShallowWaterBikeJumpOut", iniDisableShallowWaterBikeJumpOut);
 	iniDisableStuntJumps = ini.GetBoolValue(playerGroup, "DisableStuntJumps", iniDisableStuntJumps);
 
