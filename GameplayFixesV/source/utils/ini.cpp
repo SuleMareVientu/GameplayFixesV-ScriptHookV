@@ -44,14 +44,15 @@ bool DisablePauseMenuPostFX = false;
 bool DisableHUDPostFX = false;
 bool DisableSpecialAbilityPostFX = false;
 bool EnableBigMapToggle = true;
+bool DisableMinimapTilt = false;
 bool HideMinimapFog = true;
+bool HideMinimapSatNav = false;
+bool HideMinimapDepth = false;
 bool HideMinimapBars = false;
 bool AlwaysHideAbilityBar = false;
 bool HideAbilityBarForNonMainCharacters = true;
 bool ReplaceArmourBarWithStamina = false;
 bool MergeHealthAndArmour = true;
-bool HideMinimapSatNav = false;
-bool HideMinimapDepth = false;
 //Audio
 bool DisableWantedMusic = false;
 bool DisablePoliceScanner = false;
@@ -118,14 +119,15 @@ void ReadINI()
 	DisableHUDPostFX = ini.GetBoolValue(HUDGroup, "DisableHUDPostFX", DisableHUDPostFX);
 	DisableSpecialAbilityPostFX = ini.GetBoolValue(HUDGroup, "DisableSpecialAbilityPostFX", DisableSpecialAbilityPostFX);
 	EnableBigMapToggle = ini.GetBoolValue(HUDGroup, "EnableBigMapToggle", EnableBigMapToggle);
+	DisableMinimapTilt = ini.GetBoolValue(HUDGroup, "DisableMinimapTilt", DisableMinimapTilt);
 	HideMinimapFog = ini.GetBoolValue(HUDGroup, "HideMinimapFog", HideMinimapFog);
+	HideMinimapSatNav = ini.GetBoolValue(HUDGroup, "HideMinimapSatNav", HideMinimapSatNav);
+	HideMinimapDepth = ini.GetBoolValue(HUDGroup, "HideMinimapDepth", HideMinimapDepth);
 	HideMinimapBars = ini.GetBoolValue(HUDGroup, "HideMinimapBars", HideMinimapBars);
 	AlwaysHideAbilityBar = ini.GetBoolValue(HUDGroup, "AlwaysHideAbilityBar", AlwaysHideAbilityBar);
 	HideAbilityBarForNonMainCharacters = ini.GetBoolValue(HUDGroup, "HideAbilityBarForNonMainCharacters", HideAbilityBarForNonMainCharacters);
 	ReplaceArmourBarWithStamina = ini.GetBoolValue(HUDGroup, "ReplaceArmourBarWithStamina", ReplaceArmourBarWithStamina);
 	MergeHealthAndArmour = ini.GetBoolValue(HUDGroup, "MergeHealthAndArmour", MergeHealthAndArmour);
-	HideMinimapSatNav = ini.GetBoolValue(HUDGroup, "HideMinimapSatNav", HideMinimapSatNav);
-	HideMinimapDepth = ini.GetBoolValue(HUDGroup, "HideMinimapDepth", HideMinimapDepth);
 
 	/////////////////////////////////////Audio/////////////////////////////////////////////
 	DisableWantedMusic = ini.GetBoolValue(AudioGroup, "DisableWantedMusic", DisableWantedMusic);

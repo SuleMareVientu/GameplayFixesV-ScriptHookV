@@ -931,6 +931,8 @@ void EnableBigMapToggle()
 	return;
 }
 
+inline void DisableMinimapTilt() { DONT_TILT_MINIMAP_THIS_FRAME(); return; }
+
 inline void HideMinimapFog() { SET_MINIMAP_HIDE_FOW(true); return; }
 
 void HideMinimapBars()
@@ -1086,7 +1088,10 @@ void UpdatePlayerOptions()
 	if (INI::DisablePauseMenuPostFX) { nHUD::DisablePauseMenuPostFX(); }
 	if (INI::DisableSpecialAbilityPostFX) { nHUD::DisableSpecialAbilityPostFX(); }
 	if (INI::EnableBigMapToggle) { nHUD::EnableBigMapToggle(); }
+	if (INI::DisableMinimapTilt) { nHUD::DisableMinimapTilt(); }
 	if (INI::HideMinimapFog) { nHUD::HideMinimapFog(); }
+	if (INI::HideMinimapSatNav) { nHUD::HideSatNav(); }
+	if (INI::HideMinimapDepth) { nHUD::HideMinimapDepth(); }
 
 	if (INI::HideMinimapBars) nHUD::HideMinimapBars();
 	else
@@ -1095,9 +1100,6 @@ void UpdatePlayerOptions()
 		else if (INI::HideAbilityBarForNonMainCharacters) nHUD::HideAbilityBarForNonMainCharacters();
 		if (INI::ReplaceArmourBarWithStamina) { nHUD::ReplaceArmourBarWithStamina(); }
 	}
-	if (INI::HideMinimapSatNav) { nHUD::HideSatNav(); }
-	if (INI::HideMinimapDepth) { nHUD::HideMinimapDepth(); }
-
 	//////////////////////////////////////////Audio////////////////////////////////////////
 	if (INI::DisableWantedMusic) { nAudio::DisableWantedMusic(); }
 	if (INI::DisablePoliceScanner) { nAudio::DisablePoliceScanner(); }

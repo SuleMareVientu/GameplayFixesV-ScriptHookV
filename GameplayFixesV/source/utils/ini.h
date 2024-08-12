@@ -37,14 +37,15 @@ extern bool DisablePauseMenuPostFX;
 extern bool DisableHUDPostFX;
 extern bool DisableSpecialAbilityPostFX;
 extern bool EnableBigMapToggle;
+extern bool DisableMinimapTilt;
 extern bool HideMinimapFog;
+extern bool HideMinimapSatNav;
+extern bool HideMinimapDepth;
 extern bool HideMinimapBars;
 extern bool AlwaysHideAbilityBar;
 extern bool HideAbilityBarForNonMainCharacters;
 extern bool ReplaceArmourBarWithStamina;
 extern bool MergeHealthAndArmour;
-extern bool HideMinimapSatNav;
-extern bool HideMinimapDepth;
 //Audio
 extern bool DisableWantedMusic;
 extern bool DisablePoliceScanner;
