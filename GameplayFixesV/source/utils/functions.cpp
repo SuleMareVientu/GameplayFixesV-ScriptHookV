@@ -3,8 +3,9 @@
 // #include <types.h> //Already included in globals.h
 //Custom
 #include "functions.h"
-#include "..\globals.h"
 #include <random>
+#include "ini.h"
+#include "..\globals.h"
 
 #pragma region Ped Flags
 void EnablePedConfigFlag(Ped ped, int flag)
@@ -88,12 +89,41 @@ bool GetWeightedBool(int chance)	//Chance out of 100
 	return dist(gen);
 }
 
-Vehicle GetVehiclePedIsIn(Ped ped, bool includeEntering)
+Vehicle GetVehiclePedIsIn(Ped ped, bool includeEntering, bool includeExiting)
 {
-	if (IS_PED_IN_ANY_VEHICLE(ped, includeEntering))
-		return GET_VEHICLE_PED_IS_USING(playerPed);
+	Vehicle veh = GET_VEHICLE_PED_IS_USING(ped);
+	if ((!includeEntering && GET_PED_RESET_FLAG(ped, PRF_IsEnteringVehicle)) ||
+		(!includeExiting && GET_IS_TASK_ACTIVE(ped, CODE_TASK_EXIT_VEHICLE)))
+	{ veh = NULL; }
 
-	return NULL;
+	if (!DOES_ENTITY_EXIST(veh)) veh = NULL;
+	return veh;
+}
+
+Vehicle GetVehiclePedIsEntering(Ped ped)
+{
+	Vehicle veh = NULL;
+	if (GET_PED_RESET_FLAG(ped, PRF_IsEnteringVehicle)) veh = GET_VEHICLE_PED_IS_USING(ped);
+	if (!DOES_ENTITY_EXIST(veh)) veh = NULL;
+	return veh;
+}
+
+Vehicle GetVehiclePedIsExiting(Ped ped)
+{
+	Vehicle veh = NULL;
+	if (GET_IS_TASK_ACTIVE(ped, CODE_TASK_EXIT_VEHICLE)) veh = GET_VEHICLE_PED_IS_USING(ped);
+	if (!DOES_ENTITY_EXIST(veh)) veh = NULL;
+	return veh;
+}
+
+Vehicle GetVehiclePedIsEnteringOrExiting(Ped ped)
+{
+	Vehicle veh = NULL;
+	if (GET_PED_RESET_FLAG(ped, PRF_IsEnteringVehicle) || GET_IS_TASK_ACTIVE(ped, CODE_TASK_EXIT_VEHICLE))
+		veh = GET_VEHICLE_PED_IS_USING(ped);
+	
+	if (!DOES_ENTITY_EXIST(veh)) veh = NULL;
+	return veh;
 }
 
 /*
@@ -132,6 +162,17 @@ bool CanDisarmPed(Ped ped, bool includeLeftHand)
 
 	return false;
 }
+
+/*
+static bool RequestScaleform(const char* name, int* handle)
+{
+	if (HAS_SCALEFORM_MOVIE_LOADED(*handle))
+		return true;
+
+	*handle = REQUEST_SCALEFORM_MOVIE(name);
+	return false;
+}
+*/
 #pragma endregion
 
 /////////////////////////////////////////////Player//////////////////////////////////////////////
@@ -139,18 +180,18 @@ namespace nGeneral
 {
 void FriendlyFire()
 {
-	SET_CAN_ATTACK_FRIENDLY(playerPed, true, true);	// Sets PCF_CanAttackFriendly, PCF_AllowLockonToFriendlyPlayers
+	SET_CAN_ATTACK_FRIENDLY(GetPlayerPed(), true, true);	// Sets PCF_CanAttackFriendly, PCF_AllowLockonToFriendlyPlayers
 
 	Ped ped = NULL;
 	SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);
-	if (!GET_CLOSEST_PED(playerLoc.x, playerLoc.y, playerLoc.z, 10.0f, true, true, &ped, false, true, -1))
+	if (!GET_CLOSEST_PED(GetPlayerCoords().x, GetPlayerCoords().y, GetPlayerCoords().z, 10.0f, true, true, &ped, false, true, -1))
 		return;
 
-	int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(playerPed, ped);
+	int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(GetPlayerPed(), ped);
 	if (relationship == ACQUAINTANCE_TYPE_PED_RESPECT || relationship == ACQUAINTANCE_TYPE_PED_LIKE)
 	{
 		SET_PED_CAN_BE_TARGETTED(ped, true);
-		SET_PED_CAN_BE_TARGETTED_BY_PLAYER(ped, player, true);
+		SET_PED_CAN_BE_TARGETTED_BY_PLAYER(ped, GetPlayer(), true);
 		SET_PED_CAN_BE_TARGETED_WHEN_INJURED(ped, true);
 		SET_ALLOW_LOCKON_TO_PED_IF_FRIENDLY(ped, true);
 		SET_PED_CAN_RAGDOLL(ped, true);
@@ -166,43 +207,47 @@ void FriendlyFire()
 	return;
 }
 
+inline void DisableActionMode() { EnablePedResetFlag(GetPlayerPed(), PRF_DisableActionMode); return; }
+
 void DisarmPlayerWhenShot()
 {
 	Hash weapon = NULL;
-	GET_CURRENT_PED_WEAPON(playerPed, &weapon, false);
+	GET_CURRENT_PED_WEAPON(GetPlayerPed(), &weapon, false);
 	if (weapon == WEAPON_UNARMED)
 		return;
 
-	if ((CanDisarmPed(playerPed, true) && GetWeightedBool(70)) ||
-		HasEntityBeenDamagedByWeaponThisFrame(playerPed, WEAPON_STUNGUN, GENERALWEAPON_TYPE_INVALID))
+	if ((CanDisarmPed(GetPlayerPed(), true) && GetWeightedBool(70)) ||
+		HasEntityBeenDamagedByWeaponThisFrame(GetPlayerPed(), WEAPON_STUNGUN, GENERALWEAPON_TYPE_INVALID))
 	{
-		if (!IS_AMBIENT_SPEECH_PLAYING(playerPed))
-			PLAY_PED_AMBIENT_SPEECH_NATIVE(playerPed, "GENERIC_CURSE_MED", "SPEECH_PARAMS_FORCE", false);
+		if (!IS_AMBIENT_SPEECH_PLAYING(GetPlayerPed()))
+			PLAY_PED_AMBIENT_SPEECH_NATIVE(GetPlayerPed(), "GENERIC_CURSE_MED", "SPEECH_PARAMS_FORCE", false);
 
-		SET_PED_DROPS_WEAPON(playerPed);
+		SET_PED_DROPS_WEAPON(GetPlayerPed());
 	}
 	return;
 }
 
-bool IsPlayerInsideSafehouse(Ped playerPed, Vector3 playerLoc)
+inline void EnableSprintInsideInteriors() { EnablePedConfigFlag(GetPlayerPed(), PCF_IgnoreInteriorCheckForSprinting); return; }
+
+bool IsPlayerInsideSafehouse()
 {
 	constexpr int arrSize = 5;
 	int safehouses[arrSize] = {
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(playerLoc.x, playerLoc.y, playerLoc.z, "v_franklins"),
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(playerLoc.x, playerLoc.y, playerLoc.z, "v_franklinshouse"),
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(playerLoc.x, playerLoc.y, playerLoc.z, "v_michael"),
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(playerLoc.x, playerLoc.y, playerLoc.z, "v_trailer"),
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(playerLoc.x, playerLoc.y, playerLoc.z, "v_trevors")
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(GetPlayerCoords().x, GetPlayerCoords().y, GetPlayerCoords().z, "v_franklins"),
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(GetPlayerCoords().x, GetPlayerCoords().y, GetPlayerCoords().z, "v_franklinshouse"),
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(GetPlayerCoords().x, GetPlayerCoords().y, GetPlayerCoords().z, "v_michael"),
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(GetPlayerCoords().x, GetPlayerCoords().y, GetPlayerCoords().z, "v_trailer"),
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(GetPlayerCoords().x, GetPlayerCoords().y, GetPlayerCoords().z, "v_trevors")
 	};
 
-	int playerInterior = GET_INTERIOR_FROM_ENTITY(playerPed);
+	int playerInterior = GET_INTERIOR_FROM_ENTITY(GetPlayerPed());
 	for (int i = 0; i < arrSize; i++) {
 		if (safehouses[i] == playerInterior)
 			return true;
 	}
 
 	//Special check for Trevor's office inside the strip club
-	if (GET_ROOM_KEY_FROM_ENTITY(playerPed) == strp3off)	//room key for "strp3off"
+	if (GET_ROOM_KEY_FROM_ENTITY(GetPlayerPed()) == strp3off)	//room key for "strp3off"
 		return true;
 
 	return false;
@@ -232,16 +277,16 @@ void SetFakeWanted(Player player, bool toggle)
 	{
 	case true:
 		SET_MAX_WANTED_LEVEL(5);	//Fix for Menyoo never wanted
-		SET_PLAYER_WANTED_LEVEL_NO_DROP(player, 1, true);
-		SET_PLAYER_WANTED_LEVEL_NOW(player, true);
+		SET_PLAYER_WANTED_LEVEL_NO_DROP(GetPlayer(), 1, true);
+		SET_PLAYER_WANTED_LEVEL_NOW(GetPlayer(), true);
 
 		//Various ignore player commands
-		SET_PLAYER_WANTED_CENTRE_POSITION(player, &fakeCoords);
-		SET_POLICE_IGNORE_PLAYER(player, true);
+		SET_PLAYER_WANTED_CENTRE_POSITION(GetPlayer(), &fakeCoords);
+		SET_POLICE_IGNORE_PLAYER(GetPlayer(), true);
 		SetDispatchServices(false);
-		SET_DISPATCH_COPS_FOR_PLAYER(player, false);
-		SET_IGNORE_LOW_PRIORITY_SHOCKING_EVENTS(player, true);
-		SET_WANTED_LEVEL_DIFFICULTY(player, 0.001f);
+		SET_DISPATCH_COPS_FOR_PLAYER(GetPlayer(), false);
+		SET_IGNORE_LOW_PRIORITY_SHOCKING_EVENTS(GetPlayer(), true);
+		SET_WANTED_LEVEL_DIFFICULTY(GetPlayer(), 0.001f);
 		SET_WANTED_LEVEL_MULTIPLIER(0.0f);
 		SET_AUDIO_FLAG("PoliceScannerDisabled", true);
 		SET_BLOCK_WANTED_FLASH(true);
@@ -250,15 +295,15 @@ void SetFakeWanted(Player player, bool toggle)
 		isFakeWanted = true;
 		break;
 	case false:
-		if (GET_PLAYER_WANTED_LEVEL(player) != 0)
-			CLEAR_PLAYER_WANTED_LEVEL(player);
+		if (GET_PLAYER_WANTED_LEVEL(GetPlayer()) != 0)
+			CLEAR_PLAYER_WANTED_LEVEL(GetPlayer());
 
 		//Reset ignore player commands
-		SET_POLICE_IGNORE_PLAYER(player, false);
+		SET_POLICE_IGNORE_PLAYER(GetPlayer(), false);
 		SetDispatchServices(true);
-		SET_DISPATCH_COPS_FOR_PLAYER(player, true);
-		SET_IGNORE_LOW_PRIORITY_SHOCKING_EVENTS(player, false);
-		RESET_WANTED_LEVEL_DIFFICULTY(player);
+		SET_DISPATCH_COPS_FOR_PLAYER(GetPlayer(), true);
+		SET_IGNORE_LOW_PRIORITY_SHOCKING_EVENTS(GetPlayer(), false);
+		RESET_WANTED_LEVEL_DIFFICULTY(GetPlayer());
 		SET_WANTED_LEVEL_MULTIPLIER(1.0f);
 		SET_AUDIO_FLAG("PoliceScannerDisabled", false);
 		SET_BLOCK_WANTED_FLASH(false);
@@ -281,25 +326,25 @@ void AllowWeaponsInsideSafeHouse()
 {
 	//Force selected player weapon for 1000ms upon exit/enter of safehouse
 	if (timerLastPlayerWeapon.Get() < 1000 && lastPlayerWeapon != WEAPON_UNARMED)
-		SET_CURRENT_PED_WEAPON(playerPed, lastPlayerWeapon, true);
+		SET_CURRENT_PED_WEAPON(GetPlayerPed(), lastPlayerWeapon, true);
 
 	//Checks if player is inside valid interior
-	int playerInterior = GET_INTERIOR_FROM_ENTITY(playerPed);
+	int playerInterior = GET_INTERIOR_FROM_ENTITY(GetPlayerPed());
 	if (!IS_VALID_INTERIOR(playerInterior) ||
 		//reset fakewanted also if player is inside the strip club but not inside the office
-		(GET_INTERIOR_AT_COORDS(113.53f, -1287.61f, 28.64f) == playerInterior /*v_strip3*/ && GET_ROOM_KEY_FROM_ENTITY(playerPed) != strp3off))
+		(GET_INTERIOR_AT_COORDS(113.53f, -1287.61f, 28.64f) == playerInterior /*v_strip3*/ && GET_ROOM_KEY_FROM_ENTITY(GetPlayerPed()) != strp3off))
 	{
 		if (isFakeWanted)
 		{
 			timerLastPlayerWeapon.Set(0);
-			SetFakeWanted(player, false);
+			SetFakeWanted(GetPlayer(), false);
 		}
-		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(playerPed);
+		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(GetPlayerPed());
 		return;
 	}
 
 	//Check if player is inside a safehouse, and not just in a random interior and return if player was already wanted before entering the interior
-	if (!IsPlayerInsideSafehouse(playerPed, playerLoc) || (!isFakeWanted && GET_PLAYER_WANTED_LEVEL(player) != 0))
+	if (!IsPlayerInsideSafehouse() || (!isFakeWanted && GET_PLAYER_WANTED_LEVEL(GetPlayer()) != 0))
 		return;
 
 	//Allow player to switch characters while inside the safehouse
@@ -317,7 +362,7 @@ void AllowWeaponsInsideSafeHouse()
 			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_TREVOR)))
 	{
 		if (isFakeWanted)
-			SetFakeWanted(player, false);
+			SetFakeWanted(GetPlayer(), false);
 
 		timerLastPlayerWeapon.Set(0);
 		return;
@@ -327,29 +372,31 @@ void AllowWeaponsInsideSafeHouse()
 	if (!isFakeWanted)
 		timerLastPlayerWeapon.Set(0);
 	else
-		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(playerPed);
+		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(GetPlayerPed());
 
 	//If all cheks pass, set fake wanted level
-	SetFakeWanted(player, true);
+	SetFakeWanted(GetPlayer(), true);
 	return;
 }
 }	//END nGeneral
 
-///////////////////////////////////////////////Player Controls///////////////////////////////////////////////
+/////////////////////////////////////////Player Controls/////////////////////////////////////////
 namespace nControls
 {
+inline void DisableAssistedMovement() { ASSISTED_MOVEMENT_OVERRIDE_LOAD_DISTANCE_THIS_FRAME(NULL); return; }
+
 bool isWalking = false;
 float playerLastMoveBlend = 0.0f;
 Timer timerToggleFPSWalking;
 void ToggleFPSWalking()
 {
-	if (!IS_PED_ON_FOOT(playerPed) || !IS_CONTROL_ENABLED(PLAYER_CONTROL, INPUT_SPRINT) ||
+	if (!IS_PED_ON_FOOT(GetPlayerPed()) || !IS_CONTROL_ENABLED(PLAYER_CONTROL, INPUT_SPRINT) ||
 		GET_FOLLOW_PED_CAM_VIEW_MODE() != CAM_VIEW_MODE_FIRST_PERSON)
 	{
 		if (isWalking)
 		{
 			isWalking = false;
-			SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, PEDMOVEBLENDRATIO_SPRINT);
+			SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_SPRINT);
 		}
 		return;
 	}
@@ -358,8 +405,8 @@ void ToggleFPSWalking()
 	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SPRINT))
 	{
 		timerToggleFPSWalking.Set(0);
-		playerLastMoveBlend = GET_PED_DESIRED_MOVE_BLEND_RATIO(playerPed);
-		SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, playerLastMoveBlend);
+		playerLastMoveBlend = GET_PED_DESIRED_MOVE_BLEND_RATIO(GetPlayerPed());
+		SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), playerLastMoveBlend);
 	}
 	else if (timerToggleFPSWalking.Get() < 250)
 	{
@@ -367,25 +414,25 @@ void ToggleFPSWalking()
 		{
 			if (isWalking)
 			{
-				SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, PEDMOVEBLENDRATIO_SPRINT);
+				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_SPRINT);
 				isWalking = false;
 			}
 			else
 			{
-				SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, PEDMOVEBLENDRATIO_WALK);
+				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_WALK);
 				isWalking = true;
 			}
 		}
 		else
-			SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, playerLastMoveBlend);
+			SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), playerLastMoveBlend);
 	}
 	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SPRINT))
 	{
 		isWalking = false;
-		SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, PEDMOVEBLENDRATIO_SPRINT);
+		SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_SPRINT);
 	}
 	else if (isWalking)
-		SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, PEDMOVEBLENDRATIO_WALK);
+		SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_WALK);
 	return;
 }
 
@@ -418,10 +465,10 @@ Timer timerVehCamA;
 Timer timerVehCamB;
 void CamFollowVehicleDuringHandbrake()
 {
-	const int timePressed = iniCamFollowVehDelay;
+	const int timePressed = INI::CamFollowVehDelay;
 	constexpr int delay = 300;
 
-	if (!IS_PED_IN_ANY_VEHICLE(playerPed, false))
+	if (!IS_PED_IN_ANY_VEHICLE(GetPlayerPed(), false))
 		return;
 
 	if (timePressed > 0)
@@ -453,6 +500,13 @@ void CamFollowVehicleDuringHandbrake()
 	return;
 }
 
+void DisableIdleCamera()
+{
+	INVALIDATE_CINEMATIC_VEHICLE_IDLE_MODE();
+	INVALIDATE_IDLE_CAM();
+	return;
+}
+
 void DisableRecording()
 {
 	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING, false);
@@ -467,12 +521,12 @@ void DisableMobilePhone()
 		TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME("cellphone_controller");
 
 	if (IS_MOBILE_PHONE_CALL_ONGOING()) { STOP_SCRIPTED_CONVERSATION(false); }
-	if (IS_PED_RINGTONE_PLAYING(playerPed)) { STOP_PED_RINGTONE(playerPed); }
+	if (IS_PED_RINGTONE_PLAYING(GetPlayerPed())) { STOP_PED_RINGTONE(GetPlayerPed()); }
 	DESTROY_MOBILE_PHONE();
 
-	EnablePedConfigFlag(playerPed, PCF_PhoneDisableTextingAnimations);
-	EnablePedConfigFlag(playerPed, PCF_PhoneDisableTalkingAnimations);
-	EnablePedConfigFlag(playerPed, PCF_PhoneDisableCameraAnimations);
+	EnablePedConfigFlag(GetPlayerPed(), PCF_PhoneDisableTextingAnimations);
+	EnablePedConfigFlag(GetPlayerPed(), PCF_PhoneDisableTalkingAnimations);
+	EnablePedConfigFlag(GetPlayerPed(), PCF_PhoneDisableCameraAnimations);
 
 	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_PHONE, false);
 	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_UP, false);
@@ -494,13 +548,13 @@ void DisableMobilePhone()
 }
 }	//END nControls
 
-///////////////////////////////////////////////Player Vehicle/////////////////////////////////////////////////
+//////////////////////////////////////////Player Vehicle/////////////////////////////////////////
 namespace nVehicle
 {
 Vehicle lastVeh = NULL;
 void DisableCarMidAirAndRollControl()
 {
-	Vehicle veh = GetVehiclePedIsIn(playerPed);
+	Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
@@ -543,7 +597,7 @@ bool wasSetAsMissionEntity = false;
 Timer timerCarExplosion;
 void DisableForcedCarExplosionOnImpact()
 {
-	Vehicle veh = GetVehiclePedIsIn(playerPed);
+	Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
@@ -575,7 +629,7 @@ void DisableForcedCarExplosionOnImpact()
 
 void DisableEngineSmoke()
 {
-	Vehicle veh = GetVehiclePedIsIn(playerPed);
+	Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
 	if (veh == NULL)
 		return;
 
@@ -589,7 +643,7 @@ void DisableEngineSmoke()
 Vehicle lastVehEngine = NULL;
 void DisableEngineFire()
 {
-	Vehicle veh = GetVehiclePedIsIn(playerPed);
+	Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
 	if (veh == NULL)
 		return;
 
@@ -623,31 +677,32 @@ void DisableEngineFire()
 void DisableRagdollOnVehicleRoof()
 {
 	//Velocity Unit -> Km/h
-	if (iniMaxVehicleSpeed > 0.0f)
+	if (INI::MaxVehicleSpeed > 0.0f)
 	{
-		const float speed = GET_ENTITY_SPEED(playerPed) * 3.6f;	// m\s to Km\h
-		if (speed > iniMaxVehicleSpeed)
+		const float speed = GET_ENTITY_SPEED(GetPlayerPed()) * 3.6f;	// m\s to Km\h
+		if (speed > INI::MaxVehicleSpeed)
 			return;
 	}
 
-	EnablePedResetFlag(playerPed, PRF_BlockRagdollFromVehicleFallOff);
+	EnablePedResetFlag(GetPlayerPed(), PRF_BlockRagdollFromVehicleFallOff);
 	return;
 }
 
 Timer timerEngineControl;
+constexpr int TURN_OFF_ENGINE_DURATION = 250;
 void LeaveEngineOnWhenExitingVehicles()
 {
-	Vehicle veh = GetVehiclePedIsIn(playerPed);
-	if (veh == NULL)
+	Vehicle veh = GetVehiclePedIsIn(GetPlayerPed(), true, true);
+	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
-	constexpr int TURN_OFF_ENGINE_DURATION = 250;
 	SET_VEHICLE_KEEP_ENGINE_ON_WHEN_ABANDONED(veh, true);	//Same thing as setting PCF_LeaveEngineOnWhenExitingVehicles
-	if (IS_DISABLED_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT))
+	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT))
 		timerEngineControl.Set(0);
-	else if (IS_DISABLED_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_EXIT) && timerEngineControl.Get() > TURN_OFF_ENGINE_DURATION)
-		SET_VEHICLE_ENGINE_ON(veh, false, true, false);
-
+	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && 
+		timerEngineControl.Get() > TURN_OFF_ENGINE_DURATION &&
+		GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
+	{ SET_VEHICLE_ENGINE_ON(veh, false, true, false); }
 	return;
 }
 
@@ -662,12 +717,12 @@ void DisableWheelsAutoCenterOnCarExit()
 {
 	constexpr float maxVehSpeedDetach = 10.0f;
 
-	const Vehicle veh = GetVehiclePedIsIn(playerPed);
+	const Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
 	const int vehHash = GET_ENTITY_MODEL(veh);	//Disable for bikes and bicycles, can cause issues
-	if (!IS_THIS_MODEL_A_CAR(vehHash) || !IS_VEHICLE_DRIVEABLE(veh, false) || GET_ENTITY_SUBMERGED_LEVEL(playerPed) > 0.7f)
+	if (!IS_THIS_MODEL_A_CAR(vehHash) || !IS_VEHICLE_DRIVEABLE(veh, false) || GET_ENTITY_SUBMERGED_LEVEL(GetPlayerPed()) > 0.7f)
 		return;
 
 	const int tmpVehHash = GET_ENTITY_MODEL(tmpVeh);
@@ -696,14 +751,11 @@ void DisableWheelsAutoCenterOnCarExit()
 		return;
 	}
 
-	if (GET_IS_TASK_ACTIVE(playerPed, 2) || timerWheelsAutoCenter.Get() > 2000 || GET_ENTITY_SPEED(veh) > maxVehSpeedDetach)	//CTaskExitVehicle
+	if (GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE) || timerWheelsAutoCenter.Get() > 2000 || GET_ENTITY_SPEED(veh) > maxVehSpeedDetach)	//CTaskExitVehicle
 		shouldAttachVeh = false;
 
-	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && IS_PED_IN_ANY_VEHICLE(playerPed, false)
-		&& !IS_VEHICLE_ATTACHED_TO_TRAILER(veh))
-	{
+	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && IS_PED_IN_ANY_VEHICLE(GetPlayerPed(), false)) //&& !IS_VEHICLE_ATTACHED_TO_TRAILER(veh))
 		shouldAttachVeh = true;
-	}
 
 	if (shouldAttachVeh && !IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh) && GET_ENTITY_SPEED(veh) < maxVehSpeedDetach)
 	{
@@ -729,12 +781,57 @@ void DisableWheelsAutoCenterOnCarExit()
 	return;
 }
 
-void DisableShallowWaterBikeJumpOut()
+Timer hydraulicsTimer;
+Vehicle lastHydraulicsVeh = NULL;
+Vehicle lastUsedHydraulicsVeh = NULL;
+float hydraulicsState[MAX_WHEELS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+void KeepCarHydraulicsPosition()
 {
-	if (GET_ENTITY_SUBMERGED_LEVEL(playerPed) < 0.7f)
-		EnablePedResetFlag(playerPed, PRF_DisableShallowWaterBikeJumpOutThisFrame);
+	if (IS_PED_IN_ANY_VEHICLE(GetPlayerPed(), false) && !GET_PED_RESET_FLAG(GetPlayerPed(), PRF_IsEnteringOrExitingVehicle))
+	{
+		const Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
+		if (!DOES_ENTITY_EXIST(veh) || !IS_THIS_MODEL_A_CAR(GET_ENTITY_MODEL(veh)) || !IS_VEHICLE_DRIVEABLE(veh, false))
+			return;
+
+		if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT))
+		{
+			LOOP(i, MAX_WHEELS) { hydraulicsState[i] = GET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(lastHydraulicsVeh, i); }
+		}
+
+		lastHydraulicsVeh = veh;
+		if (veh != lastUsedHydraulicsVeh) lastUsedHydraulicsVeh = NULL;
+	}
+
+	if (GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
+	{
+		hydraulicsTimer.Set(0);
+		LOOP(i, MAX_WHEELS) { SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(lastHydraulicsVeh, i, hydraulicsState[i]); }
+		lastUsedHydraulicsVeh = lastHydraulicsVeh;
+	}
+	else if (hydraulicsTimer.Get() < 500)
+	{
+		LOOP(i, MAX_WHEELS) { SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(lastHydraulicsVeh, i, hydraulicsState[i]); }
+	}
+
+	if (DOES_ENTITY_EXIST(lastUsedHydraulicsVeh) && GetVehiclePedIsEntering(GetPlayerPed()) == lastUsedHydraulicsVeh)
+	{
+		LOOP(i, MAX_WHEELS) { SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(lastHydraulicsVeh, i, hydraulicsState[i]); }
+	}
 	return;
 }
+
+inline void DisableFlyThroughWindscreen() { DisablePedConfigFlag(GetPlayerPed(), PCF_WillFlyThroughWindscreen); return; }
+inline void DisableBikeKnockOff() { SET_PED_CAN_BE_KNOCKED_OFF_VEHICLE(GetPlayerPed(), KNOCKOFFVEHICLE_NEVER); return; }
+inline void DisableDragOutCar() { SET_PED_CAN_BE_DRAGGED_OUT(GetPlayerPed(), false); return; }	//Same thing as setting CPED_CONFIG_FLAG_DontDragMeOutCar
+
+void DisableShallowWaterBikeJumpOut()
+{
+	if (GET_ENTITY_SUBMERGED_LEVEL(GetPlayerPed()) < 0.7f)
+		EnablePedResetFlag(GetPlayerPed(), PRF_DisableShallowWaterBikeJumpOutThisFrame);
+	return;
+}
+
+inline void DisableStuntJumps() { SET_STUNT_JUMPS_CAN_TRIGGER(false); return; }
 }	//END nVehicle
 
 ///////////////////////////////////////////////HUD///////////////////////////////////////////////
@@ -752,39 +849,10 @@ int RequestMinimapScaleform()
 	return minimapScaleformIndex;
 }
 
-/*
-static bool RequestScaleform(const char* name, int* handle)
-{
-	if (HAS_SCALEFORM_MOVIE_LOADED(*handle))
-		return true;
-
-	*handle = REQUEST_SCALEFORM_MOVIE(name);
-	return false;
-}
-*/
-
-void HideSatNav()
-{
-	CALL_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "HIDE_SATNAV");
-	return;
-}
-
-bool IsPedMainCharacter(Ped ped)
-{
-	switch (GET_ENTITY_MODEL(ped))
-	{
-	case MichaelPed:
-	case FranklinPed:
-	case TrevorPed:
-		return true;	break;
-	}
-	return false;
-}
-
 bool HasPlayerVehicleAbility()
 {
-	Vehicle veh = GetVehiclePedIsIn(playerPed);
-	if (veh != NULL && (GET_VEHICLE_HAS_KERS(veh) || GET_HAS_ROCKET_BOOST(veh) || GET_CAR_HAS_JUMP(veh)))
+	Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
+	if (DOES_ENTITY_EXIST(veh) && (GET_VEHICLE_HAS_KERS(veh) || GET_HAS_ROCKET_BOOST(veh) || GET_CAR_HAS_JUMP(veh)))
 		return true;
 
 	return false;
@@ -798,6 +866,73 @@ void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool 
 	return;
 }
 
+void AllowGameExecutionOnPauseMenu()
+{
+	if (!IS_CONTROL_PRESSED(FRONTEND_CONTROL, INPUT_FRONTEND_PAUSE_ALTERNATE))
+		SET_PAUSE_MENU_ACTIVE(false);
+
+	if (IS_CONTROL_JUST_PRESSED(FRONTEND_CONTROL, INPUT_FRONTEND_PAUSE) &&
+		GET_CURRENT_FRONTEND_MENU_VERSION() != FE_MENU_VERSION_SP_PAUSE)
+	{ ACTIVATE_FRONTEND_MENU(FE_MENU_VERSION_SP_PAUSE, false, -1); }
+
+	return;
+}
+
+void DisablePauseMenuPostFX()
+{
+	CLEAR_ALL_TCMODIFIER_OVERRIDES("hud_def_blur");
+	CLEAR_ALL_TCMODIFIER_OVERRIDES("bloommid");
+	CLEAR_ALL_TCMODIFIER_OVERRIDES("hud_def_Franklin");
+	CLEAR_ALL_TCMODIFIER_OVERRIDES("hud_def_Michael");
+	CLEAR_ALL_TCMODIFIER_OVERRIDES("hud_def_Trevor");
+	CLEAR_ALL_TCMODIFIER_OVERRIDES("hud_def_desat_Neutral");
+
+	ADD_TCMODIFIER_OVERRIDE("hud_def_blur", "default");
+	ADD_TCMODIFIER_OVERRIDE("bloommid", "default");
+	switch (GET_ENTITY_MODEL(GetPlayerPed()))
+	{
+	case FranklinPed:
+		ADD_TCMODIFIER_OVERRIDE("hud_def_Franklin", "default"); break;
+	case MichaelPed:
+		ADD_TCMODIFIER_OVERRIDE("hud_def_Michael", "default"); break;
+	case TrevorPed:
+		ADD_TCMODIFIER_OVERRIDE("hud_def_Trevor", "default"); break;
+	default:
+		ADD_TCMODIFIER_OVERRIDE("hud_def_desat_Neutral", "default"); break;
+	}
+	return;
+}
+
+void DisableHUDPostFX()
+{
+	LOOP(i, AnimPostFXSize)
+	{ ANIMPOSTFX_STOP_AND_FLUSH_REQUESTS(AnimPostFX[i]); }
+	return;
+}
+
+void DisableSpecialAbilityPostFX()
+{
+	LOOP(i, AbilityPostFXSize)
+	{ ANIMPOSTFX_STOP_AND_FLUSH_REQUESTS(AbilityPostFX[i]); }
+	return;
+}
+
+Timer timerBigMap;
+bool isBigMapActive = false;
+void EnableBigMapToggle()
+{
+	if (IS_CONTROL_JUST_PRESSED(FRONTEND_CONTROL, INPUT_HUD_SPECIAL))
+		timerBigMap.Set(0);
+	else if (IS_CONTROL_JUST_RELEASED(FRONTEND_CONTROL, INPUT_HUD_SPECIAL) && timerBigMap.Get() < 200)
+	{
+		isBigMapActive ^= true;
+		SET_BIGMAP_ACTIVE(isBigMapActive, false);
+	}
+	return;
+}
+
+inline void HideMinimapFog() { SET_MINIMAP_HIDE_FOW(true); return; }
+
 void HideMinimapBars()
 {
 	if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SETUP_HEALTH_ARMOUR"))
@@ -808,9 +943,19 @@ void HideMinimapBars()
 	return;
 }
 
+void AlwaysHideAbilityBar()
+{
+	if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER"))
+	{
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
+		END_SCALEFORM_MOVIE_METHOD();
+	}
+	return;
+}
+
 void HideAbilityBarForNonMainCharacters()
 {
-	if (IsPedMainCharacter(playerPed) || HasPlayerVehicleAbility())
+	if (IS_SPECIAL_ABILITY_ENABLED(GetPlayer(), 0) || HasPlayerVehicleAbility())
 	{
 		if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "MULTIPLAYER_IS_ACTIVE"))
 		{
@@ -827,27 +972,17 @@ void HideAbilityBarForNonMainCharacters()
 	return;
 }
 
-void AlwaysHideAbilityBar()
-{
-	if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER"))
-	{
-		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
-		END_SCALEFORM_MOVIE_METHOD();
-	}
-	return;
-}
-
 Timer timerFlashHealth;
 constexpr int flashHealthInterval = 400;
 void ReplaceArmourBarWithStamina()
 {
-	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(player));		//GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
-	if (iniMergeHealthAndArmour)
+	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(GetPlayer()));		//GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
+	if (INI::MergeHealthAndArmour)
 	{
-		int health = GET_ENTITY_HEALTH(playerPed) - 100 + GET_PED_ARMOUR(playerPed);			//We need to subtract 100 because the player fatal healt is 100 not 0
-		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100 + GET_PLAYER_MAX_ARMOUR(player);
+		int health = GET_ENTITY_HEALTH(GetPlayerPed()) - 100 + GET_PED_ARMOUR(GetPlayerPed());			//We need to subtract 100 because the player fatal healt is 100 not 0
+		int maxHealth = GET_ENTITY_MAX_HEALTH(GetPlayerPed()) - 100 + GET_PLAYER_MAX_ARMOUR(GetPlayer());
 		int newHealthPercentage = ROUND(health * 100.0f / maxHealth);							//Always ensure a 100 offset to fix hud ratio
-		int realHealthPercentage = ROUND((GET_ENTITY_HEALTH(playerPed) - 100.0f) * 100.0f / (GET_ENTITY_MAX_HEALTH(playerPed) - 100.0f));
+		int realHealthPercentage = ROUND((GET_ENTITY_HEALTH(GetPlayerPed()) - 100.0f) * 100.0f / (GET_ENTITY_MAX_HEALTH(GetPlayerPed()) - 100.0f));
 
 		//Flash health bar every 400ms if health is below 25%
 		if (realHealthPercentage > 25 || timerFlashHealth.Get() > flashHealthInterval)
@@ -857,7 +992,7 @@ void ReplaceArmourBarWithStamina()
 
 			SetHealthHudDisplayValues(newHealthPercentage, staminaPercentage);
 		}
-		else if (realHealthPercentage <= 25 && GET_PED_ARMOUR(playerPed) > 10)
+		else if (realHealthPercentage <= 25 && GET_PED_ARMOUR(GetPlayerPed()) > 10)
 		{
 			if (timerFlashHealth.Get() <= flashHealthInterval)
 				SetHealthHudDisplayValues(realHealthPercentage, staminaPercentage);
@@ -867,18 +1002,25 @@ void ReplaceArmourBarWithStamina()
 	}
 	else
 	{
-		int health = GET_ENTITY_HEALTH(playerPed) - 100;
-		int maxHealth = GET_ENTITY_MAX_HEALTH(playerPed) - 100;
+		int health = GET_ENTITY_HEALTH(GetPlayerPed()) - 100;
+		int maxHealth = GET_ENTITY_MAX_HEALTH(GetPlayerPed()) - 100;
 		int healthPercentage = ROUND(health * 100.0f / maxHealth);
 		SetHealthHudDisplayValues(healthPercentage, staminaPercentage);
 	}
 	return;
 }
+
+inline void HideSatNav() { CALL_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "HIDE_SATNAV"); return; }
+inline void HideMinimapDepth() { CALL_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "HIDE_DEPTH"); return; }
 }	//END nHUD
 
 ///////////////////////////////////////////////Audio///////////////////////////////////////////////
 namespace nAudio
 {
+inline void DisableWantedMusic() { SET_AUDIO_FLAG("WantedMusicDisabled", true); return; }
+inline void DisablePoliceScanner() { SET_AUDIO_FLAG("PoliceScannerDisabled", true); return; }
+inline void DisableFlightMusic() { SET_AUDIO_FLAG("DisableFlightMusic", true); return; }
+
 Timer timerRadioMusic;
 void SetRadiosMusicOnly()
 {
@@ -896,62 +1038,71 @@ void SetRadiosMusicOnly()
 Vehicle lastVehRadioOff = NULL;
 void DefaultVehicleRadioOff()
 {
-	Vehicle tmpVeh = GET_VEHICLE_PED_IS_USING(playerPed);
+	Vehicle tmpVeh = GET_VEHICLE_PED_IS_USING(GetPlayerPed());
 	if (DOES_ENTITY_EXIST(tmpVeh) && tmpVeh != lastVehRadioOff)
 	{
 		lastVehRadioOff = tmpVeh;
-		if (!GET_IS_VEHICLE_ENGINE_RUNNING(tmpVeh))
+		if (!GET_IS_VEHICLE_ENGINE_RUNNING(tmpVeh) && GET_PED_RESET_FLAG(GetPlayerPed(), PRF_IsEnteringVehicle))
 			SET_VEH_RADIO_STATION(lastVehRadioOff, "OFF");
 	}
 	return;
 }
 }	//END nAudio
 
-void SetPlayerFlags()
+void UpdatePlayerOptions()
 {
-	if (iniFriendlyFire) { nGeneral::FriendlyFire(); }
-	if (iniDisableActionMode) { EnablePedResetFlag(playerPed, PRF_DisableActionMode); }
-	if (iniDisarmPlayerWhenShot) { nGeneral::DisarmPlayerWhenShot(); }
-	if (iniSprintInsideInteriors) { EnablePedConfigFlag(playerPed, PCF_IgnoreInteriorCheckForSprinting); }
-	if (iniAllowWeaponsInsideSafeHouse) { nGeneral::AllowWeaponsInsideSafeHouse(); }
+	if (INI::FriendlyFire) { nGeneral::FriendlyFire(); }
+	if (INI::DisableActionMode) { nGeneral::DisableActionMode(); }
+	if (INI::DisarmPlayerWhenShot) { nGeneral::DisarmPlayerWhenShot(); }
+	if (INI::SprintInsideInteriors) { nGeneral::EnableSprintInsideInteriors(); }
+	if (INI::AllowWeaponsInsideSafeHouse) { nGeneral::AllowWeaponsInsideSafeHouse(); }
 
 	//////////////////////////////////////Player Controls//////////////////////////////////
-	if (iniToggleFPSWalking) { nControls::ToggleFPSWalking(); }
-	if (iniCamFollowVehicleDuringHandbrake) { nControls::CamFollowVehicleDuringHandbrake(); }
-	if (iniDisableRecording) { nControls::DisableRecording(); }
-	if (iniDisableMobilePhone) { nControls::DisableMobilePhone(); }
+	if (INI::ToggleFPSWalking) { nControls::ToggleFPSWalking(); }
+	if (INI::CamFollowVehicleDuringHandbrake) { nControls::CamFollowVehicleDuringHandbrake(); }
+	if (INI::DisableAssistedMovement) { nControls::DisableAssistedMovement(); }
+	if (INI::DisableIdleCamera) { nControls::DisableIdleCamera(); }
+	if (INI::DisableRecording) { nControls::DisableRecording(); }
+	if (INI::DisableMobilePhone) { nControls::DisableMobilePhone(); }
 
 	//////////////////////////////////////Player Vehicle///////////////////////////////////
-	if (iniDisableCarMidAirAndRollControl) { nVehicle::DisableCarMidAirAndRollControl(); }
-	if (iniDisableForcedCarExplosionOnImpact) { nVehicle::DisableForcedCarExplosionOnImpact(); }
-	if (iniDisableEngineSmoke) { nVehicle::DisableEngineSmoke(); }
-	if (iniDisableEngineFire) { nVehicle::DisableEngineFire(); }
-	if (iniLeaveEngineOnWhenExitingVehicles) { nVehicle::LeaveEngineOnWhenExitingVehicles(); }
-	if (iniDisableWheelsAutoCenterOnCarExit) { nVehicle::DisableWheelsAutoCenterOnCarExit(); }
-	if (iniDisableRagdollOnVehicleRoof) { nVehicle::DisableRagdollOnVehicleRoof(); }
-	if (iniDisableFlyThroughWindscreen) { DisablePedConfigFlag(playerPed, PCF_WillFlyThroughWindscreen); }
-	if (iniDisableBikeKnockOff) { SET_PED_CAN_BE_KNOCKED_OFF_VEHICLE(playerPed, KNOCKOFFVEHICLE_NEVER); }
-	if (iniDisableDragOutCar) { SET_PED_CAN_BE_DRAGGED_OUT(playerPed, false); } //Same thing as setting CPED_CONFIG_FLAG_DontDragMeOutCar
-	if (iniDisableShallowWaterBikeJumpOut) { nVehicle::DisableShallowWaterBikeJumpOut(); }
-	if (iniDisableStuntJumps) { SET_STUNT_JUMPS_CAN_TRIGGER(false); }
+	if (INI::DisableCarMidAirAndRollControl) { nVehicle::DisableCarMidAirAndRollControl(); }
+	if (INI::DisableForcedCarExplosionOnImpact) { nVehicle::DisableForcedCarExplosionOnImpact(); }
+	if (INI::DisableEngineSmoke) { nVehicle::DisableEngineSmoke(); }
+	if (INI::DisableEngineFire) { nVehicle::DisableEngineFire(); }
+	if (INI::LeaveEngineOnWhenExitingVehicles) { nVehicle::LeaveEngineOnWhenExitingVehicles(); }
+	if (INI::DisableWheelsAutoCenterOnCarExit) { nVehicle::DisableWheelsAutoCenterOnCarExit(); }
+	if (INI::KeepCarHydraulicsPosition) { nVehicle::KeepCarHydraulicsPosition(); }
+	if (INI::DisableRagdollOnVehicleRoof) { nVehicle::DisableRagdollOnVehicleRoof(); }
+	if (INI::DisableFlyThroughWindscreen) { nVehicle::DisableFlyThroughWindscreen(); }
+	if (INI::DisableBikeKnockOff) { nVehicle::DisableBikeKnockOff(); }
+	if (INI::DisableDragOutCar) { nVehicle::DisableDragOutCar(); }
+	if (INI::DisableShallowWaterBikeJumpOut) { nVehicle::DisableShallowWaterBikeJumpOut(); }
+	if (INI::DisableStuntJumps) { nVehicle::DisableStuntJumps(); }
 
 	///////////////////////////////////////////HUD/////////////////////////////////////////
-	if (iniHideMinimapSatNav) { nHUD::HideSatNav(); }
-	if (iniHideMinimapBars) nHUD::HideMinimapBars();
+	if (INI::AllowGameExecutionOnPauseMenu) { nHUD::AllowGameExecutionOnPauseMenu(); }
+	if (INI::DisableHUDPostFX) { nHUD::DisableHUDPostFX(); }
+	if (INI::DisablePauseMenuPostFX) { nHUD::DisablePauseMenuPostFX(); }
+	if (INI::DisableSpecialAbilityPostFX) { nHUD::DisableSpecialAbilityPostFX(); }
+	if (INI::EnableBigMapToggle) { nHUD::EnableBigMapToggle(); }
+	if (INI::HideMinimapFog) { nHUD::HideMinimapFog(); }
+
+	if (INI::HideMinimapBars) nHUD::HideMinimapBars();
 	else
 	{
-		if (iniHideAbilityBarForNonMainCharacters && !iniAlwaysHideAbilityBar)
-			nHUD::HideAbilityBarForNonMainCharacters();
-
-		if (iniAlwaysHideAbilityBar) { nHUD::AlwaysHideAbilityBar(); }
-		if (iniReplaceArmourBarWithStamina) { nHUD::ReplaceArmourBarWithStamina(); }
+		if (INI::AlwaysHideAbilityBar) { nHUD::AlwaysHideAbilityBar(); }
+		else if (INI::HideAbilityBarForNonMainCharacters) nHUD::HideAbilityBarForNonMainCharacters();
+		if (INI::ReplaceArmourBarWithStamina) { nHUD::ReplaceArmourBarWithStamina(); }
 	}
+	if (INI::HideMinimapSatNav) { nHUD::HideSatNav(); }
+	if (INI::HideMinimapDepth) { nHUD::HideMinimapDepth(); }
 
 	//////////////////////////////////////////Audio////////////////////////////////////////
-	if (iniDisableWantedMusic) { SET_AUDIO_FLAG("WantedMusicDisabled", true); }
-	if (iniDisablePoliceScanner) { SET_AUDIO_FLAG("PoliceScannerDisabled", true); }
-	if (iniDisableFlyingMusic) { SET_AUDIO_FLAG("DisableFlightMusic", true); }
-	if (iniDisableRadioInterruptions) { nAudio::SetRadiosMusicOnly(); }
-	if (iniDefaultVehicleRadioOff) { nAudio::DefaultVehicleRadioOff(); }
+	if (INI::DisableWantedMusic) { nAudio::DisableWantedMusic(); }
+	if (INI::DisablePoliceScanner) { nAudio::DisablePoliceScanner(); }
+	if (INI::DisableFlyingMusic) { nAudio::DisableFlightMusic(); }
+	if (INI::DisableRadioInterruptions) { nAudio::SetRadiosMusicOnly(); }
+	if (INI::DefaultVehicleRadioOff) { nAudio::DefaultVehicleRadioOff(); }
 	return;
 }

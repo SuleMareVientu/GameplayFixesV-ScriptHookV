@@ -3,8 +3,9 @@
 // #include <types.h> //Already included in globals.h
 //Custom
 #include "peds.h"
-#include "../globals.h"
 #include "functions.h"
+#include "ini.h"
+#include "../globals.h"
 
 namespace
 {
@@ -53,10 +54,10 @@ void DisarmPedWhenShot(const Ped ped)
 	bool shoudDisarm = false;
 	if (HasEntityBeenDamagedByWeaponThisFrame(ped, WEAPON_STUNGUN, GENERALWEAPON_TYPE_INVALID))
 		shoudDisarm = true;
-	else if (CanDisarmPed(ped, iniDisarmIncludeLeftHand))
+	else if (CanDisarmPed(ped, INI::DisarmIncludeLeftHand))
 	{
 		CLEAR_ENTITY_LAST_WEAPON_DAMAGE(ped);
-		if (GetWeightedBool(iniDisarmChance))
+		if (GetWeightedBool(INI::DisarmChance))
 			shoudDisarm = true;
 	}
 
@@ -101,28 +102,28 @@ void SetupPedFunctions()
 {
 	countPedFuncs = 0;
 
-	if (iniDisableWrithe)
+	if (INI::DisableWrithe)
 		AddPedFuncToArr(DisableWrithe);
 
-	if (iniDisableHurt)
+	if (INI::DisableHurt)
 		AddPedFuncToArr(DisableHurt);
 
-	if (iniDisableSittingPedsInstantDeath)
+	if (INI::DisableSittingPedsInstantDeath)
 		AddPedFuncToArr(DisableSittingPedsInstantDeath);
 
-	if (iniDisarmPedWhenShot)
+	if (INI::DisarmPedWhenShot)
 		AddPedFuncToArr(DisarmPedWhenShot);
 
-	if (iniDisablePedOnlyDamagedByPlayer)
+	if (INI::DisablePedOnlyDamagedByPlayer)
 		AddPedFuncToArr(DisablePedOnlyDamagedByPlayer);
 
-	if (iniDisableDeadPedsJumpOutOfVehicle)
+	if (INI::DisableDeadPedsJumpOutOfVehicle)
 		AddPedFuncToArr(DisableDeadPedsJumpOutOfVehicle);
 	return;
 }
 
 //Heavy, uses gamepools
-void SetPedsPoolFlags()
+void UpdatePedsPool()
 {
 	//Get all peds
 	constexpr int ARR_SIZE = 1024;
@@ -131,7 +132,7 @@ void SetPedsPoolFlags()
 
 	LOOP(i, count)
 	{
-		if (peds[i] == playerPed || !IS_ENTITY_A_PED(peds[i]) || !IS_PED_HUMAN(peds[i]) || IS_ENTITY_DEAD(peds[i], false))
+		if (peds[i] == GetPlayerPed() || !IS_ENTITY_A_PED(peds[i]) || !IS_PED_HUMAN(peds[i]) || IS_ENTITY_DEAD(peds[i], false))
 			continue;
 
 		LOOP(j, countPedFuncs)

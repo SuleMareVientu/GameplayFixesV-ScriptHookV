@@ -1813,7 +1813,7 @@ namespace HUD
 	static void SET_HEALTH_HUD_DISPLAY_VALUES(int health, int capacity, bool wasAdded) { invoke<Void>(0x3F5CC444DCAAA8F2, health, capacity, wasAdded); } // 0x3F5CC444DCAAA8F2 0x7FB6FB2A b323
 	static void SET_MAX_HEALTH_HUD_DISPLAY(int maximumValue) { invoke<Void>(0x975D66A0BC17064C, maximumValue); } // 0x975D66A0BC17064C 0xF07D8CEF b323
 	static void SET_MAX_ARMOUR_HUD_DISPLAY(int maximumValue) { invoke<Void>(0x06A320535F5F0248, maximumValue); } // 0x06A320535F5F0248 0x827F14DE b323
-	static void SET_BIGMAP_ACTIVE(bool toggleBigMap, bool showFullMap) { invoke<Void>(0x231C8F89D0539D8F, toggleBigMap, showFullMap); } // 0x231C8F89D0539D8F 0x08EB83D2 b323
+	static void SET_BIGMAP_ACTIVE(bool EnableBigMapToggle, bool showFullMap) { invoke<Void>(0x231C8F89D0539D8F, EnableBigMapToggle, showFullMap); } // 0x231C8F89D0539D8F 0x08EB83D2 b323
 	static bool IS_HUD_COMPONENT_ACTIVE(int id) { return invoke<bool>(0xBC4C9EA5391ECC0D, id); } // 0xBC4C9EA5391ECC0D 0x6214631F b323
 	static bool IS_SCRIPTED_HUD_COMPONENT_ACTIVE(int id) { return invoke<bool>(0xDD100EB17A94FF65, id); } // 0xDD100EB17A94FF65 0x2B86F382 b323
 	static void HIDE_SCRIPTED_HUD_COMPONENT_THIS_FRAME(int id) { invoke<Void>(0xE374C498D8BADC14, id); } // 0xE374C498D8BADC14 0x31ABA127 b323

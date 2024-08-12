@@ -1,5 +1,5 @@
-#include <SimpleIni.h>
 #include "ini.h"
+#include <SimpleIni.h>
 #include "../globals.h"
 
 static constexpr char* playerGroup = "Player";
@@ -7,55 +7,69 @@ static constexpr char* HUDGroup = "HUD";
 static constexpr char* AudioGroup = "Audio";
 static constexpr char* pedsGroup = "Peds";
 
+namespace INI
+{
 //Player Settings
-bool iniFriendlyFire = true;
-bool iniDisableActionMode = false;
-bool iniDisarmPlayerWhenShot = true;
-bool iniSprintInsideInteriors = true;
-bool iniAllowWeaponsInsideSafeHouse = false;
+bool FriendlyFire = true;
+bool DisableActionMode = false;
+bool DisarmPlayerWhenShot = true;
+bool SprintInsideInteriors = true;
+bool AllowWeaponsInsideSafeHouse = false;
 //Player Controls
-bool iniToggleFPSWalking = true;
-bool iniCamFollowVehicleDuringHandbrake = false;
-int iniCamFollowVehDelay = 250;
-bool iniDisableRecording = false;
-bool iniDisableMobilePhone = false;
+bool DisableAssistedMovement = true;
+bool ToggleFPSWalking = true;
+bool CamFollowVehicleDuringHandbrake = false;
+int CamFollowVehDelay = 250;
+bool DisableIdleCamera = false;
+bool DisableRecording = false;
+bool DisableMobilePhone = false;
 //Player Vehicle
-bool iniDisableCarMidAirAndRollControl = true;
-bool iniDisableForcedCarExplosionOnImpact = true;
-bool iniDisableEngineSmoke = false;
-bool iniDisableEngineFire = false;
-bool iniLeaveEngineOnWhenExitingVehicles = true;
-bool iniDisableWheelsAutoCenterOnCarExit = true;
-bool iniDisableRagdollOnVehicleRoof = true;
-float iniMaxVehicleSpeed = 90.0f;
-bool iniDisableFlyThroughWindscreen = false;
-bool iniDisableBikeKnockOff = false;
-bool iniDisableDragOutCar = false;
-bool iniDisableShallowWaterBikeJumpOut = true;
-bool iniDisableStuntJumps = false;
+bool DisableCarMidAirAndRollControl = true;
+bool DisableForcedCarExplosionOnImpact = true;
+bool DisableEngineSmoke = false;
+bool DisableEngineFire = false;
+bool LeaveEngineOnWhenExitingVehicles = true;
+bool DisableWheelsAutoCenterOnCarExit = true;
+bool KeepCarHydraulicsPosition = true;
+bool DisableRagdollOnVehicleRoof = true;
+float MaxVehicleSpeed = 90.0f;
+bool DisableFlyThroughWindscreen = false;
+bool DisableBikeKnockOff = false;
+bool DisableDragOutCar = false;
+bool DisableShallowWaterBikeJumpOut = true;
+bool DisableStuntJumps = false;
 //HUD
-bool iniHideMinimapSatNav = false;
-bool iniHideMinimapBars = false;
-bool iniHideAbilityBarForNonMainCharacters = true;
-bool iniAlwaysHideAbilityBar = false;
-bool iniReplaceArmourBarWithStamina = false;
-bool iniMergeHealthAndArmour = true;
+bool AllowGameExecutionOnPauseMenu = false;
+bool DisablePauseMenuPostFX = false;
+bool DisableHUDPostFX = false;
+bool DisableSpecialAbilityPostFX = false;
+bool EnableBigMapToggle = true;
+bool HideMinimapFog = true;
+bool HideMinimapBars = false;
+bool AlwaysHideAbilityBar = false;
+bool HideAbilityBarForNonMainCharacters = true;
+bool ReplaceArmourBarWithStamina = false;
+bool MergeHealthAndArmour = true;
+bool HideMinimapSatNav = false;
+bool HideMinimapDepth = false;
 //Audio
-bool iniDisableWantedMusic = false;
-bool iniDisablePoliceScanner = false;
-bool iniDisableFlyingMusic = false;
-bool iniDisableRadioInterruptions = false;
-bool iniDefaultVehicleRadioOff = false;
+bool DisableWantedMusic = false;
+bool DisablePoliceScanner = false;
+bool DisableFlyingMusic = false;
+bool DisableRadioInterruptions = false;
+bool DefaultVehicleRadioOff = false;
 
 //Peds Settings
-bool iniDisableWrithe = true;
-bool iniDisableHurt = true;
-bool iniDisableSittingPedsInstantDeath = true;
-bool iniDisarmPedWhenShot = true;
-int iniDisarmChance = 50;
-bool iniDisarmIncludeLeftHand = false;
-bool iniDisablePedOnlyDamagedByPlayer = true;
-bool iniDisableDeadPedsJumpOutOfVehicle = true;
+bool DisableWrithe = true;
+bool DisableHurt = true;
+bool DisableSittingPedsInstantDeath = true;
+bool DisarmPedWhenShot = true;
+int DisarmChance = 50;
+bool DisarmIncludeLeftHand = false;
+bool DisablePedOnlyDamagedByPlayer = true;
+bool DisableDeadPedsJumpOutOfVehicle = true;
+}
+using namespace INI;
 
 void ReadINI()
 {
@@ -66,58 +80,68 @@ void ReadINI()
 		return;
 
 	//////////////////////////////////////Player//////////////////////////////////////////
-	iniFriendlyFire = ini.GetBoolValue(playerGroup, "FriendlyFire", iniFriendlyFire);
-	iniDisableActionMode = ini.GetBoolValue(playerGroup, "DisableActionMode", iniDisableActionMode);
-	iniDisarmPlayerWhenShot = ini.GetBoolValue(playerGroup, "DisarmPlayerWhenShot", iniDisarmPlayerWhenShot);
-	iniSprintInsideInteriors = ini.GetBoolValue(playerGroup, "SprintInsideInteriors", iniSprintInsideInteriors);
-	iniAllowWeaponsInsideSafeHouse = ini.GetBoolValue(playerGroup, "AllowWeaponsInsideSafeHouse", iniAllowWeaponsInsideSafeHouse);
+	FriendlyFire = ini.GetBoolValue(playerGroup, "FriendlyFire", FriendlyFire);
+	DisableActionMode = ini.GetBoolValue(playerGroup, "DisableActionMode", DisableActionMode);
+	DisarmPlayerWhenShot = ini.GetBoolValue(playerGroup, "DisarmPlayerWhenShot", DisarmPlayerWhenShot);
+	SprintInsideInteriors = ini.GetBoolValue(playerGroup, "SprintInsideInteriors", SprintInsideInteriors);
+	AllowWeaponsInsideSafeHouse = ini.GetBoolValue(playerGroup, "AllowWeaponsInsideSafeHouse", AllowWeaponsInsideSafeHouse);
 
 	//////////////////////////////////////Player Controls//////////////////////////////////
-	iniToggleFPSWalking = ini.GetBoolValue(playerGroup, "ToggleFPSWalking", iniToggleFPSWalking);
-	iniCamFollowVehicleDuringHandbrake = ini.GetBoolValue(playerGroup, "CamFollowVehicleDuringHandbrake", iniCamFollowVehicleDuringHandbrake);
-	iniCamFollowVehDelay = ini.GetLongValue(playerGroup, "CamFollowVehDelay", iniCamFollowVehDelay);
-	iniDisableRecording = ini.GetBoolValue(playerGroup, "DisableRecording", iniDisableRecording);
-	iniDisableMobilePhone = ini.GetBoolValue(playerGroup, "DisableMobilePhone", iniDisableMobilePhone);
+	DisableAssistedMovement = ini.GetBoolValue(playerGroup, "DisableAssistedMovement", DisableAssistedMovement);
+	ToggleFPSWalking = ini.GetBoolValue(playerGroup, "ToggleFPSWalking", ToggleFPSWalking);
+	CamFollowVehicleDuringHandbrake = ini.GetBoolValue(playerGroup, "CamFollowVehicleDuringHandbrake", CamFollowVehicleDuringHandbrake);
+	CamFollowVehDelay = ini.GetLongValue(playerGroup, "CamFollowVehDelay", CamFollowVehDelay);
+	DisableIdleCamera = ini.GetBoolValue(playerGroup, "DisableIdleCamera", DisableIdleCamera);
+	DisableRecording = ini.GetBoolValue(playerGroup, "DisableRecording", DisableRecording);
+	DisableMobilePhone = ini.GetBoolValue(playerGroup, "DisableMobilePhone", DisableMobilePhone);
 
 	//////////////////////////////////////Player Vehicle///////////////////////////////////
-	iniDisableCarMidAirAndRollControl = ini.GetBoolValue(playerGroup, "DisableCarMidAirAndRollControl", iniDisableCarMidAirAndRollControl);
-	iniDisableForcedCarExplosionOnImpact = ini.GetBoolValue(playerGroup, "DisableForcedCarExplosionOnImpact", iniDisableForcedCarExplosionOnImpact);
-	iniDisableEngineSmoke = ini.GetBoolValue(playerGroup, "DisableEngineSmoke", iniDisableEngineSmoke);
-	iniDisableEngineFire = ini.GetBoolValue(playerGroup, "DisableEngineFire", iniDisableEngineFire);
-	iniLeaveEngineOnWhenExitingVehicles = ini.GetBoolValue(playerGroup, "LeaveEngineOnWhenExitingVehicles", iniLeaveEngineOnWhenExitingVehicles);
-	iniDisableWheelsAutoCenterOnCarExit = ini.GetBoolValue(playerGroup, "DisableWheelsAutoCenterOnCarExit", iniDisableWheelsAutoCenterOnCarExit);
-	iniDisableRagdollOnVehicleRoof = ini.GetBoolValue(playerGroup, "DisableRagdollOnVehicleRoof", iniDisableRagdollOnVehicleRoof);
+	DisableCarMidAirAndRollControl = ini.GetBoolValue(playerGroup, "DisableCarMidAirAndRollControl", DisableCarMidAirAndRollControl);
+	DisableForcedCarExplosionOnImpact = ini.GetBoolValue(playerGroup, "DisableForcedCarExplosionOnImpact", DisableForcedCarExplosionOnImpact);
+	DisableEngineSmoke = ini.GetBoolValue(playerGroup, "DisableEngineSmoke", DisableEngineSmoke);
+	DisableEngineFire = ini.GetBoolValue(playerGroup, "DisableEngineFire", DisableEngineFire);
+	LeaveEngineOnWhenExitingVehicles = ini.GetBoolValue(playerGroup, "LeaveEngineOnWhenExitingVehicles", LeaveEngineOnWhenExitingVehicles);
+	KeepCarHydraulicsPosition = ini.GetBoolValue(playerGroup, "KeepCarHydraulicsPosition", KeepCarHydraulicsPosition);
+	DisableWheelsAutoCenterOnCarExit = ini.GetBoolValue(playerGroup, "DisableWheelsAutoCenterOnCarExit", DisableWheelsAutoCenterOnCarExit);
+	DisableRagdollOnVehicleRoof = ini.GetBoolValue(playerGroup, "DisableRagdollOnVehicleRoof", DisableRagdollOnVehicleRoof);
 	#pragma warning(suppress: 4244)
-	iniMaxVehicleSpeed = ini.GetDoubleValue(playerGroup, "MaxVehicleSpeed", iniMaxVehicleSpeed);
-	iniDisableFlyThroughWindscreen = ini.GetBoolValue(playerGroup, "DisableFlyThroughWindscreen", iniDisableFlyThroughWindscreen);
-	iniDisableBikeKnockOff = ini.GetBoolValue(playerGroup, "DisableBikeKnockOff", iniDisableBikeKnockOff);
-	iniDisableDragOutCar = ini.GetBoolValue(playerGroup, "DisableDragOutCar", iniDisableDragOutCar);
-	iniDisableShallowWaterBikeJumpOut = ini.GetBoolValue(playerGroup, "DisableShallowWaterBikeJumpOut", iniDisableShallowWaterBikeJumpOut);
-	iniDisableStuntJumps = ini.GetBoolValue(playerGroup, "DisableStuntJumps", iniDisableStuntJumps);
+	MaxVehicleSpeed = ini.GetDoubleValue(playerGroup, "MaxVehicleSpeed", MaxVehicleSpeed);
+	DisableFlyThroughWindscreen = ini.GetBoolValue(playerGroup, "DisableFlyThroughWindscreen", DisableFlyThroughWindscreen);
+	DisableBikeKnockOff = ini.GetBoolValue(playerGroup, "DisableBikeKnockOff", DisableBikeKnockOff);
+	DisableDragOutCar = ini.GetBoolValue(playerGroup, "DisableDragOutCar", DisableDragOutCar);
+	DisableShallowWaterBikeJumpOut = ini.GetBoolValue(playerGroup, "DisableShallowWaterBikeJumpOut", DisableShallowWaterBikeJumpOut);
+	DisableStuntJumps = ini.GetBoolValue(playerGroup, "DisableStuntJumps", DisableStuntJumps);
 
 	//////////////////////////////////////HUD//////////////////////////////////////////////
-	iniHideMinimapSatNav = ini.GetBoolValue(HUDGroup, "HideMinimapSatNav", iniHideMinimapSatNav);
-	iniHideMinimapBars = ini.GetBoolValue(HUDGroup, "HideMinimapBars", iniHideMinimapBars);
-	iniHideAbilityBarForNonMainCharacters = ini.GetBoolValue(HUDGroup, "HideAbilityBarForNonMainCharacters", iniHideAbilityBarForNonMainCharacters);
-	iniAlwaysHideAbilityBar = ini.GetBoolValue(HUDGroup, "AlwaysHideAbilityBar", iniAlwaysHideAbilityBar);
-	iniReplaceArmourBarWithStamina = ini.GetBoolValue(HUDGroup, "ReplaceArmourBarWithStamina", iniReplaceArmourBarWithStamina);
-	iniMergeHealthAndArmour = ini.GetBoolValue(HUDGroup, "MergeHealthAndArmour", iniMergeHealthAndArmour);
+	AllowGameExecutionOnPauseMenu = ini.GetBoolValue(HUDGroup, "AllowGameExecutionOnPauseMenu", AllowGameExecutionOnPauseMenu);
+	DisablePauseMenuPostFX = ini.GetBoolValue(HUDGroup, "DisablePauseMenuPostFX", DisablePauseMenuPostFX);
+	DisableHUDPostFX = ini.GetBoolValue(HUDGroup, "DisableHUDPostFX", DisableHUDPostFX);
+	DisableSpecialAbilityPostFX = ini.GetBoolValue(HUDGroup, "DisableSpecialAbilityPostFX", DisableSpecialAbilityPostFX);
+	EnableBigMapToggle = ini.GetBoolValue(HUDGroup, "EnableBigMapToggle", EnableBigMapToggle);
+	HideMinimapFog = ini.GetBoolValue(HUDGroup, "HideMinimapFog", HideMinimapFog);
+	HideMinimapBars = ini.GetBoolValue(HUDGroup, "HideMinimapBars", HideMinimapBars);
+	AlwaysHideAbilityBar = ini.GetBoolValue(HUDGroup, "AlwaysHideAbilityBar", AlwaysHideAbilityBar);
+	HideAbilityBarForNonMainCharacters = ini.GetBoolValue(HUDGroup, "HideAbilityBarForNonMainCharacters", HideAbilityBarForNonMainCharacters);
+	ReplaceArmourBarWithStamina = ini.GetBoolValue(HUDGroup, "ReplaceArmourBarWithStamina", ReplaceArmourBarWithStamina);
+	MergeHealthAndArmour = ini.GetBoolValue(HUDGroup, "MergeHealthAndArmour", MergeHealthAndArmour);
+	HideMinimapSatNav = ini.GetBoolValue(HUDGroup, "HideMinimapSatNav", HideMinimapSatNav);
+	HideMinimapDepth = ini.GetBoolValue(HUDGroup, "HideMinimapDepth", HideMinimapDepth);
 
 	/////////////////////////////////////Audio/////////////////////////////////////////////
-	iniDisableWantedMusic = ini.GetBoolValue(AudioGroup, "DisableWantedMusic", iniDisableWantedMusic);
-	iniDisablePoliceScanner = ini.GetBoolValue(AudioGroup, "DisablePoliceScanner", iniDisablePoliceScanner);
-	iniDisableFlyingMusic = ini.GetBoolValue(AudioGroup, "DisableFlyingMusic", iniDisableFlyingMusic);
-	iniDisableRadioInterruptions = ini.GetBoolValue(AudioGroup, "DisableRadioInterruptions", iniDisableRadioInterruptions);
-	iniDefaultVehicleRadioOff = ini.GetBoolValue(AudioGroup, "DefaultVehicleRadioOff", iniDefaultVehicleRadioOff);
+	DisableWantedMusic = ini.GetBoolValue(AudioGroup, "DisableWantedMusic", DisableWantedMusic);
+	DisablePoliceScanner = ini.GetBoolValue(AudioGroup, "DisablePoliceScanner", DisablePoliceScanner);
+	DisableFlyingMusic = ini.GetBoolValue(AudioGroup, "DisableFlyingMusic", DisableFlyingMusic);
+	DisableRadioInterruptions = ini.GetBoolValue(AudioGroup, "DisableRadioInterruptions", DisableRadioInterruptions);
+	DefaultVehicleRadioOff = ini.GetBoolValue(AudioGroup, "DefaultVehicleRadioOff", DefaultVehicleRadioOff);
 
 	//////////////////////////////////////Peds/////////////////////////////////////////////
-	iniDisableWrithe = ini.GetBoolValue(pedsGroup, "DisableWrithe", iniDisableWrithe);
-	iniDisableHurt = ini.GetBoolValue(pedsGroup, "DisableHurt", iniDisableHurt);
-	iniDisableSittingPedsInstantDeath = ini.GetBoolValue(pedsGroup, "DisableSittingPedsInstantDeath", iniDisableSittingPedsInstantDeath);
-	iniDisarmPedWhenShot = ini.GetBoolValue(pedsGroup, "DisarmPedWhenShot", iniDisarmPedWhenShot);
-	iniDisarmChance = ini.GetLongValue(playerGroup, "DisarmChance", iniDisarmChance);
-	iniDisarmIncludeLeftHand = ini.GetBoolValue(pedsGroup, "DisarmIncludeLeftHand", iniDisarmIncludeLeftHand);
-	iniDisablePedOnlyDamagedByPlayer = ini.GetBoolValue(pedsGroup, "DisablePedOnlyDamagedByPlayer", iniDisablePedOnlyDamagedByPlayer);
-	iniDisableDeadPedsJumpOutOfVehicle = ini.GetBoolValue(pedsGroup, "DisableDeadPedsJumpOutOfVehicle", iniDisableDeadPedsJumpOutOfVehicle);
+	DisableWrithe = ini.GetBoolValue(pedsGroup, "DisableWrithe", DisableWrithe);
+	DisableHurt = ini.GetBoolValue(pedsGroup, "DisableHurt", DisableHurt);
+	DisableSittingPedsInstantDeath = ini.GetBoolValue(pedsGroup, "DisableSittingPedsInstantDeath", DisableSittingPedsInstantDeath);
+	DisarmPedWhenShot = ini.GetBoolValue(pedsGroup, "DisarmPedWhenShot", DisarmPedWhenShot);
+	DisarmChance = ini.GetLongValue(playerGroup, "DisarmChance", DisarmChance);
+	DisarmIncludeLeftHand = ini.GetBoolValue(pedsGroup, "DisarmIncludeLeftHand", DisarmIncludeLeftHand);
+	DisablePedOnlyDamagedByPlayer = ini.GetBoolValue(pedsGroup, "DisablePedOnlyDamagedByPlayer", DisablePedOnlyDamagedByPlayer);
+	DisableDeadPedsJumpOutOfVehicle = ini.GetBoolValue(pedsGroup, "DisableDeadPedsJumpOutOfVehicle", DisableDeadPedsJumpOutOfVehicle);
 	return;
 }

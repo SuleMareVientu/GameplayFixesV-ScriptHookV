@@ -20,8 +20,8 @@ void PrintHelp(char* string, bool playSound = false, int overrideDuration = -1);
 
 bool ArrayContains(int value, const int a[], int n);
 bool GetWeightedBool(int chance);
-Vehicle GetVehiclePedIsIn(Ped ped, bool includeEntering = true);
+Vehicle GetVehiclePedIsIn(Ped ped, bool includeEntering = true, bool includeExiting = false);
 bool HasEntityBeenDamagedByWeaponThisFrame(Ped ped, Hash weaponHash, int weaponType = 0);
 bool CanDisarmPed(Ped ped, bool includeLeftHand);
 
-void SetPlayerFlags();
+void UpdatePlayerOptions();
