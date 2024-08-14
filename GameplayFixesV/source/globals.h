@@ -1,32 +1,46 @@
 #pragma once
 #include <types.h>
+#include "utils\functions.h"
 
-#define LOOP(i, n) for(int i = 0; i < n; i++)
+#define LOOP(i, n) for(int i = 0; i < n; ++i)
 
-//Globals
-namespace nPlayerGlobals
+constexpr unsigned int Joaat(const char* str)
 {
-extern Player player;
-extern Ped playerPed;
-extern Vector3 playerCoords;
+	if (str == nullptr || *str == '\0')
+		return NULL;
+
+	unsigned int n = NULL;
+	for (unsigned long long i = 0; str[i] != '\0'; ++i)
+	{
+		unsigned char b = static_cast<unsigned char>(str[i]);
+		if (b >= 65 && b <= 90) // A-Z
+			b += 32; // Convert to lowercase
+		else if (b == 92) // Backslash
+			b = 47; // Convert to forward slash
+
+		n += b;
+		n += n << 10;
+		n ^= n >> 6;
+	}
+
+	n += n << 3;
+	n ^= n >> 11;
+	n += n << 15;
+	return n;
 }
 
-inline Player GetPlayer() { return nPlayerGlobals::player; }
-inline Ped GetPlayerPed() { return nPlayerGlobals::playerPed; }
-inline Vector3 GetPlayerCoords() { return nPlayerGlobals::playerCoords; }
-
 //Constants
-constexpr int HUD_WANTED_STARS = 1;
+constexpr Vector3 nullVec{ NULL, NULL, NULL, NULL, NULL, NULL };
 
 //Hashes
-constexpr int FE_MENU_VERSION_SP_PAUSE = 0xD528C7E2;
-constexpr int strp3off = 0x5E7A73AE;
-constexpr int WEAPON_UNARMED = 0xA2719263;
-constexpr int WEAPON_STUNGUN = 0x3656C8C1;
+constexpr unsigned int FE_MENU_VERSION_SP_PAUSE = Joaat("FE_MENU_VERSION_SP_PAUSE");
+constexpr unsigned int strp3off = Joaat("strp3off");
+constexpr unsigned int WEAPON_UNARMED = Joaat("WEAPON_UNARMED");
+constexpr unsigned int WEAPON_STUNGUN = Joaat("WEAPON_STUNGUN");
 
-constexpr int MichaelPed = 0xD7114C9;		//Player_Zero
-constexpr int FranklinPed = 0x9B22DBAF;		//Player_One
-constexpr int TrevorPed = 0x9B810FA2;		//Player_Two
+constexpr unsigned int MichaelPed = Joaat("Player_Zero");
+constexpr unsigned int FranklinPed = Joaat("Player_One");
+constexpr unsigned int TrevorPed = Joaat("Player_Two");
 
 //Ped move blend ratios
 constexpr float PEDMOVEBLENDRATIO_STILL = 0.0f;
@@ -67,6 +81,7 @@ enum ePedFlag {
 	PCF_DieWhenRagdoll = 33,
 	PCF_AllowLockonToFriendlyPlayers = 45,
 	PCF_IsSitting = 68,					//is the ped sitting
+	PCF_IsAimingGun = 78,			//Is performing an aim task
 	PCF_UNUSED_REPLACE_ME = 125,
 	PCF_CanAttackFriendly = 140,		//True allows this ped to attack peds theya re friendly with
 	PCF_IsInjured = 166,				//When true, the ped will use injured movement anim sets and getup animations.
@@ -85,10 +100,12 @@ enum ePedFlag {
 	PCF_IgnoreInteriorCheckForSprinting = 427,
 
 	//Ped Reset Flags
+	PRF_IsAiming = 27,							//TASK_GUN or TASK_USE_COVER
 	PRF_HurtThisFrame = 127,					//The ped has entered the hurt state this frame
 	PRF_ShootFromGround = 140,
 	PRF_IsEnteringOrExitingVehicle = 152,		// TASK_ENTER_VEHICLE or TASK_EXIT_VEHICLE
-	PRF_MakeHeadInvisble = 166,					// If set, scale the head of the ped to 0.001
+	PRD_HasGunTaskWithAimingState = 154,		// Ped is running TASK_GUN and task's state is State_Aim
+	PRF_MakeHeadInvisible = 166,				// If set, scale the head of the ped to 0.001
 	PRF_IsExitingVehicle = 199,					// TASK_EXIT_VEHICLE
 	PRF_DisableActionMode = 200,				// Disable combat anims for ped.
 	PRF_IsEnteringVehicle = 230,				// TASK_ENTER_VEHICLE
@@ -188,7 +205,7 @@ enum eCombatAttribute {
 	CA_BLOCK_FIRE_FOR_VEHICLE_PASSENGER_MOUNTED_GUNS = 90
 };
 
-enum eKnockOffVehicl {
+enum eKnockOffVehicle {
 	KNOCKOFFVEHICLE_DEFAULT,
 	KNOCKOFFVEHICLE_NEVER,
 	KNOCKOFFVEHICLE_EASY,
@@ -317,64 +334,64 @@ enum ePedBoneTag {
 	BONETAG_NULL = -1,
 
 	BONETAG_ROOT = 0,
-	BONETAG_PELVIS = 11816,
-	BONETAG_SPINE = 23553,
-	BONETAG_SPINE1 = 24816,
-	BONETAG_SPINE2 = 24817,
-	BONETAG_SPINE3 = 24818,
-	BONETAG_NECK = 39317,
-	BONETAG_HEAD = 31086,
-	BONETAG_R_CLAVICLE = 10706,
-	BONETAG_R_UPPERARM = 40269,
-	BONETAG_R_FOREARM = 28252,
-	BONETAG_R_HAND = 57005,
-	BONETAG_R_FINGER0 = 58866,
-	BONETAG_R_FINGER01 = 64016,
-	BONETAG_R_FINGER02 = 64017,
-	BONETAG_R_FINGER1 = 58867,
-	BONETAG_R_FINGER11 = 64096,
-	BONETAG_R_FINGER12 = 64097,
-	BONETAG_R_FINGER2 = 58868,
-	BONETAG_R_FINGER21 = 64112,
-	BONETAG_R_FINGER22 = 64113,
-	BONETAG_R_FINGER3 = 58869,
-	BONETAG_R_FINGER31 = 64064,
-	BONETAG_R_FINGER32 = 64065,
-	BONETAG_R_FINGER4 = 58870,
-	BONETAG_R_FINGER41 = 64080,
-	BONETAG_R_FINGER42 = 64081,
+	BONETAG_PELVIS = 0x2E28,
+	BONETAG_SPINE = 0x5C01,
+	BONETAG_SPINE1 = 0x60F0,
+	BONETAG_SPINE2 = 0x60F1,
+	BONETAG_SPINE3 = 0x60F2,
+	BONETAG_NECK = 0x9995,
+	BONETAG_HEAD = 0x796E,
+	BONETAG_R_CLAVICLE = 0x29D2,
+	BONETAG_R_UPPERARM = 0x9D4D,
+	BONETAG_R_FOREARM = 0x6E5C,
+	BONETAG_R_HAND = 0xDEAD,
+	BONETAG_R_FINGER0 = 0xE5F2,
+	BONETAG_R_FINGER01 = 0xFA10,
+	BONETAG_R_FINGER02 = 0xFA11,
+	BONETAG_R_FINGER1 = 0xE5F3,
+	BONETAG_R_FINGER11 = 0xFA60,
+	BONETAG_R_FINGER12 = 0xFA61,
+	BONETAG_R_FINGER2 = 0xE5F4,
+	BONETAG_R_FINGER21 = 0xFA70,
+	BONETAG_R_FINGER22 = 0xFA71,
+	BONETAG_R_FINGER3 = 0xE5F5,
+	BONETAG_R_FINGER31 = 0xFA40,
+	BONETAG_R_FINGER32 = 0xFA41,
+	BONETAG_R_FINGER4 = 0xE5F6,
+	BONETAG_R_FINGER41 = 0xFA50,
+	BONETAG_R_FINGER42 = 0xFA51,
 
-	BONETAG_L_CLAVICLE = 64729,
-	BONETAG_L_UPPERARM = 45509,
-	BONETAG_L_FOREARM = 61163,
-	BONETAG_L_HAND = 18905,
-	BONETAG_L_FINGER0 = 26610,
-	BONETAG_L_FINGER01 = 4089,
-	BONETAG_L_FINGER02 = 4090,
-	BONETAG_L_FINGER1 = 26611,
-	BONETAG_L_FINGER11 = 4169,
-	BONETAG_L_FINGER12 = 4170,
-	BONETAG_L_FINGER2 = 26612,
-	BONETAG_L_FINGER21 = 4185,
-	BONETAG_L_FINGER22 = 4186,
-	BONETAG_L_FINGER3 = 26613,
-	BONETAG_L_FINGER31 = 4137,
-	BONETAG_L_FINGER32 = 4138,
-	BONETAG_L_FINGER4 = 26614,
-	BONETAG_L_FINGER41 = 4153,
-	BONETAG_L_FINGER42 = 4154,
+	BONETAG_L_CLAVICLE = 0xFCD9,
+	BONETAG_L_UPPERARM = 0xB1C5,
+	BONETAG_L_FOREARM = 0xEEEB,
+	BONETAG_L_HAND = 0x49D9,
+	BONETAG_L_FINGER0 = 0x67F2,
+	BONETAG_L_FINGER01 = 0xFF9,
+	BONETAG_L_FINGER02 = 0xFFA,
+	BONETAG_L_FINGER1 = 0x67F3,
+	BONETAG_L_FINGER11 = 0x1049,
+	BONETAG_L_FINGER12 = 0x104A,
+	BONETAG_L_FINGER2 = 0x67F4,
+	BONETAG_L_FINGER21 = 0x1059,
+	BONETAG_L_FINGER22 = 0x105A,
+	BONETAG_L_FINGER3 = 0x67F5,
+	BONETAG_L_FINGER31 = 0x1029,
+	BONETAG_L_FINGER32 = 0x102A,
+	BONETAG_L_FINGER4 = 0x67F6,
+	BONETAG_L_FINGER41 = 0x1039,
+	BONETAG_L_FINGER42 = 0x103A,
 
-	BONETAG_L_THIGH = 58271,
-	BONETAG_L_CALF = 63931,
-	BONETAG_L_FOOT = 14201,
-	BONETAG_L_TOE = 2108,
-	BONETAG_R_THIGH = 51826,
-	BONETAG_R_CALF = 36864,
-	BONETAG_R_FOOT = 52301,
-	BONETAG_R_TOE = 20781,
+	BONETAG_L_THIGH = 0xE39F,
+	BONETAG_L_CALF = 0xF9BB,
+	BONETAG_L_FOOT = 0x3779,
+	BONETAG_L_TOE = 0x83C,
+	BONETAG_R_THIGH = 0xCA72,
+	BONETAG_R_CALF = 0x9000,
+	BONETAG_R_FOOT = 0xCC4D,
+	BONETAG_R_TOE = 0x512D,
 
-	BONETAG_PH_L_HAND = 60309,
-	BONETAG_PH_R_HAND = 28422
+	BONETAG_PH_L_HAND = 0xEB95,
+	BONETAG_PH_R_HAND = 0x6F06
 };
 
 enum eGeneralWeaponType
@@ -382,6 +399,67 @@ enum eGeneralWeaponType
 	GENERALWEAPON_TYPE_INVALID = 0,
 	GENERALWEAPON_TYPE_ANYMELEE,
 	GENERALWEAPON_TYPE_ANYWEAPON
+};
+
+enum eWeaponGroup {
+	WEAPONGROUP_INVALID = 0,
+	WEAPONGROUP_MELEE = 0xD49321D4,				//GROUP_MELEE
+	WEAPONGROUP_PISTOL = 0x18D5FA97,			//GROUP_PISTOL
+	WEAPONGROUP_SMG = 0xC6E9A5C5,				//GROUP_SMG
+	WEAPONGROUP_RIFLE = 0x39D5C192,				//GROUP_RIFLE
+	WEAPONGROUP_MG = 0x451B04BC,				//GROUP_MG
+	WEAPONGROUP_SHOTGUN = 0x33431399,			//GROUP_SHOTGUN
+	WEAPONGROUP_SNIPER = 0xB7BBD827,			//GROUP_SNIPER
+	WEAPONGROUP_HEAVY = 0xA27A4F9F,				//GROUP_HEAVY
+	WEAPONGROUP_THROWN = 0x5C4C5883,			//GROUP_THROWN
+	WEAPONGROUP_RUBBERGUN = 0x054C7FFC,			//GROUP_RUBBERGUN
+	WEAPONGROUP_STUNGUN = 0x29268262,			//GROUP_STUNGUN
+	WEAPONGROUP_FIREEXTINGUISHER = 0xFDBF656C,	//GROUP_FIREEXTINGUISHER
+	WEAPONGROUP_PETROLCAN = 0x5F1BE07C,			//GROUP_PETROLCAN
+	WEAPONGROUP_LOUDHAILER = 0x1E3DEED0,		//GROUP_LOUDHAILER
+	WEAPONGROUP_DIGISCANNER = 0xD2F7B56B,		//GROUP_DIGISCANNER
+	WEAPONGROUP_NIGHTVISION = 0xD035CE98,		//GROUP_NIGHTVISION
+	WEAPONGROUP_PARACHUTE = 0x19B9968F,			//GROUP_PARACHUTE
+	WEAPONGROUP_JETPACK = 0x8B16BE36,			//GROUP_JETPACK
+	WEAPONGROUP_METALDETECTOR = 0xE0154937		//GROUP_METALDETECTOR
+};
+
+enum eWeaponCheckFlags {
+	WF_INCLUDE_MELEE = 1,
+	WF_INCLUDE_PROJECTILE = 2,
+	WF_INCLUDE_GUN = 4
+};
+
+enum eHudComponents
+{
+	//HUD = 0,
+	HUD_WANTED_STARS = 1,
+	HUD_WEAPON_ICON,
+	HUD_CASH,
+	HUD_MP_CASH,
+	HUD_MP_MESSAGE,
+	HUD_VEHICLE_NAME,
+	HUD_AREA_NAME,
+	HUD_UNUSED,
+	HUD_STREET_NAME,
+	HUD_HELP_TEXT,
+	HUD_FLOATING_HELP_TEXT_1,
+	HUD_FLOATING_HELP_TEXT_2,
+	HUD_CASH_CHANGE,
+	HUD_RETICLE,
+	HUD_SUBTITLE_TEXT,
+	HUD_RADIO_STATIONS,
+	HUD_SAVING_GAME,
+	HUD_GAME_STREAM,
+	HUD_WEAPON_WHEEL,
+	HUD_WEAPON_WHEEL_STATS,
+	MAX_HUD_COMPONENTS
+};
+
+enum eStartRagdollTask {
+	TASK_RELAX = 0,
+	TASK_NM_SCRIPT,
+	TASK_NM_BALANCE
 };
 
 /*

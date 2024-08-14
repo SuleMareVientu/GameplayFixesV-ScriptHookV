@@ -2,6 +2,7 @@
 #include <SimpleIni.h>
 #include "../globals.h"
 
+static constexpr char* inputGroup = "Input";
 static constexpr char* playerGroup = "Player";
 static constexpr char* HUDGroup = "HUD";
 static constexpr char* AudioGroup = "Audio";
@@ -9,6 +10,8 @@ static constexpr char* pedsGroup = "Peds";
 
 namespace INI
 {
+//Input Settings
+unsigned long ReloadIniKey = VK_F12;
 //Player Settings
 bool FriendlyFire = true;
 bool DisableActionMode = false;
@@ -18,6 +21,7 @@ bool AllowWeaponsInsideSafeHouse = false;
 //Player Controls
 bool DisableAssistedMovement = true;
 bool ToggleFPSWalking = true;
+int DisableCameraAutoCenter = NULL;
 bool CamFollowVehicleDuringHandbrake = false;
 int CamFollowVehDelay = 250;
 bool DisableIdleCamera = false;
@@ -31,6 +35,7 @@ bool DisableEngineFire = false;
 bool LeaveEngineOnWhenExitingVehicles = true;
 bool DisableWheelsAutoCenterOnCarExit = true;
 bool KeepCarHydraulicsPosition = true;
+bool EnableHeliWaterPhysics = true;
 bool DisableRagdollOnVehicleRoof = true;
 float MaxVehicleSpeed = 90.0f;
 bool DisableFlyThroughWindscreen = false;
@@ -43,7 +48,8 @@ bool AllowGameExecutionOnPauseMenu = false;
 bool DisablePauseMenuPostFX = false;
 bool DisableHUDPostFX = false;
 bool DisableSpecialAbilityPostFX = false;
-bool EnableBigMapToggle = true;
+bool EnableBigMapToggle = false;
+float SetRadarZoom = -1.0f;
 bool DisableMinimapTilt = false;
 bool HideMinimapFog = true;
 bool HideMinimapSatNav = false;
@@ -53,6 +59,10 @@ bool AlwaysHideAbilityBar = false;
 bool HideAbilityBarForNonMainCharacters = true;
 bool ReplaceArmourBarWithStamina = false;
 bool MergeHealthAndArmour = true;
+bool HideHudComponents = false;
+char* HudComponents = "HUD_VEHICLE_NAME, HUD_AREA_NAME, HUD_STREET_NAME";
+bool HideWeaponReticle = false;
+bool HideEnemiesBlips = false;
 //Audio
 bool DisableWantedMusic = false;
 bool DisablePoliceScanner = false;
@@ -63,6 +73,7 @@ bool DefaultVehicleRadioOff = false;
 //Peds Settings
 bool DisableWrithe = true;
 bool DisableHurt = true;
+bool DisableShootFromGround = true;
 bool DisableSittingPedsInstantDeath = true;
 bool DisarmPedWhenShot = true;
 int DisarmChance = 50;
@@ -72,13 +83,15 @@ bool DisableDeadPedsJumpOutOfVehicle = true;
 }
 using namespace INI;
 
+static CSimpleIniA ini;
 void ReadINI()
 {
-	CSimpleIniA ini;
 	SI_Error res = ini.LoadFile("GameplayFixesV.ini");
 
 	if (res != SI_OK)
 		return;
+
+	ReloadIniKey = ini.GetLongValue(inputGroup, "ReloadIniKey", ReloadIniKey);
 
 	//////////////////////////////////////Player//////////////////////////////////////////
 	FriendlyFire = ini.GetBoolValue(playerGroup, "FriendlyFire", FriendlyFire);
@@ -90,8 +103,9 @@ void ReadINI()
 	//////////////////////////////////////Player Controls//////////////////////////////////
 	DisableAssistedMovement = ini.GetBoolValue(playerGroup, "DisableAssistedMovement", DisableAssistedMovement);
 	ToggleFPSWalking = ini.GetBoolValue(playerGroup, "ToggleFPSWalking", ToggleFPSWalking);
+	DisableCameraAutoCenter = static_cast<int>(ini.GetLongValue(playerGroup, "DisableCameraAutoCenter", DisableCameraAutoCenter));
 	CamFollowVehicleDuringHandbrake = ini.GetBoolValue(playerGroup, "CamFollowVehicleDuringHandbrake", CamFollowVehicleDuringHandbrake);
-	CamFollowVehDelay = ini.GetLongValue(playerGroup, "CamFollowVehDelay", CamFollowVehDelay);
+	CamFollowVehDelay = static_cast<int>(ini.GetLongValue(playerGroup, "CamFollowVehDelay", CamFollowVehDelay));
 	DisableIdleCamera = ini.GetBoolValue(playerGroup, "DisableIdleCamera", DisableIdleCamera);
 	DisableRecording = ini.GetBoolValue(playerGroup, "DisableRecording", DisableRecording);
 	DisableMobilePhone = ini.GetBoolValue(playerGroup, "DisableMobilePhone", DisableMobilePhone);
@@ -104,9 +118,9 @@ void ReadINI()
 	LeaveEngineOnWhenExitingVehicles = ini.GetBoolValue(playerGroup, "LeaveEngineOnWhenExitingVehicles", LeaveEngineOnWhenExitingVehicles);
 	KeepCarHydraulicsPosition = ini.GetBoolValue(playerGroup, "KeepCarHydraulicsPosition", KeepCarHydraulicsPosition);
 	DisableWheelsAutoCenterOnCarExit = ini.GetBoolValue(playerGroup, "DisableWheelsAutoCenterOnCarExit", DisableWheelsAutoCenterOnCarExit);
+	EnableHeliWaterPhysics = ini.GetBoolValue(playerGroup, "EnableHeliWaterPhysics", EnableHeliWaterPhysics);
 	DisableRagdollOnVehicleRoof = ini.GetBoolValue(playerGroup, "DisableRagdollOnVehicleRoof", DisableRagdollOnVehicleRoof);
-	#pragma warning(suppress: 4244)
-	MaxVehicleSpeed = ini.GetDoubleValue(playerGroup, "MaxVehicleSpeed", MaxVehicleSpeed);
+	MaxVehicleSpeed = static_cast<float>(ini.GetDoubleValue(playerGroup, "MaxVehicleSpeed", MaxVehicleSpeed));
 	DisableFlyThroughWindscreen = ini.GetBoolValue(playerGroup, "DisableFlyThroughWindscreen", DisableFlyThroughWindscreen);
 	DisableBikeKnockOff = ini.GetBoolValue(playerGroup, "DisableBikeKnockOff", DisableBikeKnockOff);
 	DisableDragOutCar = ini.GetBoolValue(playerGroup, "DisableDragOutCar", DisableDragOutCar);
@@ -119,6 +133,7 @@ void ReadINI()
 	DisableHUDPostFX = ini.GetBoolValue(HUDGroup, "DisableHUDPostFX", DisableHUDPostFX);
 	DisableSpecialAbilityPostFX = ini.GetBoolValue(HUDGroup, "DisableSpecialAbilityPostFX", DisableSpecialAbilityPostFX);
 	EnableBigMapToggle = ini.GetBoolValue(HUDGroup, "EnableBigMapToggle", EnableBigMapToggle);
+	SetRadarZoom = static_cast<float>(ini.GetDoubleValue(HUDGroup, "SetRadarZoom", SetRadarZoom));
 	DisableMinimapTilt = ini.GetBoolValue(HUDGroup, "DisableMinimapTilt", DisableMinimapTilt);
 	HideMinimapFog = ini.GetBoolValue(HUDGroup, "HideMinimapFog", HideMinimapFog);
 	HideMinimapSatNav = ini.GetBoolValue(HUDGroup, "HideMinimapSatNav", HideMinimapSatNav);
@@ -128,6 +143,10 @@ void ReadINI()
 	HideAbilityBarForNonMainCharacters = ini.GetBoolValue(HUDGroup, "HideAbilityBarForNonMainCharacters", HideAbilityBarForNonMainCharacters);
 	ReplaceArmourBarWithStamina = ini.GetBoolValue(HUDGroup, "ReplaceArmourBarWithStamina", ReplaceArmourBarWithStamina);
 	MergeHealthAndArmour = ini.GetBoolValue(HUDGroup, "MergeHealthAndArmour", MergeHealthAndArmour);
+	HideHudComponents = ini.GetBoolValue(HUDGroup, "HideHudComponents", HideHudComponents);
+	HudComponents = const_cast<char*>(ini.GetValue(HUDGroup, "HudComponents", HudComponents));
+	HideWeaponReticle = ini.GetBoolValue(HUDGroup, "HideWeaponReticle", HideWeaponReticle);
+	HideEnemiesBlips = ini.GetBoolValue(HUDGroup, "HideEnemiesBlips", HideEnemiesBlips);
 
 	/////////////////////////////////////Audio/////////////////////////////////////////////
 	DisableWantedMusic = ini.GetBoolValue(AudioGroup, "DisableWantedMusic", DisableWantedMusic);
@@ -139,9 +158,10 @@ void ReadINI()
 	//////////////////////////////////////Peds/////////////////////////////////////////////
 	DisableWrithe = ini.GetBoolValue(pedsGroup, "DisableWrithe", DisableWrithe);
 	DisableHurt = ini.GetBoolValue(pedsGroup, "DisableHurt", DisableHurt);
+	DisableShootFromGround = ini.GetBoolValue(pedsGroup, "DisableShootFromGround", DisableShootFromGround);
 	DisableSittingPedsInstantDeath = ini.GetBoolValue(pedsGroup, "DisableSittingPedsInstantDeath", DisableSittingPedsInstantDeath);
 	DisarmPedWhenShot = ini.GetBoolValue(pedsGroup, "DisarmPedWhenShot", DisarmPedWhenShot);
-	DisarmChance = ini.GetLongValue(playerGroup, "DisarmChance", DisarmChance);
+	DisarmChance = static_cast<int>(ini.GetLongValue(pedsGroup, "DisarmChance", DisarmChance));
 	DisarmIncludeLeftHand = ini.GetBoolValue(pedsGroup, "DisarmIncludeLeftHand", DisarmIncludeLeftHand);
 	DisablePedOnlyDamagedByPlayer = ini.GetBoolValue(pedsGroup, "DisablePedOnlyDamagedByPlayer", DisablePedOnlyDamagedByPlayer);
 	DisableDeadPedsJumpOutOfVehicle = ini.GetBoolValue(pedsGroup, "DisableDeadPedsJumpOutOfVehicle", DisableDeadPedsJumpOutOfVehicle);

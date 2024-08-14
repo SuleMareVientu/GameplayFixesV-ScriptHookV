@@ -13,6 +13,9 @@
     <ClCompile Include="source\utils\peds.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="source\utils\keyboard.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\script.h" />
@@ -23,6 +26,9 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="source\utils\peds.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utils\keyboard.h">
       <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>

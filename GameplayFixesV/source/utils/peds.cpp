@@ -7,6 +7,8 @@
 #include "ini.h"
 #include "../globals.h"
 
+typedef void (*pedFunc)(Ped);
+
 namespace
 {
 constexpr int arrSizePedFuncs = 10;
@@ -32,9 +34,32 @@ void DisableHurt(const Ped ped)
 	return;
 }
 
+void DisableShootFromGround(const Ped ped)
+{
+	if (!IS_PED_ARMED(ped, WF_INCLUDE_GUN))
+		return;
+
+	if (GET_PED_RESET_FLAG(ped, PRF_ShootFromGround) ||
+		IS_ENTITY_PLAYING_ANIM(ped, "get_up@aim_from_ground@pistol@back", "intro_0", 3)		||
+		IS_ENTITY_PLAYING_ANIM(ped, "get_up@aim_from_ground@pistol@back", "intro_90r", 3)	||
+		IS_ENTITY_PLAYING_ANIM(ped, "get_up@aim_from_ground@pistol@back", "intro_90l", 3)	||
+		IS_ENTITY_PLAYING_ANIM(ped, "get_up@aim_from_ground@pistol@back", "intro_180r", 3)	||
+		IS_ENTITY_PLAYING_ANIM(ped, "get_up@aim_from_ground@pistol@back", "intro_180l", 3)	||
+		IS_ENTITY_PLAYING_ANIM(ped, "get_up@aim_from_ground@rifle@back", "intro_0", 3)		||
+		IS_ENTITY_PLAYING_ANIM(ped, "get_up@aim_from_ground@rifle@back", "intro_90r", 3)	||
+		IS_ENTITY_PLAYING_ANIM(ped, "get_up@aim_from_ground@rifle@back", "intro_90l", 3)	||
+		IS_ENTITY_PLAYING_ANIM(ped, "get_up@aim_from_ground@rifle@back", "intro_180r", 3)	||
+		IS_ENTITY_PLAYING_ANIM(ped, "get_up@aim_from_ground@rifle@back", "intro_180l", 3))
+	{
+		SET_PED_TO_RAGDOLL(ped, 0, 75, TASK_RELAX, false, false, false);
+		//FORCE_PED_MOTION_STATE(ped, 0xD827C3DB, false, false, false);
+	}
+	return;
+}
+
 void DisableSittingPedsInstantDeath(const Ped ped)
 {
-	if (PED::GET_PED_CONFIG_FLAG(ped, PCF_IsSitting, false))
+	if (GET_PED_CONFIG_FLAG(ped, PCF_IsSitting, false))
 		SET_PED_SUFFERS_CRITICAL_HITS(ped, false);	//Same thing as setting CPED_CONFIG_FLAG_NoCriticalHits
 	return;
 }
@@ -92,7 +117,7 @@ void AddPedFuncToArr(pedFunc func)
 	if (countPedFuncs < arrSizePedFuncs)
 		arrPedFuncs[countPedFuncs] = func;
 
-	countPedFuncs++;
+	++countPedFuncs;
 	return;
 }
 }
@@ -100,25 +125,14 @@ void AddPedFuncToArr(pedFunc func)
 //Using an array of functions saves us from checking ini bools for every ped
 void SetupPedFunctions()
 {
-	countPedFuncs = 0;
-
-	if (INI::DisableWrithe)
-		AddPedFuncToArr(DisableWrithe);
-
-	if (INI::DisableHurt)
-		AddPedFuncToArr(DisableHurt);
-
-	if (INI::DisableSittingPedsInstantDeath)
-		AddPedFuncToArr(DisableSittingPedsInstantDeath);
-
-	if (INI::DisarmPedWhenShot)
-		AddPedFuncToArr(DisarmPedWhenShot);
-
-	if (INI::DisablePedOnlyDamagedByPlayer)
-		AddPedFuncToArr(DisablePedOnlyDamagedByPlayer);
-
-	if (INI::DisableDeadPedsJumpOutOfVehicle)
-		AddPedFuncToArr(DisableDeadPedsJumpOutOfVehicle);
+	countPedFuncs = NULL;
+	if (INI::DisableWrithe) AddPedFuncToArr(DisableWrithe);
+	if (INI::DisableHurt) AddPedFuncToArr(DisableHurt);
+	if (INI::DisableShootFromGround) AddPedFuncToArr(DisableShootFromGround);
+	if (INI::DisableSittingPedsInstantDeath) AddPedFuncToArr(DisableSittingPedsInstantDeath);
+	if (INI::DisarmPedWhenShot) AddPedFuncToArr(DisarmPedWhenShot);
+	if (INI::DisablePedOnlyDamagedByPlayer) AddPedFuncToArr(DisablePedOnlyDamagedByPlayer);
+	if (INI::DisableDeadPedsJumpOutOfVehicle) AddPedFuncToArr(DisableDeadPedsJumpOutOfVehicle);
 	return;
 }
 

@@ -9,24 +9,14 @@
 #include "utils\ini.h"
 #include "globals.h"
 
-namespace nPlayerGlobals
-{
-Player player = NULL;
-Ped playerPed = NULL;
-Vector3 playerCoords{ NULL, NULL, NULL, NULL, NULL, NULL };
-}
-
 static void update()
 {
-	nPlayerGlobals::player = PLAYER_ID();
-	nPlayerGlobals::playerPed = PLAYER_PED_ID();
-
-	// Check if player ped exists and control is on (e.g. not in a cutscene)
-	if (!DOES_ENTITY_EXIST(nPlayerGlobals::playerPed))// || !IS_PLAYER_CONTROL_ON(GetPlayer()))
+	// Check if player ped exists
+	if (!DOES_ENTITY_EXIST(GetPlayerPed()))
 		return;
 
-	nPlayerGlobals::playerCoords = GET_ENTITY_COORDS(nPlayerGlobals::playerPed, false);
-	
+	RefreshIni();
+
 	//Update player options
 	UpdatePlayerOptions();
 

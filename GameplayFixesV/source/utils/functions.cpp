@@ -4,7 +4,11 @@
 //Custom
 #include "functions.h"
 #include <random>
+#include <string>
+#include <sstream>
+#include "keyboard.h"
 #include "ini.h"
+#include "peds.h"
 #include "..\globals.h"
 
 #pragma region Ped Flags
@@ -69,14 +73,42 @@ void PrintHelp(char* string, bool playSound, int overrideDuration)
 	END_TEXT_COMMAND_DISPLAY_HELP(NULL, false, playSound, overrideDuration);
 	return;
 }
+
+int ShowNotification(const char* str, bool flash)
+{
+	BEGIN_TEXT_COMMAND_THEFEED_POST("STRING");
+	ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(str);
+	return END_TEXT_COMMAND_THEFEED_POST_TICKER(flash, false);
+}
 #pragma endregion
 
 #pragma region Misc
+inline int Abs(int n) { return n * ((n > 0) - (n < 0)); }
+inline float Abs(float n) { return n * ((n > 0.0f) - (n < 0.0f)); }
+
 bool ArrayContains(int value, const int a[], int n)
 {
 	int i = 0;
-	while (i < n && a[i] != value) i++;
+	while (i < n && a[i] != value) ++i;
 	return i == n ? false : true;
+}
+
+void SplitString(const char* charStr, std::string arr[], const int arrSize)
+{
+	constexpr char space = 0x20; constexpr char tab = 0x09; constexpr char comma = 0x2C;
+	std::string str; str = charStr;
+	str.erase(std::remove(str.begin(), str.end(), space), str.end());
+	str.erase(std::remove(str.begin(), str.end(), tab), str.end());
+	std::istringstream ss(str);
+	std::string token;
+
+	int i = 0;
+	while (std::getline(ss, token, comma) && i < arrSize)
+	{
+		arr[i] = token;
+		i++;
+	}
+	return;
 }
 
 bool GetWeightedBool(int chance)	//Chance out of 100
@@ -184,7 +216,8 @@ void FriendlyFire()
 
 	Ped ped = NULL;
 	SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);
-	if (!GET_CLOSEST_PED(GetPlayerCoords().x, GetPlayerCoords().y, GetPlayerCoords().z, 10.0f, true, true, &ped, false, true, -1))
+	const Vector3 tmpCoords = GetPlayerCoords();
+	if (!GET_CLOSEST_PED(tmpCoords.x, tmpCoords.y, tmpCoords.z, 10.0f, true, true, &ped, false, true, -1))
 		return;
 
 	int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(GetPlayerPed(), ped);
@@ -231,17 +264,19 @@ inline void EnableSprintInsideInteriors() { EnablePedConfigFlag(GetPlayerPed(), 
 
 bool IsPlayerInsideSafehouse()
 {
+	const Vector3 tmpCoords = GetPlayerCoords();
 	constexpr int arrSize = 5;
 	int safehouses[arrSize] = {
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(GetPlayerCoords().x, GetPlayerCoords().y, GetPlayerCoords().z, "v_franklins"),
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(GetPlayerCoords().x, GetPlayerCoords().y, GetPlayerCoords().z, "v_franklinshouse"),
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(GetPlayerCoords().x, GetPlayerCoords().y, GetPlayerCoords().z, "v_michael"),
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(GetPlayerCoords().x, GetPlayerCoords().y, GetPlayerCoords().z, "v_trailer"),
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(GetPlayerCoords().x, GetPlayerCoords().y, GetPlayerCoords().z, "v_trevors")
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_franklins"),
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_franklinshouse"),
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_michael"),
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_trailer"),
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_trevors")
 	};
 
 	int playerInterior = GET_INTERIOR_FROM_ENTITY(GetPlayerPed());
-	for (int i = 0; i < arrSize; i++) {
+	LOOP(i, arrSize) 
+	{
 		if (safehouses[i] == playerInterior)
 			return true;
 	}
@@ -436,6 +471,25 @@ void ToggleFPSWalking()
 	return;
 }
 
+void DisableCameraAutoCenter()
+{
+	switch (INI::DisableCameraAutoCenter)
+	{
+	case 1:
+		if (IS_PED_ON_FOOT(GetPlayerPed()))
+			SET_FOLLOW_CAM_IGNORE_ATTACH_PARENT_MOVEMENT_THIS_UPDATE();
+		break;
+	case 2:
+		if (GetVehiclePedIsIn(GetPlayerPed(), true, true) != NULL)
+			SET_FOLLOW_CAM_IGNORE_ATTACH_PARENT_MOVEMENT_THIS_UPDATE();
+		break;
+	case 3:
+		SET_FOLLOW_CAM_IGNORE_ATTACH_PARENT_MOVEMENT_THIS_UPDATE();
+		break;
+	}
+	return;
+}
+
 float handbrakeCamHeadingMin = 0.0f;
 float handbrakeCamHeadingMax = 0.0f;
 void SetCamSmoothHeadingLimit()
@@ -468,7 +522,13 @@ void CamFollowVehicleDuringHandbrake()
 	const int timePressed = INI::CamFollowVehDelay;
 	constexpr int delay = 300;
 
-	if (!IS_PED_IN_ANY_VEHICLE(GetPlayerPed(), false))
+	const Vehicle veh = GET_VEHICLE_PED_IS_USING(GetPlayerPed());
+	if (!DOES_ENTITY_EXIST(veh))
+		return;
+
+	const int hash = GET_ENTITY_MODEL(veh);
+	if (IS_THIS_MODEL_A_BOAT(hash) || IS_THIS_MODEL_A_PLANE(hash) || IS_THIS_MODEL_A_HELI(hash) ||
+		IS_THIS_MODEL_A_TRAIN(hash) || IS_THIS_MODEL_A_BIKE(hash) || IS_THIS_MODEL_A_BICYCLE(hash))
 		return;
 
 	if (timePressed > 0)
@@ -674,20 +734,6 @@ void DisableEngineFire()
 	return;
 }
 
-void DisableRagdollOnVehicleRoof()
-{
-	//Velocity Unit -> Km/h
-	if (INI::MaxVehicleSpeed > 0.0f)
-	{
-		const float speed = GET_ENTITY_SPEED(GetPlayerPed()) * 3.6f;	// m\s to Km\h
-		if (speed > INI::MaxVehicleSpeed)
-			return;
-	}
-
-	EnablePedResetFlag(GetPlayerPed(), PRF_BlockRagdollFromVehicleFallOff);
-	return;
-}
-
 Timer timerEngineControl;
 constexpr int TURN_OFF_ENGINE_DURATION = 250;
 void LeaveEngineOnWhenExitingVehicles()
@@ -717,7 +763,7 @@ void DisableWheelsAutoCenterOnCarExit()
 {
 	constexpr float maxVehSpeedDetach = 10.0f;
 
-	const Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
+	const Vehicle veh = GET_VEHICLE_PED_IS_USING(GetPlayerPed());
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
@@ -744,17 +790,17 @@ void DisableWheelsAutoCenterOnCarExit()
 			REQUEST_MODEL(vehHash);
 			return;
 		}
-		tmpVeh = CREATE_VEHICLE(vehHash, 0.0f, 0.0f, -100.0f, 0.0f, false, false, true);
+		tmpVeh = CREATE_VEHICLE(vehHash, 0.0f, 0.0f, -90.0f, 0.0f, false, false, true);
 		SET_ENTITY_AS_MISSION_ENTITY(tmpVeh, false, true);
 		SET_ENTITY_VISIBLE(tmpVeh, false, false);
 		FREEZE_ENTITY_POSITION(tmpVeh, true);
 		return;
 	}
 
-	if (GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE) || timerWheelsAutoCenter.Get() > 2000 || GET_ENTITY_SPEED(veh) > maxVehSpeedDetach)	//CTaskExitVehicle
+	if (GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE) || timerWheelsAutoCenter.Get() > 2000 || GET_ENTITY_SPEED(veh) > maxVehSpeedDetach)
 		shouldAttachVeh = false;
 
-	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && IS_PED_IN_ANY_VEHICLE(GetPlayerPed(), false)) //&& !IS_VEHICLE_ATTACHED_TO_TRAILER(veh))
+	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && GetVehiclePedIsIn(GetPlayerPed(), false, false)) //&& !IS_VEHICLE_ATTACHED_TO_TRAILER(veh))
 		shouldAttachVeh = true;
 
 	if (shouldAttachVeh && !IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh) && GET_ENTITY_SPEED(veh) < maxVehSpeedDetach)
@@ -820,14 +866,84 @@ void KeepCarHydraulicsPosition()
 	return;
 }
 
+void EnableHeliWaterPhysics()
+{
+	Vehicle heli = GET_VEHICLE_PED_IS_USING(GetPlayerPed());
+	if (!DOES_ENTITY_EXIST(heli) || !IS_THIS_MODEL_A_HELI(GET_ENTITY_MODEL(heli)) ||
+		!GET_IS_VEHICLE_ENGINE_RUNNING(heli))
+		return;
+
+	constexpr int arrSize = 4;
+	const int rotors[arrSize] = {
+		GET_ENTITY_BONE_INDEX_BY_NAME(heli, "ROTOR_MAIN"),
+		GET_ENTITY_BONE_INDEX_BY_NAME(heli, "ROTOR_MAIN_2"),
+		GET_ENTITY_BONE_INDEX_BY_NAME(heli, "ROTOR_REAR"),
+		GET_ENTITY_BONE_INDEX_BY_NAME(heli, "ROTOR_REAR_2")
+	};
+
+	Vector3 heliCoords = GET_ENTITY_COORDS(heli, false);
+	Vector3 min = nullVec; Vector3 max = nullVec;
+	GET_MODEL_DIMENSIONS(GET_ENTITY_MODEL(heli), &min, &max);
+	heliCoords.z += min.z;
+
+	float z = NULL;
+	if (!GET_GROUND_Z_FOR_3D_COORD(heliCoords.x, heliCoords.y, heliCoords.z, &z, true, true))
+		return;
+
+	constexpr float maxHeight = 15.0f;
+	const float distGround = heliCoords.z - z;
+	if (distGround > maxHeight)
+		return;
+
+	const float mult = 1.0f - (distGround / maxHeight);
+	const float speed = -2.5f * mult;
+	constexpr float rate = 0.9f;
+	LOOP(i, arrSize)
+	{
+		if (rotors[i] < 0)
+			continue;
+
+		if (i <= 1)
+		{
+			const Vector3 tmpCoords = GET_WORLD_POSITION_OF_ENTITY_BONE(heli, rotors[i]);
+			MODIFY_WATER(tmpCoords.x, tmpCoords.y, speed, rate);
+		}
+		else
+		{
+			if (GET_ENTITY_BONE_INDEX_BY_NAME(heli, "TAIL") < 0)
+			{
+				const Vector3 tmpCoords = GET_WORLD_POSITION_OF_ENTITY_BONE(heli, rotors[i]);
+				MODIFY_WATER(tmpCoords.x, tmpCoords.y, speed, rate);
+			}
+		}
+	}
+	return;
+}
+
+void DisableRagdollOnVehicleRoof()
+{
+	//Velocity Unit -> Km/h
+	if (INI::MaxVehicleSpeed > 0.0f)
+	{
+		const float speed = GET_ENTITY_SPEED(GetPlayerPed()) * 3.6f;	// m\s to Km\h
+		if (speed > INI::MaxVehicleSpeed)
+			return;
+	}
+
+	EnablePedResetFlag(GetPlayerPed(), PRF_BlockRagdollFromVehicleFallOff);
+	return;
+}
+
 inline void DisableFlyThroughWindscreen() { DisablePedConfigFlag(GetPlayerPed(), PCF_WillFlyThroughWindscreen); return; }
 inline void DisableBikeKnockOff() { SET_PED_CAN_BE_KNOCKED_OFF_VEHICLE(GetPlayerPed(), KNOCKOFFVEHICLE_NEVER); return; }
 inline void DisableDragOutCar() { SET_PED_CAN_BE_DRAGGED_OUT(GetPlayerPed(), false); return; }	//Same thing as setting CPED_CONFIG_FLAG_DontDragMeOutCar
 
 void DisableShallowWaterBikeJumpOut()
 {
-	if (GET_ENTITY_SUBMERGED_LEVEL(GetPlayerPed()) < 0.7f)
-		EnablePedResetFlag(GetPlayerPed(), PRF_DisableShallowWaterBikeJumpOutThisFrame);
+	if (GET_ENTITY_SUBMERGED_LEVEL(GET_VEHICLE_PED_IS_USING(GetPlayerPed())) > 0.9f)
+		return;
+
+	EnablePedResetFlag(GetPlayerPed(), PRF_DisableShallowWaterBikeJumpOutThisFrame);
 	return;
 }
 
@@ -931,6 +1047,21 @@ void EnableBigMapToggle()
 	return;
 }
 
+void SetRadarZoom()
+{
+	if (INI::SetRadarZoom < 0.0f)
+		return;
+
+	if (INI::SetRadarZoom >= 100.0f)
+		SET_RADAR_ZOOM_PRECISE(100.0f);
+	else
+		SET_RADAR_ZOOM_PRECISE(INI::SetRadarZoom);
+
+	DONT_ZOOM_MINIMAP_WHEN_RUNNING_THIS_FRAME();
+	DONT_ZOOM_MINIMAP_WHEN_SNIPING_THIS_FRAME();
+	return;
+}
+
 inline void DisableMinimapTilt() { DONT_TILT_MINIMAP_THIS_FRAME(); return; }
 
 inline void HideMinimapFog() { SET_MINIMAP_HIDE_FOW(true); return; }
@@ -1014,6 +1145,62 @@ void ReplaceArmourBarWithStamina()
 
 inline void HideSatNav() { CALL_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "HIDE_SATNAV"); return; }
 inline void HideMinimapDepth() { CALL_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "HIDE_DEPTH"); return; }
+
+int GetHudComponentFromString(std::string str)
+{
+	//std::for_each(str.begin(), str.end(), std::toupper);
+	switch (Joaat(str.c_str()))
+	{
+	case Joaat("HUD_WANTED_STARS"): return HUD_WANTED_STARS;
+	case Joaat("HUD_WEAPON_ICON"): return HUD_WEAPON_ICON;
+	case Joaat("HUD_CASH"): return HUD_CASH;
+	case Joaat("HUD_MP_CASH"): return HUD_MP_CASH;
+	case Joaat("HUD_MP_MESSAGE"): return HUD_MP_MESSAGE;
+	case Joaat("HUD_VEHICLE_NAME"): return HUD_VEHICLE_NAME;
+	case Joaat("HUD_AREA_NAME"): return HUD_AREA_NAME;
+	case Joaat("HUD_UNUSED"): return HUD_UNUSED;
+	case Joaat("HUD_STREET_NAME"): return HUD_STREET_NAME;
+	case Joaat("HUD_HELP_TEXT"): return HUD_HELP_TEXT;
+	case Joaat("HUD_FLOATING_HELP_TEXT_1"): return HUD_FLOATING_HELP_TEXT_1;
+	case Joaat("HUD_FLOATING_HELP_TEXT_2"): return HUD_FLOATING_HELP_TEXT_2;
+	case Joaat("HUD_CASH_CHANGE"): return HUD_CASH_CHANGE;
+	case Joaat("HUD_RETICLE"): return HUD_RETICLE;
+	case Joaat("HUD_SUBTITLE_TEXT"): return HUD_SUBTITLE_TEXT;
+	case Joaat("HUD_RADIO_STATIONS"): return HUD_RADIO_STATIONS;
+	case Joaat("HUD_SAVING_GAME"): return HUD_SAVING_GAME;
+	case Joaat("HUD_GAME_STREAM"): return HUD_GAME_STREAM;
+	case Joaat("HUD_WEAPON_WHEEL"): return HUD_WEAPON_WHEEL;
+	case Joaat("HUD_WEAPON_WHEEL_STATS"): return HUD_WEAPON_WHEEL_STATS;
+	}
+	return -1;
+}
+
+bool InitializedHideHudComponents = false;
+std::string hudComponentsArr[MAX_HUD_COMPONENTS]{};
+void HideHudComponents()
+{
+	if (!InitializedHideHudComponents)
+		SplitString(INI::HudComponents, hudComponentsArr, MAX_HUD_COMPONENTS);
+
+	LOOP(i, MAX_HUD_COMPONENTS)
+	{
+		if (!hudComponentsArr[i].empty())
+			HIDE_HUD_COMPONENT_THIS_FRAME(GetHudComponentFromString(hudComponentsArr[i]));
+	}
+}
+
+void HideWeaponReticle()
+{
+	Hash playerWeapon = NULL;
+	GET_CURRENT_PED_WEAPON(GetPlayerPed(), &playerWeapon, false);
+	if (GET_WEAPONTYPE_GROUP(playerWeapon) == WEAPONGROUP_SNIPER && GET_PED_CONFIG_FLAG(GetPlayerPed(), PCF_IsAimingGun, false))
+		return;
+
+	HIDE_HUD_COMPONENT_THIS_FRAME(HUD_RETICLE);
+	return;
+}
+
+inline void HideEnemiesBlips() { SET_POLICE_RADAR_BLIPS(false); return; }
 }	//END nHUD
 
 ///////////////////////////////////////////////Audio///////////////////////////////////////////////
@@ -1051,6 +1238,20 @@ void DefaultVehicleRadioOff()
 }
 }	//END nAudio
 
+Timer timerRefreshIni; //Allow reload every 5s
+void RefreshIni()
+{
+	if (IsKeyJustUp(INI::ReloadIniKey) && timerRefreshIni.Get() > 5000)
+	{
+		timerRefreshIni.Set(0);
+		ShowNotification("GameplayFixesV:~n~Reloaded INI");
+		ReadINI();
+		SetupPedFunctions();
+		nHUD::InitializedHideHudComponents = false;
+	}
+	return;
+}
+
 void UpdatePlayerOptions()
 {
 	if (INI::FriendlyFire) { nGeneral::FriendlyFire(); }
@@ -1060,9 +1261,10 @@ void UpdatePlayerOptions()
 	if (INI::AllowWeaponsInsideSafeHouse) { nGeneral::AllowWeaponsInsideSafeHouse(); }
 
 	//////////////////////////////////////Player Controls//////////////////////////////////
-	if (INI::ToggleFPSWalking) { nControls::ToggleFPSWalking(); }
-	if (INI::CamFollowVehicleDuringHandbrake) { nControls::CamFollowVehicleDuringHandbrake(); }
 	if (INI::DisableAssistedMovement) { nControls::DisableAssistedMovement(); }
+	if (INI::ToggleFPSWalking) { nControls::ToggleFPSWalking(); }
+	if (INI::DisableCameraAutoCenter > 0) { nControls::DisableCameraAutoCenter(); }
+	if (INI::CamFollowVehicleDuringHandbrake) { nControls::CamFollowVehicleDuringHandbrake(); }
 	if (INI::DisableIdleCamera) { nControls::DisableIdleCamera(); }
 	if (INI::DisableRecording) { nControls::DisableRecording(); }
 	if (INI::DisableMobilePhone) { nControls::DisableMobilePhone(); }
@@ -1075,6 +1277,7 @@ void UpdatePlayerOptions()
 	if (INI::LeaveEngineOnWhenExitingVehicles) { nVehicle::LeaveEngineOnWhenExitingVehicles(); }
 	if (INI::DisableWheelsAutoCenterOnCarExit) { nVehicle::DisableWheelsAutoCenterOnCarExit(); }
 	if (INI::KeepCarHydraulicsPosition) { nVehicle::KeepCarHydraulicsPosition(); }
+	if (INI::EnableHeliWaterPhysics) { nVehicle::EnableHeliWaterPhysics(); }
 	if (INI::DisableRagdollOnVehicleRoof) { nVehicle::DisableRagdollOnVehicleRoof(); }
 	if (INI::DisableFlyThroughWindscreen) { nVehicle::DisableFlyThroughWindscreen(); }
 	if (INI::DisableBikeKnockOff) { nVehicle::DisableBikeKnockOff(); }
@@ -1088,6 +1291,7 @@ void UpdatePlayerOptions()
 	if (INI::DisablePauseMenuPostFX) { nHUD::DisablePauseMenuPostFX(); }
 	if (INI::DisableSpecialAbilityPostFX) { nHUD::DisableSpecialAbilityPostFX(); }
 	if (INI::EnableBigMapToggle) { nHUD::EnableBigMapToggle(); }
+	if (INI::SetRadarZoom >= 0.0f) { nHUD::SetRadarZoom(); }
 	if (INI::DisableMinimapTilt) { nHUD::DisableMinimapTilt(); }
 	if (INI::HideMinimapFog) { nHUD::HideMinimapFog(); }
 	if (INI::HideMinimapSatNav) { nHUD::HideSatNav(); }
@@ -1100,6 +1304,11 @@ void UpdatePlayerOptions()
 		else if (INI::HideAbilityBarForNonMainCharacters) nHUD::HideAbilityBarForNonMainCharacters();
 		if (INI::ReplaceArmourBarWithStamina) { nHUD::ReplaceArmourBarWithStamina(); }
 	}
+
+	if (INI::HideHudComponents) { nHUD::HideHudComponents(); }
+	if (INI::HideWeaponReticle) { nHUD::HideWeaponReticle(); }
+	if (INI::HideEnemiesBlips) { nHUD::HideEnemiesBlips(); }
+
 	//////////////////////////////////////////Audio////////////////////////////////////////
 	if (INI::DisableWantedMusic) { nAudio::DisableWantedMusic(); }
 	if (INI::DisablePoliceScanner) { nAudio::DisablePoliceScanner(); }

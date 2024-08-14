@@ -12,12 +12,14 @@
     <ClCompile Include="source\globals.h" />
     <ClCompile Include="source\utils\ini.cpp" />
     <ClCompile Include="source\utils\functions.cpp" />
+    <ClCompile Include="source\utils\keyboard.cpp" />
     <ClCompile Include="source\utils\peds.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\script.h" />
     <ClInclude Include="source\utils\ini.h" />
     <ClInclude Include="source\utils\functions.h" />
+    <ClInclude Include="source\utils\keyboard.h" />
     <ClInclude Include="source\utils\peds.h" />
   </ItemGroup>
   <ItemGroup>
