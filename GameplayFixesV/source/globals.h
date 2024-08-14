@@ -119,6 +119,17 @@ enum ePedFlag {
 	PRF_DisableShallowWaterBikeJumpOutThisFrame = 445
 };
 
+enum ePedDecorationZone {
+	PDZ_TORSO = 0,
+	PDZ_HEAD,
+	PDZ_LEFT_ARM,
+	PDZ_RIGHT_ARM,
+	PDZ_LEFT_LEG,
+	PDZ_RIGHT_LEG,
+	PDZ_MEDALS,
+	PDZ_INVALID
+};
+
 enum eCombatAttribute {
 	CA_INVALID = -1,
 	CA_USE_COVER = 0,

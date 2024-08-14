@@ -260,6 +260,31 @@ void DisarmPlayerWhenShot()
 	return;
 }
 
+void CleanWoundsInWater()
+{
+	const float subLevel = GET_ENTITY_SUBMERGED_LEVEL(GetPlayerPed());
+	if (subLevel >= 0.3f)
+	{
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_RIGHT_LEG);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_LEFT_LEG);
+	}
+
+	if (subLevel >= 0.7f || IS_PED_SWIMMING(GetPlayerPed()))
+	{
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_TORSO);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_RIGHT_ARM);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_LEFT_ARM);
+	}
+
+	if (subLevel > 0.9f)
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_HEAD);
+
+	if (subLevel == 1.0f || IS_PED_SWIMMING_UNDER_WATER(GetPlayerPed()))
+		CLEAR_PED_BLOOD_DAMAGE(GetPlayerPed());
+
+	return;
+}
+
 inline void EnableSprintInsideInteriors() { EnablePedConfigFlag(GetPlayerPed(), PCF_IgnoreInteriorCheckForSprinting); return; }
 
 bool IsPlayerInsideSafehouse()
@@ -559,6 +584,8 @@ void CamFollowVehicleDuringHandbrake()
 	}
 	return;
 }
+
+inline void DisableFirstPersonView() { DISABLE_ON_FOOT_FIRST_PERSON_VIEW_THIS_UPDATE(); /* Also works in vehicles */ return; }
 
 void DisableIdleCamera()
 {
@@ -940,8 +967,12 @@ inline void DisableDragOutCar() { SET_PED_CAN_BE_DRAGGED_OUT(GetPlayerPed(), fal
 
 void DisableShallowWaterBikeJumpOut()
 {
-	if (GET_ENTITY_SUBMERGED_LEVEL(GET_VEHICLE_PED_IS_USING(GetPlayerPed())) > 0.9f)
-		return;
+	const Vehicle veh = GetVehiclePedIsIn(GetPlayerPed(), false, false);
+	if (DOES_ENTITY_EXIST(veh))
+	{
+		if (GET_ENTITY_SUBMERGED_LEVEL(veh) > 0.9f || (IS_ENTITY_IN_WATER(veh) && !IS_VEHICLE_DRIVEABLE(veh, false)))
+			return;
+	}
 
 	EnablePedResetFlag(GetPlayerPed(), PRF_DisableShallowWaterBikeJumpOutThisFrame);
 	return;
@@ -1257,6 +1288,7 @@ void UpdatePlayerOptions()
 	if (INI::FriendlyFire) { nGeneral::FriendlyFire(); }
 	if (INI::DisableActionMode) { nGeneral::DisableActionMode(); }
 	if (INI::DisarmPlayerWhenShot) { nGeneral::DisarmPlayerWhenShot(); }
+	if (INI::CleanWoundsInWater) { nGeneral::CleanWoundsInWater(); }
 	if (INI::SprintInsideInteriors) { nGeneral::EnableSprintInsideInteriors(); }
 	if (INI::AllowWeaponsInsideSafeHouse) { nGeneral::AllowWeaponsInsideSafeHouse(); }
 
@@ -1265,6 +1297,7 @@ void UpdatePlayerOptions()
 	if (INI::ToggleFPSWalking) { nControls::ToggleFPSWalking(); }
 	if (INI::DisableCameraAutoCenter > 0) { nControls::DisableCameraAutoCenter(); }
 	if (INI::CamFollowVehicleDuringHandbrake) { nControls::CamFollowVehicleDuringHandbrake(); }
+	if (INI::DisableFirstPersonView) { nControls::DisableFirstPersonView(); }
 	if (INI::DisableIdleCamera) { nControls::DisableIdleCamera(); }
 	if (INI::DisableRecording) { nControls::DisableRecording(); }
 	if (INI::DisableMobilePhone) { nControls::DisableMobilePhone(); }

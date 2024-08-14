@@ -16,6 +16,7 @@ unsigned long ReloadIniKey = VK_F12;
 bool FriendlyFire = true;
 bool DisableActionMode = false;
 bool DisarmPlayerWhenShot = true;
+bool CleanWoundsInWater = true;
 bool SprintInsideInteriors = true;
 bool AllowWeaponsInsideSafeHouse = false;
 //Player Controls
@@ -24,6 +25,7 @@ bool ToggleFPSWalking = true;
 int DisableCameraAutoCenter = NULL;
 bool CamFollowVehicleDuringHandbrake = false;
 int CamFollowVehDelay = 250;
+bool DisableFirstPersonView = false;
 bool DisableIdleCamera = false;
 bool DisableRecording = false;
 bool DisableMobilePhone = false;
@@ -97,6 +99,7 @@ void ReadINI()
 	FriendlyFire = ini.GetBoolValue(playerGroup, "FriendlyFire", FriendlyFire);
 	DisableActionMode = ini.GetBoolValue(playerGroup, "DisableActionMode", DisableActionMode);
 	DisarmPlayerWhenShot = ini.GetBoolValue(playerGroup, "DisarmPlayerWhenShot", DisarmPlayerWhenShot);
+	CleanWoundsInWater = ini.GetBoolValue(playerGroup, "CleanWoundsInWater", CleanWoundsInWater);
 	SprintInsideInteriors = ini.GetBoolValue(playerGroup, "SprintInsideInteriors", SprintInsideInteriors);
 	AllowWeaponsInsideSafeHouse = ini.GetBoolValue(playerGroup, "AllowWeaponsInsideSafeHouse", AllowWeaponsInsideSafeHouse);
 
@@ -106,6 +109,7 @@ void ReadINI()
 	DisableCameraAutoCenter = static_cast<int>(ini.GetLongValue(playerGroup, "DisableCameraAutoCenter", DisableCameraAutoCenter));
 	CamFollowVehicleDuringHandbrake = ini.GetBoolValue(playerGroup, "CamFollowVehicleDuringHandbrake", CamFollowVehicleDuringHandbrake);
 	CamFollowVehDelay = static_cast<int>(ini.GetLongValue(playerGroup, "CamFollowVehDelay", CamFollowVehDelay));
+	DisableFirstPersonView = ini.GetBoolValue(playerGroup, "DisableFirstPersonView", DisableFirstPersonView);
 	DisableIdleCamera = ini.GetBoolValue(playerGroup, "DisableIdleCamera", DisableIdleCamera);
 	DisableRecording = ini.GetBoolValue(playerGroup, "DisableRecording", DisableRecording);
 	DisableMobilePhone = ini.GetBoolValue(playerGroup, "DisableMobilePhone", DisableMobilePhone);

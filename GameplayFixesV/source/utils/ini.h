@@ -8,6 +8,7 @@ extern unsigned long ReloadIniKey;
 extern bool FriendlyFire;
 extern bool DisableActionMode;
 extern bool DisarmPlayerWhenShot;
+extern bool CleanWoundsInWater;
 extern bool SprintInsideInteriors;
 extern bool AllowWeaponsInsideSafeHouse;
 //Player Controls
@@ -16,6 +17,7 @@ extern int DisableCameraAutoCenter;
 extern bool ToggleFPSWalking;
 extern bool CamFollowVehicleDuringHandbrake;
 extern int CamFollowVehDelay;
+extern bool DisableFirstPersonView;
 extern bool DisableIdleCamera;
 extern bool DisableRecording;
 extern bool DisableMobilePhone;
