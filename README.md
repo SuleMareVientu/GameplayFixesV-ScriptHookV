@@ -98,7 +98,7 @@ This mod is **does not** patch the game directly, and should thus last more with
 DisableIdleCamera  
 - **Player Vehicle:**  
   - KeepCarHydraulicsPosition, EnableHeliWaterPhysics, DisableFlyThroughWindscreen, 
-DisableBikeKnockOff, DisableDragOutCar,
+DisableBikeKnockOff, DisableDragOutCar
 - **HUD:**  
   - AllowGameExecutionOnPauseMenu, DisablePauseMenuPostFX, DisableHUDPostFX, 
 DisableSpecialAbilityPostFX, EnableBigMapToggle, SetRadarZoom, 
