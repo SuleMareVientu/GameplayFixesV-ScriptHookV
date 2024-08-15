@@ -5,8 +5,10 @@
 class Timer {
 	int gameTimer = 0;
 public:
-	void Set(int value) { gameTimer = GET_GAME_TIMER() + value; return; };
+	void Set(int value) { gameTimer = GET_GAME_TIMER() - value; return; };
+	void Reset() { gameTimer = GET_GAME_TIMER(); return; };
 	int Get() const { return (GET_GAME_TIMER() - gameTimer); }
+	Timer(const int startVal = 0) { gameTimer = (startVal * -1); }
 };
 
 inline Player GetPlayer() { return PLAYER_ID(); }

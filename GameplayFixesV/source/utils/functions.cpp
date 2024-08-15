@@ -208,7 +208,7 @@ static bool RequestScaleform(const char* name, int* handle)
 #pragma endregion
 
 /////////////////////////////////////////////Player//////////////////////////////////////////////
-namespace nGeneral	
+namespace nGeneral
 {
 void FriendlyFire()
 {
@@ -260,8 +260,16 @@ void DisarmPlayerWhenShot()
 	return;
 }
 
+constexpr int timeClearDirtDecal = 120000;	//2min
+Timer timerDirtDecal(timeClearDirtDecal);
 void CleanWoundsAndDirtInWater()
 {
+	if (IS_PLAYER_SWITCH_IN_PROGRESS())
+	{
+		timerDirtDecal.Set(120000);
+		return;
+	}	
+
 	const float subLevel = GET_ENTITY_SUBMERGED_LEVEL(GetPlayerPed());
 	if (subLevel >= 0.3f)
 	{
@@ -271,10 +279,21 @@ void CleanWoundsAndDirtInWater()
 
 	if (subLevel >= 0.7f || IS_PED_SWIMMING(GetPlayerPed()))
 	{
-		CLEAR_PED_ENV_DIRT(GetPlayerPed());
+		timerDirtDecal.Reset();
 		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_TORSO);
 		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_RIGHT_ARM);
 		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_LEFT_ARM);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_MEDALS);
+	}
+
+	if (timerDirtDecal.Get() <= timeClearDirtDecal)
+	{
+		if (timerDirtDecal.Get() <= (timeClearDirtDecal / 2))
+			SET_PED_SWEAT(GetPlayerPed(), 0.0f);
+
+		CLEAR_PED_ENV_DIRT(GetPlayerPed());	//Must be called every frame
+		//CLEAR_PED_DAMAGE_DECAL_BY_ZONE(GetPlayerPed(), PDZ_TORSO, "basic_dirt_cloth");
+		//CLEAR_PED_DAMAGE_DECAL_BY_ZONE(GetPlayerPed(), PDZ_TORSO, "basic_dirt_skin");
 	}
 
 	if (subLevel > 0.9f)
@@ -397,7 +416,7 @@ void AllowWeaponsInsideSafeHouse()
 	{
 		if (isFakeWanted)
 		{
-			timerLastPlayerWeapon.Set(0);
+			timerLastPlayerWeapon.Reset();
 			SetFakeWanted(GetPlayer(), false);
 		}
 		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(GetPlayerPed());
@@ -414,7 +433,7 @@ void AllowWeaponsInsideSafeHouse()
 		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_FRANKLIN) ||
 		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_TREVOR))
 	{
-		timerCharacterSwitch.Set(0);
+		timerCharacterSwitch.Reset();
 	}
 	else if (timerCharacterSwitch.Get() > 250 &&
 		(IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_CHARACTER_WHEEL) ||
@@ -425,13 +444,13 @@ void AllowWeaponsInsideSafeHouse()
 		if (isFakeWanted)
 			SetFakeWanted(GetPlayer(), false);
 
-		timerLastPlayerWeapon.Set(0);
+		timerLastPlayerWeapon.Reset();
 		return;
 	}
 
 	//Reset weapon timer
 	if (!isFakeWanted)
-		timerLastPlayerWeapon.Set(0);
+		timerLastPlayerWeapon.Reset();
 	else
 		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(GetPlayerPed());
 
@@ -465,7 +484,7 @@ void ToggleFPSWalking()
 	//Walk Toggle
 	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SPRINT))
 	{
-		timerToggleFPSWalking.Set(0);
+		timerToggleFPSWalking.Reset();
 		playerLastMoveBlend = GET_PED_DESIRED_MOVE_BLEND_RATIO(GetPlayerPed());
 		SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), playerLastMoveBlend);
 	}
@@ -552,15 +571,15 @@ void CamFollowVehicleDuringHandbrake()
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
-	const int hash = GET_ENTITY_MODEL(veh);
-	if (IS_THIS_MODEL_A_BOAT(hash) || IS_THIS_MODEL_A_PLANE(hash) || IS_THIS_MODEL_A_HELI(hash) ||
-		IS_THIS_MODEL_A_TRAIN(hash) || IS_THIS_MODEL_A_BIKE(hash) || IS_THIS_MODEL_A_BICYCLE(hash))
+	Hash vehModel = GET_ENTITY_MODEL(veh);
+	if (!IS_THIS_MODEL_A_CAR(vehModel) && !(IS_THIS_MODEL_A_BIKE(vehModel) && !IS_THIS_MODEL_A_BICYCLE(vehModel))
+		&& !IS_THIS_MODEL_A_QUADBIKE(vehModel))
 		return;
 
 	if (timePressed > 0)
 	{
 		if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
-			timerVehCamA.Set(0);
+			timerVehCamA.Reset();
 		else if (timerVehCamA.Get() > timePressed && IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
 		{
 			SetCamSmoothHeadingLimit();
@@ -568,7 +587,7 @@ void CamFollowVehicleDuringHandbrake()
 		}
 		else if (timerVehCamA.Get() > timePressed && IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
 		{
-			timerVehCamB.Set(0);
+			timerVehCamB.Reset();
 			SetCamSmoothHeadingLimit();
 			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
 		}
@@ -586,7 +605,44 @@ void CamFollowVehicleDuringHandbrake()
 	return;
 }
 
-inline void DisableFirstPersonView() { DISABLE_ON_FOOT_FIRST_PERSON_VIEW_THIS_UPDATE(); /* Also works in vehicles */ return; }
+bool wasUsingHoodCam = false;
+void DisableFirstPersonView()
+{
+	if (GET_FOLLOW_PED_CAM_VIEW_MODE() == CAM_VIEW_MODE_FIRST_PERSON)
+		SET_FOLLOW_PED_CAM_VIEW_MODE(CAM_VIEW_MODE_THIRD_PERSON_NEAR);
+
+	if (IS_FOLLOW_VEHICLE_CAM_ACTIVE())
+	{
+		const bool isUsingHoodCam = GET_IS_USING_HOOD_CAMERA();	//Requires b372
+		const int vehModel = GET_ENTITY_MODEL(GET_VEHICLE_PED_IS_USING(GetPlayerPed()));
+		if (IS_THIS_MODEL_A_CAR(vehModel) || (IS_THIS_MODEL_A_BOAT(vehModel) && !IS_THIS_MODEL_A_JETSKI(vehModel)) ||
+			IS_THIS_MODEL_A_PLANE(vehModel) || IS_THIS_MODEL_A_HELI(vehModel))
+		{
+			if (wasUsingHoodCam && isUsingHoodCam)
+				SET_FOLLOW_VEHICLE_CAM_VIEW_MODE(CAM_VIEW_MODE_FIRST_PERSON);
+
+			if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_NEXT_CAMERA))
+			{
+				if (GET_FOLLOW_VEHICLE_CAM_VIEW_MODE() == CAM_VIEW_MODE_THIRD_PERSON_FAR)
+					wasUsingHoodCam = true;
+				else
+					wasUsingHoodCam = false;
+			}
+
+			if (isUsingHoodCam && !GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
+				return;
+		}
+
+		if (GET_FOLLOW_VEHICLE_CAM_VIEW_MODE() == CAM_VIEW_MODE_FIRST_PERSON && !GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
+		{
+			wasUsingHoodCam = false;
+			SET_FOLLOW_VEHICLE_CAM_VIEW_MODE(CAM_VIEW_MODE_THIRD_PERSON_NEAR);
+		}
+	}
+
+	DISABLE_ON_FOOT_FIRST_PERSON_VIEW_THIS_UPDATE(); //Also works in vehicles
+	return;
+}
 
 void DisableIdleCamera()
 {
@@ -706,7 +762,7 @@ void DisableForcedCarExplosionOnImpact()
 		return;
 	}
 
-	timerCarExplosion.Set(0);
+	timerCarExplosion.Reset();
 	if (!IS_ENTITY_A_MISSION_ENTITY(veh))
 	{
 		wasSetAsMissionEntity = true;
@@ -736,8 +792,9 @@ void DisableEngineFire()
 		return;
 
 	//Check if vehicle is a car/bike/quad and adjust engine health limit
-	Hash vehModel = GET_ENTITY_MODEL(veh);
-	if (!IS_THIS_MODEL_A_CAR(vehModel) && !IS_THIS_MODEL_A_BIKE(vehModel) && !IS_THIS_MODEL_A_QUADBIKE(vehModel))
+	const int vehModel = GET_ENTITY_MODEL(veh);
+	if (!IS_THIS_MODEL_A_CAR(vehModel) && !(IS_THIS_MODEL_A_BIKE(vehModel) && !IS_THIS_MODEL_A_BICYCLE(vehModel))
+		&& !IS_THIS_MODEL_A_QUADBIKE(vehModel))
 		return;
 
 	//Engine health safeguard
@@ -772,7 +829,7 @@ void LeaveEngineOnWhenExitingVehicles()
 
 	SET_VEHICLE_KEEP_ENGINE_ON_WHEN_ABANDONED(veh, true);	//Same thing as setting PCF_LeaveEngineOnWhenExitingVehicles
 	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT))
-		timerEngineControl.Set(0);
+		timerEngineControl.Reset();
 	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && 
 		timerEngineControl.Get() > TURN_OFF_ENGINE_DURATION &&
 		GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
@@ -833,7 +890,7 @@ void DisableWheelsAutoCenterOnCarExit()
 
 	if (shouldAttachVeh && !IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh) && GET_ENTITY_SPEED(veh) < maxVehSpeedDetach)
 	{
-		timerWheelsAutoCenter.Set(0);
+		timerWheelsAutoCenter.Reset();
 
 		float yOffset = 100.0f;
 		if (GET_ENTITY_SPEED_VECTOR(veh, true).y < 0.0f)
@@ -878,7 +935,7 @@ void KeepCarHydraulicsPosition()
 
 	if (GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
 	{
-		hydraulicsTimer.Set(0);
+		hydraulicsTimer.Reset();
 		LOOP(i, MAX_WHEELS) { SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(lastHydraulicsVeh, i, hydraulicsState[i]); }
 		lastUsedHydraulicsVeh = lastHydraulicsVeh;
 	}
@@ -1070,7 +1127,7 @@ bool isBigMapActive = false;
 void EnableBigMapToggle()
 {
 	if (IS_CONTROL_JUST_PRESSED(FRONTEND_CONTROL, INPUT_HUD_SPECIAL))
-		timerBigMap.Set(0);
+		timerBigMap.Reset();
 	else if (IS_CONTROL_JUST_RELEASED(FRONTEND_CONTROL, INPUT_HUD_SPECIAL) && timerBigMap.Get() < 200)
 	{
 		isBigMapActive ^= true;
@@ -1153,7 +1210,7 @@ void ReplaceArmourBarWithStamina()
 		if (realHealthPercentage > 25 || timerFlashHealth.Get() > flashHealthInterval)
 		{
 			if (timerFlashHealth.Get() > (flashHealthInterval * 2))
-				timerFlashHealth.Set(0);
+				timerFlashHealth.Reset();
 
 			SetHealthHudDisplayValues(newHealthPercentage, staminaPercentage);
 		}
@@ -1251,7 +1308,7 @@ void SetRadiosMusicOnly()
 		{ SET_RADIO_STATION_MUSIC_ONLY(RadioStations[i], true); }
 
 		SET_RADIO_STATION_MUSIC_ONLY(GET_PLAYER_RADIO_STATION_NAME(), true);
-		timerRadioMusic.Set(0);
+		timerRadioMusic.Reset();
 	}
 	return;
 }
@@ -1275,7 +1332,7 @@ void RefreshIni()
 {
 	if (IsKeyJustUp(INI::ReloadIniKey) && timerRefreshIni.Get() > 5000)
 	{
-		timerRefreshIni.Set(0);
+		timerRefreshIni.Reset();
 		ShowNotification("GameplayFixesV:~n~Reloaded INI");
 		ReadINI();
 		SetupPedFunctions();
