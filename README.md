@@ -1,4 +1,4 @@
-# GameplayFixesV-ScriptHookV [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa] [![GitHub all releases](https://img.shields.io/github/downloads/SuleMareVientu/GameplayFixesV-ScriptHookV/total?label=Total%20Downloads&logo=GitHub)](https://github.com/SuleMareVientu/GameplayFixesV-ScriptHookV/releases/latest)
+# GameplayFixesV-ScriptHookV [![License: GPL v3][GPL-3.0-shield]][GPL-3.0] [![GitHub all releases](https://img.shields.io/github/downloads/SuleMareVientu/GameplayFixesV-ScriptHookV/total?label=Total%20Downloads&logo=GitHub)](https://github.com/SuleMareVientu/GameplayFixesV-ScriptHookV/releases/latest)
 ![Screenshot](https://github.com/SuleMareVientu/GameplayFixesV-ScriptHookV/blob/images/GameplayFixesV.png?raw=true)
 Open-source script that aims to address some of the numerous issues GTA:V has.
 
@@ -74,10 +74,7 @@ DisableEngineSmoke and DisableEngineFire now work as intended
 - Alexander Blade - ScriptHookV
 
 This work is licensed under a
-[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
+[GNU General Public License v3.0][GPL-3.0].
 
-[![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
-
-[cc-by-nc-sa]: http://creativecommons.org/licenses/by-nc-sa/4.0/
-[cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
-[cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
+[GPL-3.0]: https://www.gnu.org/licenses/gpl-3.0
+[GPL-3.0-shield]: https://img.shields.io/badge/License-GPL%20v3-blue.svg

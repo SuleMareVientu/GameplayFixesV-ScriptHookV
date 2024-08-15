@@ -260,7 +260,7 @@ void DisarmPlayerWhenShot()
 	return;
 }
 
-void CleanWoundsInWater()
+void CleanWoundsAndDirtInWater()
 {
 	const float subLevel = GET_ENTITY_SUBMERGED_LEVEL(GetPlayerPed());
 	if (subLevel >= 0.3f)
@@ -271,6 +271,7 @@ void CleanWoundsInWater()
 
 	if (subLevel >= 0.7f || IS_PED_SWIMMING(GetPlayerPed()))
 	{
+		CLEAR_PED_ENV_DIRT(GetPlayerPed());
 		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_TORSO);
 		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_RIGHT_ARM);
 		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_LEFT_ARM);
@@ -1288,7 +1289,7 @@ void UpdatePlayerOptions()
 	if (INI::FriendlyFire) { nGeneral::FriendlyFire(); }
 	if (INI::DisableActionMode) { nGeneral::DisableActionMode(); }
 	if (INI::DisarmPlayerWhenShot) { nGeneral::DisarmPlayerWhenShot(); }
-	if (INI::CleanWoundsInWater) { nGeneral::CleanWoundsInWater(); }
+	if (INI::CleanWoundsAndDirtInWater) { nGeneral::CleanWoundsAndDirtInWater(); }
 	if (INI::SprintInsideInteriors) { nGeneral::EnableSprintInsideInteriors(); }
 	if (INI::AllowWeaponsInsideSafeHouse) { nGeneral::AllowWeaponsInsideSafeHouse(); }
 

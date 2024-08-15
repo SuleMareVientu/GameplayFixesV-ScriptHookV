@@ -16,7 +16,7 @@ unsigned long ReloadIniKey = VK_F12;
 bool FriendlyFire = true;
 bool DisableActionMode = false;
 bool DisarmPlayerWhenShot = true;
-bool CleanWoundsInWater = true;
+bool CleanWoundsAndDirtInWater = true;
 bool SprintInsideInteriors = true;
 bool AllowWeaponsInsideSafeHouse = false;
 //Player Controls
@@ -99,7 +99,7 @@ void ReadINI()
 	FriendlyFire = ini.GetBoolValue(playerGroup, "FriendlyFire", FriendlyFire);
 	DisableActionMode = ini.GetBoolValue(playerGroup, "DisableActionMode", DisableActionMode);
 	DisarmPlayerWhenShot = ini.GetBoolValue(playerGroup, "DisarmPlayerWhenShot", DisarmPlayerWhenShot);
-	CleanWoundsInWater = ini.GetBoolValue(playerGroup, "CleanWoundsInWater", CleanWoundsInWater);
+	CleanWoundsAndDirtInWater = ini.GetBoolValue(playerGroup, "CleanWoundsAndDirtInWater", CleanWoundsAndDirtInWater);
 	SprintInsideInteriors = ini.GetBoolValue(playerGroup, "SprintInsideInteriors", SprintInsideInteriors);
 	AllowWeaponsInsideSafeHouse = ini.GetBoolValue(playerGroup, "AllowWeaponsInsideSafeHouse", AllowWeaponsInsideSafeHouse);
 

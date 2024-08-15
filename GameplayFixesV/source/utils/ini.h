@@ -8,7 +8,7 @@ extern unsigned long ReloadIniKey;
 extern bool FriendlyFire;
 extern bool DisableActionMode;
 extern bool DisarmPlayerWhenShot;
-extern bool CleanWoundsInWater;
+extern bool CleanWoundsAndDirtInWater;
 extern bool SprintInsideInteriors;
 extern bool AllowWeaponsInsideSafeHouse;
 //Player Controls
