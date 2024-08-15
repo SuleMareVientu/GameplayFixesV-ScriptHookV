@@ -9,18 +9,27 @@ This mod is **does not** patch the game directly, and should thus last more with
 **Requires [ScriptHookV](http://www.dev-c.com/gtav/scripthookv/)**
 
 ## Features
+**Input:**
+- Reload the INI config with F12 (key can be changed)
+
 **Player:**
 - Enable friendly fire
-- Allow player to jack friendly peds vehicles
-- Allows enemies that hit the player's weapon (or hands) to disarm the player, similar to RDR and GTA:IV
+- Disable action mode
+- Allow enemies that hit the player's weapon (or hands) to disarm the player, similar to RDR and GTA:IV
+- Clean the player's wounds and dirt as he gradually enters the water
 - Sprint inside interiors
     - Works in b1180 & later, but doesn't in b372. Don't know in between
 - Allow weapons inside the safehouse
-    -  **Could (and probably will) break some story missions**, but shouldn't otherwise have problems in normal free-roam
+    - **Will break some story missions**, but shouldn't otherwise have problems in normal free-roam
 
 **Player Controls:**
+- Disable assisted movement (when a player follows a path automatically while moving forward, eg. Floyd's apartment entrance)
 - Toggle walking for first person by pressing (and not holding) the sprint button (X on PS / A on XBOX)
+- Disable auto-centering of the gameplay camera
 - Force the gameplay camera to follow the vehicle when using the handbrake
+- Disable the First Person View
+    - Requires at least b372
+- Disable the idle camera that activates when the player stands still for too long
 - Disable the replay recording feature completely
 - Disable the player's mobile phone
 
@@ -28,24 +37,88 @@ This mod is **does not** patch the game directly, and should thus last more with
 - Disable mid-air car controls and the ability to rotate the player's vehicle while stuck/upside down
 - Disable the automatic explosion after the player's vehicle collides with something at high speeds
 - Disable engine fire/smoke
-- Leave the engine on when exiting a vehicle unless the player keeps the exit vehicle button pressed for 250ms. Similar to GTA:IV
-- Disable the auto-centering of the player vehicle's wheels on exit. 
+- Leave the engine on when exiting a vehicle unless the player keeps the exit vehicle button pressed for 250ms. Exactly like GTA:IV
+- Disable the auto-centering of the player vehicle's wheels on exit 
     - While this is universally compatible, **it could cause some issues** with mission vehicles. Disable if necessary
+- Keeps the current position of the player vehicle's hydraulics on enter/exit
+    - Requires at least b505
+- Allow helicopter's rotors to affect the movement of dynamic water bodies, similar to GTA:IV
 - Block player from entering ragdoll when standing on car roofs
     - The max speed the player can reach before entering ragdoll is customizable inside the INI
+- Prevent the player from flying through the windscreen
+- Prevent the player from falling off bikes
+- Prevent other peds from dragging the player out of his vehicle
 - Disable the forced jump out when entering a water body with a bike (the player will still jump out if completely submerged)
 - Disable all stunt jumps around the map
+
+**HUD:**
+- Allow the game to continue when the pause menu is active, similar to GTA:Online
+    - The game can still be paused by pressing the "ESC" key instead of the "P" key.
+- Disable the blur and color filter on the pause menu
+- Disable all on-screen effects in menus and HUD (weapon wheel, radio wheel, character switch, etc.)
+- Disable the on-screen effects when the player is using a special ability
+- Allow the player to switch between normal minimap size and extended, similar to GTA:Online
+- Force a specified zoom level of the minimap
+- Flatten the minimap view.
+- Reveal all the map (hide the "Fog Of War")
+- Hide direction and distance indicator under the minimap when a waypoint is set
+- Hide the depth indicators under the minimap when inside a submersible
+- Hide the health, armour and ability bar under the minimap
+    - Requires at least b372
+- Show remaining stamina instead of armour in the blue bar below the minimap
+- Hide specific HUD component(s)
+- Hide the weapon reticle
+- Hide enemy's blips from the (mini)map. Also applies to police
+
+**Audio:**
+- Disable the dynamic music that plays when wanted
+- Disable the police scanner voice that plays when wanted
+- Disable the dynamic music that plays when flying
+- Disable all non-music radio content (ads, etc.)
+- Disable vehicle's radio auto-start (radio will be turned off by default, unless the engine is running)
 
 **Peds:**
 - Block peds from entering the "writhe" state and consequently dying
 - Block peds from entering the "hurt" state when shot while standing and consequently dying (or entering writhe)
     - Should be enabled in tandem with "DisableWritheWhenInjured", makes shootouts last much longer 
+- Force peds to get up instead of shooting when they fall on the ground with their backs
+- Make (most) sitting peds behave normally when shot, instead of dying instantly
 - Allow enemies that hit the ped's weapon (or hands) to disarm NPCs
 - Allow mission peds to be damaged by other entities and not only the player
-- Make (most) sitting peds behave normally when shot, instead of dying instantly
 - Disable dead peds from jumping out of the vehicle they are in
 
 ## Changelog:
+### **v2.0**
+**Added:**  
+- ReloadIniKey, FiveM support resource files  
+- **Player:**  
+  - DisableActionMode, CleanWoundsAndDirtInWater  
+- **Player Control:**  
+  - DisableAssistedMovement, DisableCameraAutoCenter, DisableFirstPersonView,
+DisableIdleCamera  
+- **Player Vehicle:**  
+  - KeepCarHydraulicsPosition, EnableHeliWaterPhysics, DisableFlyThroughWindscreen, 
+DisableBikeKnockOff, DisableDragOutCar,
+- **HUD:**  
+  - AllowGameExecutionOnPauseMenu, DisablePauseMenuPostFX, DisableHUDPostFX, 
+DisableSpecialAbilityPostFX, EnableBigMapToggle, SetRadarZoom, 
+DisableMinimapTilt, HideMinimapFog, HideMinimapBars, 
+HideAbilityBarForNonMainCharacters, AlwaysHideAbilityBar, 
+ReplaceArmourBarWithStamina, HideMinimapSatNav, HideMinimapDepth, 
+HideHudComponents, HideWeaponReticle, HideEnemiesBlips  
+- **Audio:**  
+  - DisableWantedMusic, DisablePoliceScanner, DisableFlyingMusic,
+DisableRadioInterruptions, DefaultVehicleRadioOff  
+- **Peds:**  
+  - DisableShootFromGround  
+   
+**Improved:**  
+- DisableWheelsAutoCenterOnCarExit, DisarmPedWhenShot, DisableMobilePhone, 
+LeaveEngineOnWhenExitingVehicles  
+
+**Removed:**  
+- PlayerCanJackFriendlyPeds
+
 ### **v1.2**
 - CamFollowVehicleDuringHandbrake / CamFollowVehDelay - Force gameplay camera to follow the vehicle when using the handbrake
 - DisableStuntJumps - Disables all stunt jumps around the map
