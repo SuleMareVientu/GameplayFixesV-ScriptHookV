@@ -1,5 +1,6 @@
 #include "ini.h"
 #include <SimpleIni.h>
+#include "functions.h"
 #include "../globals.h"
 
 static constexpr char* inputGroup = "Input";
@@ -14,6 +15,7 @@ namespace INI
 unsigned long ReloadIniKey = VK_F12;
 //Player Settings
 bool FriendlyFire = true;
+bool EnableStealthForAllPeds = true;
 bool DisableActionMode = false;
 bool DisarmPlayerWhenShot = true;
 bool CleanWoundsAndDirtInWater = true;
@@ -51,6 +53,7 @@ bool DisablePauseMenuPostFX = false;
 bool DisableHUDPostFX = false;
 bool DisableSpecialAbilityPostFX = false;
 bool EnableBigMapToggle = false;
+bool MinimapSpeedometer = false;
 float SetRadarZoom = -1.0f;
 bool DisableMinimapTilt = false;
 bool HideMinimapFog = true;
@@ -71,6 +74,9 @@ bool DisablePoliceScanner = false;
 bool DisableFlyingMusic = false;
 bool DisableRadioInterruptions = false;
 bool DefaultVehicleRadioOff = false;
+bool MuteSounds = false;
+char* Sounds = "AMBIENCE, MUSIC";
+bool DisablePlayerPainAudio = false;
 
 //Peds Settings
 bool DisableWrithe = true;
@@ -82,6 +88,7 @@ int DisarmChance = 50;
 bool DisarmIncludeLeftHand = false;
 bool DisablePedOnlyDamagedByPlayer = true;
 bool DisableDeadPedsJumpOutOfVehicle = true;
+bool DisableScenarios = false;
 }
 using namespace INI;
 
@@ -93,10 +100,13 @@ void ReadINI()
 	if (res != SI_OK)
 		return;
 
-	ReloadIniKey = ini.GetLongValue(inputGroup, "ReloadIniKey", ReloadIniKey);
+	constexpr char* DefaultReloadIniKeyStr = "F12"; std::string tmpStrArr[1]{};
+	SplitString(const_cast<char*>(ini.GetValue(inputGroup, "ReloadIniKey", DefaultReloadIniKeyStr)), tmpStrArr, 1);
+	ReloadIniKey = GetVKFromString(tmpStrArr[0]);
 
 	//////////////////////////////////////Player//////////////////////////////////////////
 	FriendlyFire = ini.GetBoolValue(playerGroup, "FriendlyFire", FriendlyFire);
+	EnableStealthForAllPeds = ini.GetBoolValue(playerGroup, "EnableStealthForAllPeds", EnableStealthForAllPeds);
 	DisableActionMode = ini.GetBoolValue(playerGroup, "DisableActionMode", DisableActionMode);
 	DisarmPlayerWhenShot = ini.GetBoolValue(playerGroup, "DisarmPlayerWhenShot", DisarmPlayerWhenShot);
 	CleanWoundsAndDirtInWater = ini.GetBoolValue(playerGroup, "CleanWoundsAndDirtInWater", CleanWoundsAndDirtInWater);
@@ -137,6 +147,7 @@ void ReadINI()
 	DisableHUDPostFX = ini.GetBoolValue(HUDGroup, "DisableHUDPostFX", DisableHUDPostFX);
 	DisableSpecialAbilityPostFX = ini.GetBoolValue(HUDGroup, "DisableSpecialAbilityPostFX", DisableSpecialAbilityPostFX);
 	EnableBigMapToggle = ini.GetBoolValue(HUDGroup, "EnableBigMapToggle", EnableBigMapToggle);
+	MinimapSpeedometer = ini.GetBoolValue(HUDGroup, "MinimapSpeedometer", MinimapSpeedometer);
 	SetRadarZoom = static_cast<float>(ini.GetDoubleValue(HUDGroup, "SetRadarZoom", SetRadarZoom));
 	DisableMinimapTilt = ini.GetBoolValue(HUDGroup, "DisableMinimapTilt", DisableMinimapTilt);
 	HideMinimapFog = ini.GetBoolValue(HUDGroup, "HideMinimapFog", HideMinimapFog);
@@ -158,6 +169,9 @@ void ReadINI()
 	DisableFlyingMusic = ini.GetBoolValue(AudioGroup, "DisableFlyingMusic", DisableFlyingMusic);
 	DisableRadioInterruptions = ini.GetBoolValue(AudioGroup, "DisableRadioInterruptions", DisableRadioInterruptions);
 	DefaultVehicleRadioOff = ini.GetBoolValue(AudioGroup, "DefaultVehicleRadioOff", DefaultVehicleRadioOff);
+	MuteSounds = ini.GetBoolValue(AudioGroup, "MuteSounds", MuteSounds);
+	Sounds = const_cast<char*>(ini.GetValue(AudioGroup, "Sounds", Sounds));
+	DisablePlayerPainAudio = ini.GetBoolValue(AudioGroup, "DisablePlayerPainAudio", DisablePlayerPainAudio);
 
 	//////////////////////////////////////Peds/////////////////////////////////////////////
 	DisableWrithe = ini.GetBoolValue(pedsGroup, "DisableWrithe", DisableWrithe);
@@ -169,5 +183,6 @@ void ReadINI()
 	DisarmIncludeLeftHand = ini.GetBoolValue(pedsGroup, "DisarmIncludeLeftHand", DisarmIncludeLeftHand);
 	DisablePedOnlyDamagedByPlayer = ini.GetBoolValue(pedsGroup, "DisablePedOnlyDamagedByPlayer", DisablePedOnlyDamagedByPlayer);
 	DisableDeadPedsJumpOutOfVehicle = ini.GetBoolValue(pedsGroup, "DisableDeadPedsJumpOutOfVehicle", DisableDeadPedsJumpOutOfVehicle);
+	DisableScenarios = ini.GetBoolValue(pedsGroup, "DisableScenarios", DisableScenarios);
 	return;
 }

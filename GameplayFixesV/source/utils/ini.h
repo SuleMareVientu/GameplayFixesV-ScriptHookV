@@ -6,6 +6,7 @@ namespace INI
 extern unsigned long ReloadIniKey;
 //Player Settings
 extern bool FriendlyFire;
+extern bool EnableStealthForAllPeds;
 extern bool DisableActionMode;
 extern bool DisarmPlayerWhenShot;
 extern bool CleanWoundsAndDirtInWater;
@@ -43,6 +44,7 @@ extern bool DisablePauseMenuPostFX;
 extern bool DisableHUDPostFX;
 extern bool DisableSpecialAbilityPostFX;
 extern bool EnableBigMapToggle;
+extern bool MinimapSpeedometer;
 extern float SetRadarZoom;
 extern bool DisableMinimapTilt;
 extern bool HideMinimapFog;
@@ -63,6 +65,9 @@ extern bool DisablePoliceScanner;
 extern bool DisableFlyingMusic;
 extern bool DisableRadioInterruptions;
 extern bool DefaultVehicleRadioOff;
+extern bool MuteSounds;
+extern char* Sounds;
+extern bool DisablePlayerPainAudio;
 
 //Peds Settings
 extern bool DisableWrithe;
@@ -74,6 +79,7 @@ extern int DisarmChance;
 extern bool DisarmIncludeLeftHand;
 extern bool DisablePedOnlyDamagedByPlayer;
 extern bool DisableDeadPedsJumpOutOfVehicle;
+extern bool DisableScenarios;
 }
 
 void ReadINI();

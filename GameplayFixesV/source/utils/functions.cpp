@@ -6,37 +6,39 @@
 #include <random>
 #include <string>
 #include <sstream>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
 #include "keyboard.h"
 #include "ini.h"
 #include "peds.h"
-#include "..\globals.h"
 
 #pragma region Ped Flags
 void EnablePedConfigFlag(Ped ped, int flag)
 {
-	if (!PED::GET_PED_CONFIG_FLAG(ped, flag, false))
-		PED::SET_PED_CONFIG_FLAG(ped, flag, true);
+	if (!GET_PED_CONFIG_FLAG(ped, flag, false))
+		SET_PED_CONFIG_FLAG(ped, flag, true);
 	return;
 }
 
 void DisablePedConfigFlag(Ped ped, int flag)
 {
-	if (PED::GET_PED_CONFIG_FLAG(ped, flag, false))
-		PED::SET_PED_CONFIG_FLAG(ped, flag, false);
+	if (GET_PED_CONFIG_FLAG(ped, flag, false))
+		SET_PED_CONFIG_FLAG(ped, flag, false);
 	return;
 }
 
 void EnablePedResetFlag(Ped ped, int flag)
 {
-	if (!PED::GET_PED_RESET_FLAG(ped, flag))
-		PED::SET_PED_RESET_FLAG(ped, flag, true);
+	if (!GET_PED_RESET_FLAG(ped, flag))
+		SET_PED_RESET_FLAG(ped, flag, true);
 	return;
 }
 
 void DisablePedResetFlag(Ped ped, int flag)
 {
-	if (PED::GET_PED_RESET_FLAG(ped, flag))
-		PED::SET_PED_RESET_FLAG(ped, flag, false);
+	if (GET_PED_RESET_FLAG(ped, flag))
+		SET_PED_RESET_FLAG(ped, flag, false);
 	return;
 }
 #pragma endregion
@@ -93,22 +95,41 @@ bool ArrayContains(int value, const int a[], int n)
 	return i == n ? false : true;
 }
 
-void SplitString(const char* charStr, std::string arr[], const int arrSize)
+void SplitString(const char* charStr, std::string arr[], const int arrSize, const bool toUpper)
 {
 	constexpr char space = 0x20; constexpr char tab = 0x09; constexpr char comma = 0x2C;
 	std::string str; str = charStr;
 	str.erase(std::remove(str.begin(), str.end(), space), str.end());
 	str.erase(std::remove(str.begin(), str.end(), tab), str.end());
-	std::istringstream ss(str);
-	std::string token;
 
 	int i = 0;
-	while (std::getline(ss, token, comma) && i < arrSize)
+	std::istringstream ss(str);
+	std::string token;
+	if (toUpper)
 	{
-		arr[i] = token;
-		i++;
+		while (std::getline(ss, token, comma) && i < arrSize)
+		{
+			std::transform(token.begin(), token.end(), token.begin(), ::toupper);
+			arr[i] = token;
+			i++;
+		}
+	}
+	else
+	{
+		while (std::getline(ss, token, comma) && i < arrSize)
+		{
+			arr[i] = token;
+			i++;
+		}
 	}
 	return;
+}
+
+int GetRandomIntInRange(int startRange, int endRange)
+{
+	endRange += 1;
+	SET_RANDOM_SEED(GET_GAME_TIMER());
+	return GET_RANDOM_INT_IN_RANGE(startRange, endRange);
 }
 
 bool GetWeightedBool(int chance)	//Chance out of 100
@@ -205,6 +226,64 @@ static bool RequestScaleform(const char* name, int* handle)
 	return false;
 }
 */
+
+void SetTextStyle(TextStyle Style, bool bDrawBeforeFade)
+{
+	// choose font
+	SET_TEXT_FONT(Style.aFont);
+	if (Style.WrapStartX != 0.0f || Style.WrapEndX != 0.0f)
+		SET_TEXT_WRAP(Style.WrapStartX, Style.WrapEndX);
+
+	SET_TEXT_SCALE(Style.XScale, Style.YScale);
+	SET_TEXT_COLOUR(Style.colour.R, Style.colour.G, Style.colour.B, Style.colour.A);
+
+	switch (Style.drop)
+	{
+	case DROPSTYLE_NONE:
+		break;
+	case DROPSTYLE_ALL:
+		SET_TEXT_OUTLINE();
+		SET_TEXT_DROP_SHADOW();
+		break;
+	case DROPSTYLE_DROPSHADOWONLY:
+		SET_TEXT_DROP_SHADOW();
+		break;
+	case DROPSTYLE_OUTLINEONLY:
+		SET_TEXT_OUTLINE();
+		break;
+	}
+
+	if (bDrawBeforeFade)
+		SET_SCRIPT_GFX_DRAW_ORDER(GFX_ORDER_AFTER_HUD);
+
+	//Other
+	SET_TEXT_CENTRE(Style.centre);
+	// SET_TEXT_DROPSHADOW(); // RGB parameters are unused, it's the same as SET_TEXT_DROP_SHADOW();
+	//SET_TEXT_EDGE(0, 0, 0, 0, 0); // nullsub
+	return;
+}
+
+int GetPadControlFromString(const std::string &str)
+{
+	std::string tmpStr = str;
+	std::transform(tmpStr.begin(), tmpStr.end(), tmpStr.begin(), ::toupper);
+	auto it = mapPadControls.find(tmpStr);
+	if (it != mapPadControls.end())
+		return it->second;
+	else
+		return -1;
+}
+
+int GetVKFromString(const std::string &str)
+{
+	std::string tmpStr = str;
+	std::transform(tmpStr.begin(), tmpStr.end(), tmpStr.begin(), ::toupper);
+	auto it = mapVKs.find(tmpStr);
+	if (it != mapVKs.end())
+		return it->second;
+	else
+		return -1;
+}
 #pragma endregion
 
 /////////////////////////////////////////////Player//////////////////////////////////////////////
@@ -236,6 +315,29 @@ void FriendlyFire()
 		DisablePedConfigFlag(ped, PCF_PreventAllMeleeTaunts);
 		DisablePedConfigFlag(ped, PCF_NeverEverTargetThisPed);
 		EnablePedConfigFlag(ped, PCF_AllowPlayerLockOnIfFriendly);
+	}
+	return;
+}
+
+void EnableStealthForAllPeds()
+{
+	if (!IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_DUCK))
+		return;
+
+	switch (GET_ENTITY_MODEL(GetPlayerPed()))
+	{
+	case FranklinPed:
+	case MichaelPed:
+	case TrevorPed:
+		return;
+	default:
+		if (IS_PED_ON_FOOT(GetPlayerPed()) && !IS_PED_RAGDOLL(GetPlayerPed()) && !IS_PED_CLIMBING(GetPlayerPed()) &&
+			!IS_PED_DIVING(GetPlayerPed()) && !IS_PED_SWIMMING(GetPlayerPed()) &&
+			GET_PED_STEALTH_MOVEMENT(GetPlayerPed())) // Not an error, GET_PED_STEALTH_MOVEMENT needs to return true here
+		{
+			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
+		}
+		return;
 	}
 	return;
 }
@@ -988,6 +1090,9 @@ void EnableHeliWaterPhysics()
 		if (rotors[i] < 0)
 			continue;
 
+		// Apply only for main rotors first, so that if the helicopter has a tail it doesn't apply the effect.
+		// Eg.: Cargobobs have both a front and rear motor, but don't have a tail and thus the effect should be applied to both motors,
+		// an helicopter will instead have a rear motors at it's tail that should NOT produce the effect
 		if (i <= 1)
 		{
 			const Vector3 tmpCoords = GET_WORLD_POSITION_OF_ENTITY_BONE(heli, rotors[i]);
@@ -1136,6 +1241,49 @@ void EnableBigMapToggle()
 	return;
 }
 
+float speed = 0.0f;
+Timer speedTimer;
+void MinimapSpeedometer()
+{
+	if (!IS_MINIMAP_RENDERING() || IS_RADAR_HIDDEN() || !GetVehiclePedIsIn(GetPlayerPed(), false, false))
+		return;
+
+	if (speedTimer.Get() > 100)
+	{
+		speed = GET_ENTITY_SPEED(GetPlayerPed());
+		speedTimer.Reset();
+	}
+
+	std::string text = "";
+	if (SHOULD_USE_METRIC_MEASUREMENTS())
+	{
+		text = std::to_string(speed * 3.6f);
+		text = text.substr(0, (text.find(".") + 2)) + "km/h";
+	}
+	else
+	{
+		text = std::to_string(speed * 2.236936f);
+		text = text.substr(0, (text.find(".") + 2)) + "mph";
+	}
+
+	float txtX = 0.0f, txtY = 0.0f;
+	float n = (16.0f / 9.0f) / GET_SCREEN_ASPECT_RATIO();	// Scale X axis if ratio differs from 16/9
+	SET_SCRIPT_GFX_ALIGN(UI_ALIGN_LEFT, UI_ALIGN_BOTTOM);
+	if (isBigMapActive)
+		GET_SCRIPT_GFX_ALIGN_POSITION(0.18f * n, -0.047f, &txtX, &txtY);
+	else
+		GET_SCRIPT_GFX_ALIGN_POSITION(0.1f * n, -0.047f, &txtX, &txtY);
+	
+	RESET_SCRIPT_GFX_ALIGN();
+
+	SetTextStyle(TextStyle{ FONT_CONDENSED, 0.44f, 0.44f, RGBA{250, 250, 250, 180}, DROPSTYLE_DROPSHADOWONLY, false, 0.0f, 1.0f });
+
+	BEGIN_TEXT_COMMAND_DISPLAY_TEXT("STRING");
+	ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(text.c_str());
+	END_TEXT_COMMAND_DISPLAY_TEXT(txtX, txtY, false);
+	return;
+}
+
 void SetRadarZoom()
 {
 	if (INI::SetRadarZoom < 0.0f)
@@ -1152,8 +1300,9 @@ void SetRadarZoom()
 }
 
 inline void DisableMinimapTilt() { DONT_TILT_MINIMAP_THIS_FRAME(); return; }
-
 inline void HideMinimapFog() { SET_MINIMAP_HIDE_FOW(true); return; }
+inline void HideSatNav() { CALL_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "HIDE_SATNAV"); return; }
+inline void HideMinimapDepth() { CALL_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "HIDE_DEPTH"); return; }
 
 void HideMinimapBars()
 {
@@ -1198,10 +1347,10 @@ Timer timerFlashHealth;
 constexpr int flashHealthInterval = 400;
 void ReplaceArmourBarWithStamina()
 {
-	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(GetPlayer()));		//GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then healt depletes
+	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(GetPlayer()));		//GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then health depletes
 	if (INI::MergeHealthAndArmour)
 	{
-		int health = GET_ENTITY_HEALTH(GetPlayerPed()) - 100 + GET_PED_ARMOUR(GetPlayerPed());			//We need to subtract 100 because the player fatal healt is 100 not 0
+		int health = GET_ENTITY_HEALTH(GetPlayerPed()) - 100 + GET_PED_ARMOUR(GetPlayerPed());			//We need to subtract 100 because the player fatal health is 100 not 0
 		int maxHealth = GET_ENTITY_MAX_HEALTH(GetPlayerPed()) - 100 + GET_PLAYER_MAX_ARMOUR(GetPlayer());
 		int newHealthPercentage = ROUND(health * 100.0f / maxHealth);							//Always ensure a 100 offset to fix hud ratio
 		int realHealthPercentage = ROUND((GET_ENTITY_HEALTH(GetPlayerPed()) - 100.0f) * 100.0f / (GET_ENTITY_MAX_HEALTH(GetPlayerPed()) - 100.0f));
@@ -1232,12 +1381,8 @@ void ReplaceArmourBarWithStamina()
 	return;
 }
 
-inline void HideSatNav() { CALL_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "HIDE_SATNAV"); return; }
-inline void HideMinimapDepth() { CALL_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "HIDE_DEPTH"); return; }
-
 int GetHudComponentFromString(std::string str)
 {
-	//std::for_each(str.begin(), str.end(), std::toupper);
 	switch (Joaat(str.c_str()))
 	{
 	case Joaat("HUD_WANTED_STARS"): return HUD_WANTED_STARS;
@@ -1265,17 +1410,27 @@ int GetHudComponentFromString(std::string str)
 }
 
 bool InitializedHideHudComponents = false;
-std::string hudComponentsArr[MAX_HUD_COMPONENTS]{};
+std::string hudComponentsStrArr[MAX_HUD_COMPONENTS]{};
+unsigned int hudComponentsArr[MAX_HUD_COMPONENTS]{};
 void HideHudComponents()
 {
 	if (!InitializedHideHudComponents)
-		SplitString(INI::HudComponents, hudComponentsArr, MAX_HUD_COMPONENTS);
+	{
+		SplitString(INI::HudComponents, hudComponentsStrArr, MAX_HUD_COMPONENTS, true);
+		LOOP(i, MAX_HUD_COMPONENTS)
+		{
+			if (!hudComponentsStrArr[i].empty())
+				hudComponentsArr[i] = GetHudComponentFromString(hudComponentsStrArr[i]);
+		}
+		InitializedHideHudComponents = true;
+	}
 
 	LOOP(i, MAX_HUD_COMPONENTS)
 	{
-		if (!hudComponentsArr[i].empty())
-			HIDE_HUD_COMPONENT_THIS_FRAME(GetHudComponentFromString(hudComponentsArr[i]));
+		if (hudComponentsArr[i] > 0)
+			HIDE_HUD_COMPONENT_THIS_FRAME(hudComponentsArr[i]);
 	}
+	return;
 }
 
 void HideWeaponReticle()
@@ -1299,17 +1454,19 @@ inline void DisableWantedMusic() { SET_AUDIO_FLAG("WantedMusicDisabled", true); 
 inline void DisablePoliceScanner() { SET_AUDIO_FLAG("PoliceScannerDisabled", true); return; }
 inline void DisableFlightMusic() { SET_AUDIO_FLAG("DisableFlightMusic", true); return; }
 
-Timer timerRadioMusic;
+int DisableRadiosCount = 0;
 void SetRadiosMusicOnly()
 {
-	if (timerRadioMusic.Get() > 10000)
+	LOOP(i, 5)
 	{
-		LOOP(i, RadioStationsSize)
-		{ SET_RADIO_STATION_MUSIC_ONLY(RadioStations[i], true); }
+		SET_RADIO_STATION_MUSIC_ONLY(RadioStations[DisableRadiosCount], true);
 
-		SET_RADIO_STATION_MUSIC_ONLY(GET_PLAYER_RADIO_STATION_NAME(), true);
-		timerRadioMusic.Reset();
+		DisableRadiosCount++;
+		if (DisableRadiosCount >= RadioStationsSize)
+			DisableRadiosCount = 0;
 	}
+
+	SET_RADIO_STATION_MUSIC_ONLY(GET_PLAYER_RADIO_STATION_NAME(), true);
 	return;
 }
 
@@ -1325,7 +1482,78 @@ void DefaultVehicleRadioOff()
 	}
 	return;
 }
+
+bool InitializedMuteSounds = false;
+constexpr int maxMutedSounds = 9;
+std::string mutedSoundsArr[maxMutedSounds]{};
+void MuteSounds()
+{
+	if (!InitializedMuteSounds)
+	{
+		SplitString(INI::Sounds, mutedSoundsArr, maxMutedSounds, true);
+		LOOP(i, maxMutedSounds)
+		{
+			if (mutedSoundsArr[i].empty())
+				continue;
+
+			switch (Joaat(mutedSoundsArr[i].c_str()))
+			{
+			case Joaat("AMBIENCE"): mutedSoundsArr[i] = "MUTES_AMBIENCE_SCENE"; break;
+			case Joaat("CUTSCENE"): mutedSoundsArr[i] = "MUTES_CUTSCENE_SCENE"; break;
+			case Joaat("FRONTEND"): mutedSoundsArr[i] = "MUTES_FRONTEND_SCENE"; break;
+			// Mutes all music emitters, including radios (cars, static ones like the stripclub etc.)
+			case Joaat("MUSIC"): mutedSoundsArr[i] = "MUTES_MUSIC_SCENE"; break;
+			case Joaat("RADIO"): mutedSoundsArr[i] = "MUTES_RADIO_SCENE"; break;
+			case Joaat("SFX"): mutedSoundsArr[i] = "MUTES_SFX_SCENE"; break;
+			case Joaat("SPEECH"): mutedSoundsArr[i] = "MUTES_SPEECH_SCENE"; break;
+			case Joaat("GUNS"): mutedSoundsArr[i] = "MUTES_GUNS_SCENE"; break;
+			case Joaat("VEHICLES"): mutedSoundsArr[i] = "MUTES_VEHICLES_SCENE"; break;
+			default: mutedSoundsArr[i] = ""; break;
+			}
+		}
+		STOP_AUDIO_SCENES();
+		InitializedMuteSounds = true;
+	}
+
+	LOOP(i, maxMutedSounds)
+	{
+		if (mutedSoundsArr[i].empty() || IS_AUDIO_SCENE_ACTIVE(mutedSoundsArr[i].c_str()))
+			continue;
+
+		START_AUDIO_SCENE(mutedSoundsArr[i].c_str());
+	}
+	return;
+}
+
+inline void DisablePlayerPainAudio() { DISABLE_PED_PAIN_AUDIO(GetPlayerPed(), true); return; }
 }	//END nAudio
+
+namespace nPeds
+{
+int DisableScenariosCount = 0;
+int DisableScenarioGroupsCount = 0;
+void DisableScenarios()
+{
+	LOOP(i, 10)
+	{
+		if (IS_SCENARIO_TYPE_ENABLED(Scenarios[DisableScenariosCount]))
+			SET_SCENARIO_TYPE_ENABLED(Scenarios[DisableScenariosCount], false);
+
+		DisableScenariosCount++;
+		if (DisableScenariosCount >= ScenariosSize)
+			DisableScenariosCount = 0;
+
+		if (DOES_SCENARIO_GROUP_EXIST(ScenarioGroups[DisableScenarioGroupsCount]) &&
+			IS_SCENARIO_GROUP_ENABLED(ScenarioGroups[DisableScenarioGroupsCount]))
+			SET_SCENARIO_GROUP_ENABLED(ScenarioGroups[DisableScenarioGroupsCount], false);
+
+		DisableScenarioGroupsCount++;
+		if (DisableScenarioGroupsCount >= ScenarioGroupsSize)
+			DisableScenarioGroupsCount = 0;
+	}
+	return;
+}
+}
 
 Timer timerRefreshIni; //Allow reload every 5s
 void RefreshIni()
@@ -1337,6 +1565,7 @@ void RefreshIni()
 		ReadINI();
 		SetupPedFunctions();
 		nHUD::InitializedHideHudComponents = false;
+		nAudio::InitializedMuteSounds = false;
 	}
 	return;
 }
@@ -1344,6 +1573,7 @@ void RefreshIni()
 void UpdatePlayerOptions()
 {
 	if (INI::FriendlyFire) { nGeneral::FriendlyFire(); }
+	if (INI::EnableStealthForAllPeds) { nGeneral::EnableStealthForAllPeds(); }
 	if (INI::DisableActionMode) { nGeneral::DisableActionMode(); }
 	if (INI::DisarmPlayerWhenShot) { nGeneral::DisarmPlayerWhenShot(); }
 	if (INI::CleanWoundsAndDirtInWater) { nGeneral::CleanWoundsAndDirtInWater(); }
@@ -1382,6 +1612,7 @@ void UpdatePlayerOptions()
 	if (INI::DisablePauseMenuPostFX) { nHUD::DisablePauseMenuPostFX(); }
 	if (INI::DisableSpecialAbilityPostFX) { nHUD::DisableSpecialAbilityPostFX(); }
 	if (INI::EnableBigMapToggle) { nHUD::EnableBigMapToggle(); }
+	if (INI::MinimapSpeedometer) { nHUD::MinimapSpeedometer(); }
 	if (INI::SetRadarZoom >= 0.0f) { nHUD::SetRadarZoom(); }
 	if (INI::DisableMinimapTilt) { nHUD::DisableMinimapTilt(); }
 	if (INI::HideMinimapFog) { nHUD::HideMinimapFog(); }
@@ -1406,5 +1637,10 @@ void UpdatePlayerOptions()
 	if (INI::DisableFlyingMusic) { nAudio::DisableFlightMusic(); }
 	if (INI::DisableRadioInterruptions) { nAudio::SetRadiosMusicOnly(); }
 	if (INI::DefaultVehicleRadioOff) { nAudio::DefaultVehicleRadioOff(); }
+	if (INI::MuteSounds) { nAudio::MuteSounds(); }
+	if (INI::DisablePlayerPainAudio) { nAudio::DisablePlayerPainAudio(); }
+
+	//////////////////////////////////////////Peds/////////////////////////////////////////
+	if (INI::DisableScenarios) { nPeds::DisableScenarios(); }
 	return;
 }

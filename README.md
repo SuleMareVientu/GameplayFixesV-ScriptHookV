@@ -41,7 +41,7 @@ This mod is **does not** patch the game directly, and should thus last more with
 - Disable the auto-centering of the player vehicle's wheels on exit 
     - While this is universally compatible, **it could cause some issues** with mission vehicles. Disable if necessary
 - Keeps the current position of the player vehicle's hydraulics on enter/exit
-    - Requires at least b505
+    - Requires at least b2372
 - Allow helicopter's rotors to affect the movement of dynamic water bodies, similar to GTA:IV
 - Block player from entering ragdoll when standing on car roofs
     - The max speed the player can reach before entering ragdoll is customizable inside the INI

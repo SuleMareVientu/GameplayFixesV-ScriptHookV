@@ -27,10 +27,10 @@ void DisableHurt(const Ped ped)
 	DisablePedConfigFlag(ped, PCF_ForceDieIfInjured);
 	DisablePedConfigFlag(ped, PCF_DieWhenRagdoll);
 	//Fix long melee fights
-	if (PED::IS_PED_IN_MELEE_COMBAT(ped) || PED::IS_PED_FLEEING(ped))
-		PED::SET_PED_DIES_WHEN_INJURED(ped, true);
+	if (IS_PED_IN_MELEE_COMBAT(ped) || IS_PED_FLEEING(ped))
+		SET_PED_DIES_WHEN_INJURED(ped, true);
 	else
-		PED::SET_PED_DIES_WHEN_INJURED(ped, false);
+		SET_PED_DIES_WHEN_INJURED(ped, false);
 	return;
 }
 

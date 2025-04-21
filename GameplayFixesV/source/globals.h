@@ -1,33 +1,46 @@
 #pragma once
 #include <types.h>
-#include "utils\functions.h"
 
 #define LOOP(i, n) for(int i = 0; i < n; ++i)
 
 constexpr unsigned int Joaat(const char* str)
 {
 	if (str == nullptr || *str == '\0')
-		return NULL;
+		return 0;
 
-	unsigned int n = NULL;
+	unsigned int hash = 0;
 	for (unsigned long long i = 0; str[i] != '\0'; ++i)
 	{
 		unsigned char b = static_cast<unsigned char>(str[i]);
-		if (b >= 65 && b <= 90) // A-Z
-			b += 32; // Convert to lowercase
-		else if (b == 92) // Backslash
-			b = 47; // Convert to forward slash
+		if (b >= 'A' && b <= 'Z')
+			b = b | 1 << 5; // Convert to lowercase
+		else if (b == '\\')
+			b = '/';
 
-		n += b;
-		n += n << 10;
-		n ^= n >> 6;
+		hash += b;
+		hash += hash << 10;
+		hash ^= hash >> 6;
 	}
 
-	n += n << 3;
-	n ^= n >> 11;
-	n += n << 15;
-	return n;
-}
+	// Finalize hash
+	hash += hash << 3;
+	hash ^= hash >> 11;
+	hash += hash << 15;
+	return hash;
+};
+
+typedef struct { int R, G, B, A; } RGBA;
+
+union scrValue
+{
+	int Int;
+	unsigned int Uns;
+	float Float;
+	const char* String;
+	scrValue* Reference;
+	unsigned long long Any;
+	bool operator==(const scrValue &val) { return Int == val.Int; }
+};
 
 //Constants
 constexpr Vector3 nullVec{ NULL, NULL, NULL, NULL, NULL, NULL };
@@ -467,6 +480,58 @@ enum eHudComponents
 	MAX_HUD_COMPONENTS
 };
 
+enum eTextFonts {
+	FONT_STANDARD = 0,
+	FONT_CURSIVE,
+	FONT_ROCKSTAR_TAG,
+	FONT_LEADERBOARD,
+	FONT_CONDENSED,
+	FONT_STYLE_FIXED_WIDTH_NUMBERS,
+	FONT_CONDENSED_NOT_GAMERNAME,
+	FONT_STYLE_PRICEDOWN,
+	FONT_STYLE_TAXI
+};
+
+enum eDropStyle {
+	DROPSTYLE_NONE = 0,
+	DROPSTYLE_ALL = 1,
+	DROPSTYLE_OUTLINEONLY = 2,
+	DROPSTYLE_DROPSHADOWONLY = 3
+};
+
+enum eGFXDrawOrder {
+	GFX_ORDER_BEFORE_HUD_PRIORITY_LOW = 0,
+	GFX_ORDER_BEFORE_HUD,  // standard
+	GFX_ORDER_BEFORE_HUD_PRIORITY_HIGH,
+
+	GFX_ORDER_AFTER_HUD_PRIORITY_LOW,
+	GFX_ORDER_AFTER_HUD,  // standard
+	GFX_ORDER_AFTER_HUD_PRIORITY_HIGH,
+
+	GFX_ORDER_AFTER_FADE_PRIORITY_LOW,
+	GFX_ORDER_AFTER_FADE,  // standard
+	GFX_ORDER_AFTER_FADE_PRIORITY_HIGH
+};
+
+enum eUIAlignment
+{
+	UI_ALIGN_LEFT = 'L',
+	UI_ALIGN_RIGHT = 'R',
+	UI_ALIGN_TOP = 'T',
+	UI_ALIGN_BOTTOM = 'B',
+	UI_ALIGN_IGNORE = 'I'
+};
+
+typedef struct {
+	eTextFonts aFont;
+	float XScale, YScale;
+	RGBA colour;
+	eDropStyle drop;
+	bool centre;
+	float WrapStartX, WrapEndX;
+} TextStyle;
+constexpr TextStyle defaultTextStyle = { FONT_STANDARD, 0.35f, 0.35f, RGBA{255, 255, 255, 255}, DROPSTYLE_NONE, false, 0.0f, 1.0f };
+
 enum eStartRagdollTask {
 	TASK_RELAX = 0,
 	TASK_NM_SCRIPT,
@@ -485,7 +550,8 @@ constexpr int AllHandsBonetags[AllHandsBonetagsSize] =
 						  BONETAG_L_FINGER02, BONETAG_L_FINGER1, BONETAG_L_FINGER11, BONETAG_L_FINGER12,
 						  BONETAG_L_FINGER2, BONETAG_L_FINGER21, BONETAG_L_FINGER22, BONETAG_L_FINGER3,
 						  BONETAG_L_FINGER31, BONETAG_L_FINGER32, BONETAG_L_FINGER4, BONETAG_L_FINGER41,
-						  BONETAG_L_FINGER42 };
+						  BONETAG_L_FINGER42
+						};
 
 constexpr int RightHandBonetagsSize = 17;
 constexpr int RightHandBonetags[RightHandBonetagsSize] = 
@@ -493,7 +559,8 @@ constexpr int RightHandBonetags[RightHandBonetagsSize] =
 						  BONETAG_R_FINGER02, BONETAG_R_FINGER1, BONETAG_R_FINGER11, BONETAG_R_FINGER12,
 						  BONETAG_R_FINGER2, BONETAG_R_FINGER21, BONETAG_R_FINGER22, BONETAG_R_FINGER3,
 						  BONETAG_R_FINGER31, BONETAG_R_FINGER32, BONETAG_R_FINGER4, BONETAG_R_FINGER41,
-						  BONETAG_R_FINGER42 };
+						  BONETAG_R_FINGER42
+						};
 */
 
 constexpr int AnimPostFXSize = 68;
@@ -528,12 +595,14 @@ constexpr char* AnimPostFX[AnimPostFXSize] = {
 	"SwitchOpenFranklinIn", "SwitchOpenMichaelIn", "SwitchOpenTrevorIn",
 	"SwitchOpenNeutralIn", "SwitchOpenFranklinMid", "SwitchOpenMichaelMid",
 	"SwitchOpenTrevorMid", "SwitchOpenNeutralMid", "SwitchOpenFranklinOut",
-	"SwitchOpenMichaelOut", "SwitchOpenTrevorOut", "SwitchOpenNeutralOut" };
+	"SwitchOpenMichaelOut", "SwitchOpenTrevorOut", "SwitchOpenNeutralOut"
+};
 
 constexpr int AbilityPostFXSize = 8;
 constexpr char* AbilityPostFX[AbilityPostFXSize] = {
 	"DrivingFocus", "DrivingFocusOut", "BulletTime", "BulletTimeOut", 
-	"REDMIST", "REDMISTOut", "Rampage", "RampageOut" };
+	"REDMIST", "REDMISTOut", "Rampage", "RampageOut"
+};
 
 constexpr int RadioStationsSize = 86;
 constexpr char* RadioStations[RadioStationsSize] = { 
@@ -567,7 +636,128 @@ constexpr char* RadioStations[RadioStationsSize] = {
 	"HIDDEN_RADIO_IFRUIT", "HIDDEN_RADIO_ML_PROMOTER", "HIDDEN_RADIO_MLR",
 	"HIDDEN_RADIO_MPSUM2_NEWS", "HIDDEN_RADIO_SEC_BILLIONAIRE",
 	"HIDDEN_RADIO_SEC_STUDIO_LOUNGE", "HIDDEN_RADIO_STRIP_CLUB", "HIDDEN_RADIO_THE_LAB",
-	"HIDDEN_RADIO_TUNER_CAR_MEET", "HIDDEN_RADIO_TUNER_MM", "HIDDEN_RADIO_TUNER_TEST_AREA" };
+	"HIDDEN_RADIO_TUNER_CAR_MEET", "HIDDEN_RADIO_TUNER_MM", "HIDDEN_RADIO_TUNER_TEST_AREA"
+};
+
+constexpr int ScenariosSize = 247;
+constexpr char* Scenarios[ScenariosSize] = {
+	"WORLD_HUMAN_AA_COFFEE", "WORLD_HUMAN_AA_SMOKE", "WORLD_HUMAN_BINOCULARS", "WORLD_HUMAN_BUM_FREEWAY",
+	"WORLD_HUMAN_BUM_SLUMPED", "WORLD_HUMAN_BUM_STANDING", "WORLD_HUMAN_BUM_WASH", "WORLD_HUMAN_CAR_PARK_ATTENDANT",
+	"WORLD_HUMAN_CHEERING", "WORLD_HUMAN_CLIPBOARD", "WORLD_HUMAN_CLIPBOARD_FACILITY", "WORLD_HUMAN_CONST_DRILL",
+	"WORLD_HUMAN_COP_IDLES", "WORLD_HUMAN_DRINKING", "WORLD_HUMAN_DRINKING_FACILITY", "WORLD_HUMAN_DRINKING_CASINO_TERRACE",
+	"WORLD_HUMAN_DRUG_DEALER", "WORLD_HUMAN_DRUG_DEALER_HARD", "WORLD_HUMAN_DRUG_FIELD_WORKERS_RAKE",
+	"WORLD_HUMAN_DRUG_FIELD_WORKERS_WEEDING", "WORLD_HUMAN_DRUG_PROCESSORS_COKE", "WORLD_HUMAN_DRUG_PROCESSORS_WEED",
+	"WORLD_HUMAN_MOBILE_FILM_SHOCKING", "WORLD_HUMAN_GARDENER_LEAF_BLOWER", "WORLD_HUMAN_GARDENER_PLANT",
+	"WORLD_HUMAN_GOLF_PLAYER", "WORLD_HUMAN_GUARD_PATROL", "WORLD_HUMAN_GUARD_STAND", "WORLD_HUMAN_GUARD_STAND_CASINO",
+	"WORLD_HUMAN_GUARD_STAND_CLUBHOUSE", "WORLD_HUMAN_GUARD_STAND_FACILITY", "WORLD_HUMAN_GUARD_STAND_ARMY", "WORLD_HUMAN_HAMMERING",
+	"WORLD_HUMAN_HANG_OUT_STREET", "WORLD_HUMAN_HANG_OUT_STREET_CLUBHOUSE", "WORLD_HUMAN_HIKER", "WORLD_HUMAN_HIKER_STANDING",
+	"WORLD_HUMAN_HUMAN_STATUE", "WORLD_HUMAN_INSPECT_CROUCH", "WORLD_HUMAN_INSPECT_STAND", "WORLD_HUMAN_JANITOR",
+	"WORLD_HUMAN_JOG", "WORLD_HUMAN_JOG_STANDING", "WORLD_HUMAN_LEANING", "WORLD_HUMAN_LEANING_CASINO_TERRACE",
+	"WORLD_HUMAN_MAID_CLEAN", "WORLD_HUMAN_MUSCLE_FLEX", "WORLD_HUMAN_MUSCLE_FREE_WEIGHTS", "WORLD_HUMAN_MUSICIAN",
+	"WORLD_HUMAN_PAPARAZZI", "WORLD_HUMAN_PARTYING", "WORLD_HUMAN_PICNIC", "WORLD_HUMAN_POWER_WALKER",
+	"WORLD_HUMAN_PROSTITUTE_HIGH_CLASS", "WORLD_HUMAN_PROSTITUTE_LOW_CLASS", "WORLD_HUMAN_PUSH_UPS", "WORLD_HUMAN_SEAT_LEDGE",
+	"WORLD_HUMAN_SEAT_LEDGE_EATING", "WORLD_HUMAN_SEAT_STEPS", "WORLD_HUMAN_SEAT_WALL", "WORLD_HUMAN_SEAT_WALL_EATING",
+	"WORLD_HUMAN_SEAT_WALL_TABLET", "WORLD_HUMAN_SECURITY_SHINE_TORCH", "WORLD_HUMAN_SIT_UPS", "WORLD_HUMAN_SMOKING",
+	"WORLD_HUMAN_SMOKING_CLUBHOUSE", "WORLD_HUMAN_SMOKING_POT", "WORLD_HUMAN_SMOKING_POT_CLUBHOUSE", "WORLD_HUMAN_STAND_FIRE",
+	"WORLD_HUMAN_STAND_FISHING", "WORLD_HUMAN_STAND_IMPATIENT", "WORLD_HUMAN_STAND_IMPATIENT_CLUBHOUSE",
+	"WORLD_HUMAN_STAND_IMPATIENT_FACILITY", "WORLD_HUMAN_STAND_IMPATIENT_UPRIGHT", "WORLD_HUMAN_STAND_IMPATIENT_UPRIGHT_FACILITY",
+	"WORLD_HUMAN_STAND_MOBILE", "WORLD_HUMAN_STAND_MOBILE_CLU	BHOUSE", "WORLD_HUMAN_STAND_MOBILE_FACILITY",
+	"WORLD_HUMAN_STAND_MOBILE_UPRIGHT", "WORLD_HUMAN_STAND_MOBILE_UPRIGHT_CLUBHOUSE", "WORLD_HUMAN_STRIP_WATCH_STAND",
+	"WORLD_HUMAN_STUPOR", "WORLD_HUMAN_STUPOR_CLUBHOUSE", "WORLD_HUMAN_WINDOW_SHOP_BROWSE_SHOWROOM",
+	"WORLD_HUMAN_SUNBATHE", "WORLD_HUMAN_SUNBATHE_BACK", "WORLD_HUMAN_SUPERHERO", "WORLD_HUMAN_SWIMMING",
+	"WORLD_HUMAN_TENNIS_PLAYER", "WORLD_HUMAN_TOURIST_MAP", "WORLD_HUMAN_TOURIST_MOBILE", "WORLD_HUMAN_VALET",
+	"WORLD_HUMAN_VEHICLE_MECHANIC", "WORLD_HUMAN_WELDING", "WORLD_HUMAN_WINDOW_SHOP_BROWSE", "WORLD_HUMAN_YOGA", "Walk",
+	"Walk_Facility", "WORLD_BOAR_GRAZING", "WORLD_CAT_SLEEPING_GROUND", "WORLD_CAT_SLEEPING_LEDGE", "WORLD_COW_GRAZING",
+	"WORLD_COYOTE_HOWL", "WORLD_COYOTE_REST", "WORLD_COYOTE_WANDER", "WORLD_COYOTE_WALK", "WORLD_CHICKENHAWK_FEEDING",
+	"WORLD_CHICKENHAWK_STANDING", "WORLD_CORMORANT_STANDING", "WORLD_CROW_FEEDING", "WORLD_CROW_STANDING",
+	"WORLD_DEER_GRAZING", "WORLD_DOG_BARKING_ROTTWEILER", "WORLD_DOG_BARKING_RETRIEVER", "WORLD_DOG_BARKING_SHEPHERD",
+	"WORLD_DOG_SITTING_ROTTWEILER", "WORLD_DOG_SITTING_RETRIEVER", "WORLD_DOG_SITTING_SHEPHERD", "WORLD_DOG_BARKING_SMALL",
+	"WORLD_DOG_SITTING_SMALL", "WORLD_DOLPHIN_SWIM", "WORLD_FISH_FLEE", "WORLD_FISH_IDLE", "WORLD_GULL_FEEDING",
+	"WORLD_GULL_STANDING", "WORLD_HEN_FLEE", "WORLD_HEN_PECKING", "WORLD_HEN_STANDING", "WORLD_MOUNTAIN_LION_REST",
+	"WORLD_MOUNTAIN_LION_WANDER", "WORLD_ORCA_SWIM", "WORLD_PIG_GRAZING", "WORLD_PIGEON_FEEDING", "WORLD_PIGEON_STANDING",
+	"WORLD_RABBIT_EATING", "WORLD_RABBIT_FLEE", "WORLD_RATS_EATING", "WORLD_RATS_FLEEING", "WORLD_SHARK_SWIM",
+	"WORLD_SHARK_HAMMERHEAD_SWIM", "WORLD_STINGRAY_SWIM", "WORLD_WHALE_SWIM", "DRIVE", "WORLD_VEHICLE_ATTRACTOR",
+	"PARK_VEHICLE", "WORLD_VEHICLE_AMBULANCE", "WORLD_VEHICLE_BICYCLE_BMX", "WORLD_VEHICLE_BICYCLE_BMX_BALLAS",
+	"WORLD_VEHICLE_BICYCLE_BMX_FAMILY", "WORLD_VEHICLE_BICYCLE_BMX_HARMONY", "WORLD_VEHICLE_BICYCLE_BMX_VAGOS",
+	"WORLD_VEHICLE_BICYCLE_MOUNTAIN", "WORLD_VEHICLE_BICYCLE_ROAD", "WORLD_VEHICLE_BIKE_OFF_ROAD_RACE",
+	"WORLD_VEHICLE_BIKER", "WORLD_VEHICLE_BOAT_IDLE", "WORLD_VEHICLE_BOAT_IDLE_ALAMO", "WORLD_VEHICLE_BOAT_IDLE_MARQUIS",
+	"WORLD_VEHICLE_BROKEN_DOWN", "WORLD_VEHICLE_BUSINESSMEN", "WORLD_VEHICLE_HELI_LIFEGUARD", "WORLD_VEHICLE_CLUCKIN_BELL_TRAILER",
+	"WORLD_VEHICLE_CONSTRUCTION_SOLO", "WORLD_VEHICLE_CONSTRUCTION_PASSENGERS", "WORLD_VEHICLE_DRIVE_PASSENGERS",
+	"WORLD_VEHICLE_DRIVE_PASSENGERS_LIMITED", "WORLD_VEHICLE_DRIVE_SOLO", "WORLD_VEHICLE_FARM_WORKER",
+	"WORLD_VEHICLE_FIRE_TRUCK", "WORLD_VEHICLE_EMPTY", "WORLD_VEHICLE_MARIACHI", "WORLD_VEHICLE_MECHANIC",
+	"WORLD_VEHICLE_MILITARY_PLANES_BIG", "WORLD_VEHICLE_MILITARY_PLANES_SMALL", "WORLD_VEHICLE_PARK_PARALLEL",
+	"WORLD_VEHICLE_PARK_PERPENDICULAR_NOSE_IN", "WORLD_VEHICLE_PASSENGER_EXIT", "WORLD_VEHICLE_POLICE_BIKE",
+	"WORLD_VEHICLE_POLICE_CAR", "WORLD_VEHICLE_POLICE_NEXT_TO_CAR", "WORLD_VEHICLE_QUARRY", "WORLD_VEHICLE_SALTON",
+	"WORLD_VEHICLE_SALTON_DIRT_BIKE", "WORLD_VEHICLE_SECURITY_CAR", "WORLD_VEHICLE_STREETRACE", "WORLD_VEHICLE_TOURBUS",
+	"WORLD_VEHICLE_TOURIST", "WORLD_VEHICLE_TANDL", "WORLD_VEHICLE_TRACTOR", "WORLD_VEHICLE_TRACTOR_BEACH",
+	"WORLD_VEHICLE_TRUCK_LOGS", "WORLD_VEHICLE_TRUCKS_TRAILERS", "PROP_BIRD_IN_TREE", "WORLD_VEHICLE_DISTANT_EMPTY_GROUND",
+	"PROP_BIRD_TELEGRAPH_POLE", "PROP_HUMAN_ATM", "PROP_HUMAN_BBQ", "PROP_HUMAN_BUM_BIN", "PROP_HUMAN_BUM_SHOPPING_CART",
+	"PROP_HUMAN_MUSCLE_CHIN_UPS", "PROP_HUMAN_MUSCLE_CHIN_UPS_ARMY", "PROP_HUMAN_MUSCLE_CHIN_UPS_PRISON", "PROP_HUMAN_PARKING_METER",
+	"PROP_HUMAN_SEAT_ARMCHAIR", "PROP_HUMAN_SEAT_BAR", "PROP_HUMAN_SEAT_BENCH", "PROP_HUMAN_SEAT_BENCH_FACILITY",
+	"PROP_HUMAN_SEAT_BENCH_DRINK", "PROP_HUMAN_SEAT_BENCH_DRINK_FACILITY", "PROP_HUMAN_SEAT_BENCH_DRINK_BEER",
+	"PROP_HUMAN_SEAT_BENCH_FOOD", "PROP_HUMAN_SEAT_BENCH_FOOD_FACILITY", "PROP_HUMAN_SEAT_BUS_STOP_WAIT",
+	"PROP_HUMAN_SEAT_CHAIR", "PROP_HUMAN_SEAT_CHAIR_DRINK", "PROP_HUMAN_SEAT_CHAIR_DRINK_BEER", "PROP_HUMAN_SEAT_CHAIR_FOOD",
+	"PROP_HUMAN_SEAT_CHAIR_UPRIGHT", "PROP_HUMAN_SEAT_CHAIR_UPRIGHT_SHOWROOM", "PROP_HUMAN_SEAT_CHAIR_MP_PLAYER",
+	"PROP_HUMAN_SEAT_COMPUTER", "PROP_HUMAN_SEAT_COMPUTER_LOW", "PROP_HUMAN_SEAT_DECKCHAIR", "PROP_HUMAN_SEAT_DECKCHAIR_DRINK",
+	"PROP_HUMAN_SEAT_MUSCLE_BENCH_PRESS", "PROP_HUMAN_SEAT_MUSCLE_BENCH_PRESS_PRISON", "PROP_HUMAN_SEAT_SEWING",
+	"PROP_HUMAN_SEAT_STRIP_WATCH", "PROP_HUMAN_SEAT_SUNLOUNGER", "PROP_HUMAN_STAND_IMPATIENT",
+	"CODE_HUMAN_COWER", "CODE_HUMAN_CROSS_ROAD_WAIT", "CODE_HUMAN_PARK_CAR", "PROP_HUMAN_MOVIE_BULB",
+	"PROP_HUMAN_MOVIE_STUDIO_LIGHT", "CODE_HUMAN_MEDIC_KNEEL", "CODE_HUMAN_MEDIC_TEND_TO_DEAD",
+	"CODE_HUMAN_MEDIC_TIME_OF_DEATH", "CODE_HUMAN_POLICE_CROWD_CONTROL", "CODE_HUMAN_POLICE_INVESTIGATE", "Standing",
+	"CHAINING_ENTRY", "CHAINING_EXIT", "CODE_HUMAN_STAND_COWER", "EAR_TO_TEXT", "EAR_TO_TEXT_FAT", "WORLD_LOOKAT_POINT"
+};
+
+constexpr int ScenarioGroupsSize = 235;
+constexpr char* ScenarioGroups[ScenarioGroupsSize] = {
+	"Agency_Heist_Peds",   "ALAMO_PLANES",   "AMMUNATION",  "ARMY_GUARD",
+	"ATTRACT_PAP",   "BLIMP",   "CanyonCliffs",   "CanyonCliffs_Start",  "CAR_WASH",
+	"CHINESE2_HILLBILLIES",   "Chinese2_Lunch",   "Chumash_14_Bikers",   "Chumash_14_Bikers",  "Chumash_14_Cops",
+	"Chumash_14_Cops",   "Chumash_14_Hookers",   "Chumash_14_Hookers",   "Chumash_14_Vagos",  "Chumash_14_Vagos",
+	"Cinema_Downtown",   "Cinema_Morningwood",   "Cinema_Textile",   "City_Banks",  "clothes_shop",
+	"Countryside_Banks",   "DEALERSHIP",   "Del_Perro_16_Bikers",   "Del_Perro_16_Bikers",  "Del_Perro_16_Cops",
+	"Del_Perro_16_Cops",   "Del_Perro_16_Hookers",   "Del_Perro_16_Hookers",   "Del_Perro_16_Vagos",  "Del_Perro_16_Vagos",
+	"DowntownAlley_33_Bikers",   "DowntownAlley_33_Bikers",   "DowntownAlley_33_Cops",   "DowntownAlley_33_Cops",  "DowntownAlley_33_Hookers",
+	"DowntownAlley_33_Hookers",   "DowntownAlley_33_Vagos",   "DowntownAlley_33_Vagos",   "E_Canals_22_Bikers",  "E_Canals_22_Cops",
+	"E_Canals_22_Hookers",   "E_Canals_22_Vagos",   "E_Cypress_05_Bikers",   "E_Cypress_05_Cops",  "E_Cypress_05_Hookers",
+	"E_Cypress_05_Vagos",   "E_Hollywood_39_Bikers",   "E_Hollywood_39_Cops",   "E_Hollywood_39_Hookers",  "E_Hollywood_39_Vagos",
+	"E_PaletoBay_10_Bikers",   "E_PaletoBay_10_Cops",   "E_PaletoBay_10_Hookers",   "E_PaletoBay_10_Vagos",  "E_Puerto_26_Bikers",
+	"E_Puerto_26_Cops",   "E_Puerto_26_Hookers",   "E_Puerto_26_Vagos",   "E_SandyShores_12_Bikers",  "E_SandyShores_12_Cops",
+	"E_SandyShores_12_Hookers",   "E_SandyShores_12_Vagos",   "E_Silverlake_40_Bikers",   "E_Silverlake_40_Cops",  "E_Silverlake_40_Hookers",
+	"E_Silverlake_40_Vagos",   "EastLS_BMX",   "EastLS_Chopshop_35_Bikers",   "EastLS_Chopshop_35_Cops",  "EastLS_Chopshop_35_Vagos",
+	"EastLS_Skatepark_36_Bikers",   "EastLS_Skatepark_36_Cops",   "EastLS_Skatepark_36_Hookers",   "EastLS_Skatepark_36_Vagos",  "Eclipse_32_Bikers",
+	"Eclipse_32_Cops",   "Eclipse_32_Hookers",   "Eclipse_32_Vagos",   "EcoFriendly",  "EcoFriendly_Start",
+	"ElBurro_Shed_38_Bikers",   "ElBurro_Shed_38_Cops",   "ElBurro_Shed_38_Hookers",   "ElBurro_Shed_38_Vagos",  "ElBurro_Wreck_37_Bikers",
+	"ElBurro_Wreck_37_Cops",   "ElBurro_Wreck_37_Hookers",   "ElBurro_Wreck_37_Vagos",   "FIB_AIRPORT",  "FIB_GROUP_1",
+	"FIB_GROUP_2",   "Fort_Zancudo_Guards",   "GENTRY_MANNOR",   "Grapeseed_Planes",  "GrapeseedAirstrip_07_Security",
+	"Guards_At_Prison",   "Harmony_ChopShop_13_Bikers",   "Harmony_ChopShop_13_Cops",   "Harmony_ChopShop_13_Hookers",  "Harmony_ChopShop_13_Vagos",
+	"KORTZ_SECURITY",   "LakesideSplash",   "LakesideSplash_Start",   "LOST_BIKERS",  "LOST_HANGOUT",
+	"LSA_Planes",   "Mid_Seoul_24_Bikers",   "Mid_Seoul_24_Cops",   "Mid_Seoul_24_Hookers",  "Mid_Seoul_24_Vagos",
+	"MinewardSpiral",   "MinewardSpiral_Start",   "MirrorPark_41_Bikers",   "MirrorPark_41_Cops",  "MirrorPark_41_Hookers",
+	"MirrorPark_41_Vagos",   "Morningwood_17_Bikers",   "Morningwood_17_Cops",   "Morningwood_17_Hookers",  "Morningwood_17_Vagos",
+	"Movie_Studio_Security",   "MP_Police",   "MP_POLICE2",   "N_W_Hollywood_31_Bikers",  "N_W_Hollywood_31_Cops",
+	"N_W_Hollywood_31_Hookers",   "N_W_Hollywood_31_Vagos",   "New group",   "New group 1",  "New group 2",
+	"Observatory_Bikers",   "OceanHighway_15_Bikers",   "OceanHighway_15_Cops",   "OceanHighway_15_Hookers",  "OceanHighway_15_Vagos",
+	"Paleto_Bank",   "Paleto_Cops",   "Pershing_04_Bikers",   "Pershing_04_Cops",  "Pershing_04_Hookers",
+	"Pershing_04_Vagos",   "Pier_18_Bikers",   "Pier_18_Cops",   "Pier_18_Hookers",  "Pier_18_Vagos",
+	"PLANE_WRECK",   "PLANE_WRECK_DOG",   "Police_At_Court",   "POLICE_PEDS_CITY",  "POLICE_POUND1",
+	"POLICE_POUND2",   "POLICE_POUND3",   "POLICE_POUND4",   "POLICE_POUND5",  "Polo_Goon",
+	"PRISON_TOWERS",   "Prison_Transport",   "QUARRY",   "Racecourse_06_Bikers",  "Racecourse_06_Cops",
+	"RaceCourse_06_Hookers",   "RaceCourse_06_Vagos",   "Rampage1",   "RidgeRun",  "RidgeRun_Start",
+	"S_SanPedro_28_Bikers",   "S_SanPedro_28_Cops",   "S_SanPedro_28_Hookers",   "S_SanPedro_28_Vagos",  "S_Seoul_27_Bikers",
+	"S_Seoul_27_Cops",   "S_Seoul_27_Hookers",   "S_Seoul_27_Vagos",   "Sandy_Cops",  "Sandy_Planes",
+	"SanPedroGarage_30_Bikers",   "SanPedroGarage_30_Cops",   "SanPedroGarage_30_Hookers",   "SanPedroGarage_30_Vagos",  "SCRAP_SECURITY",
+	"Scrapyard_29_Bikers",   "Scrapyard_29_Cops",   "Scrapyard_29_Hookers",   "Scrapyard_29_Vagos",  "SenoraAirstrip_08_Security",
+	"SeoulPark_23_Bikers",   "SeoulPark_23_Cops",   "SeoulPark_23_Hookers",   "SeoulPark_23_Vagos",  "SEW_MACHINE",
+	"SOLOMON_GATE",   "StrawberryClub_34_Bikers",   "StrawberryClub_34_Cops",   "StrawberryClub_34_Hookers",  "StrawberryClub_34_Vagos",
+	"Triathlon_1",   "Triathlon_1_Start",   "Triathlon_2",   "Triathlon_2_Start",  "Triathlon_3",
+	"Triathlon_3_Start",   "VAGOS_HANGOUT",   "ValleyTrail",   "ValleyTrail_Start",  "VANGELICO",
+	"Vespucci_20_Bikers",   "Vespucci_20_Cops",   "Vespucci_20_Hookers",   "Vespucci_20_Vagos",  "VespucciBeach_19_Bikers",
+	"VespucciBeach_19_Cops",   "VespucciBeach_19_Hookers",   "VespucciBeach_19_Vagos",   "W_Canals_21_Bikers",  "W_Canals_21_Cops",
+	"W_Canals_21_Hookers",   "W_Canals_21_Vagos",   "W_PaletoBay_09_Bikers",   "W_PaletoBay_09_Cops",  "W_PaletoBay_09_Hookers",
+	"W_PaletoBay_09_Vagos",   "W_Puerto_25_Bikers",   "W_Puerto_25_Cops",   "W_Puerto_25_Hookers",  "W_Puerto_25_Vagos",
+	"W_SandyShores_11_Bikers",   "W_SandyShores_11_Cops",   "W_SandyShores_11_Hookers",   "W_SandyShores_11_Vagos",  "WATERSPORTS",
+	"YellowJackInn"
+};
 
 enum eCodeTask {
 	CODE_TASK_INVALID_ID = -1,
