@@ -110,6 +110,8 @@ enum ePedFlag {
 	PCF_AllowPlayerLockOnIfFriendly = 266,		//If this ped is friendly with the player, this will allow the ped to lockon
 	PCF_DisableGoToWritheWhenInjured = 281,		//If set, CPed::DAMAGED_GOTOWRITHE will no longer get set.  In particular, tazer hits wil no longer kill this ped in one hit.
 	PCF_DisableWritheShootFromGround = 327,
+	PCF_DisableAutoEquipHelmetsInBikes = 380,		// Prevents ped from auto-equipping helmets when entering a bike (includes quadbikes)
+	PCF_DisableAutoEquipHelmetsInAicraft = 381,		// Prevents ped from auto-equipping helmets when entering an aircraft
 	PCF_IgnoreInteriorCheckForSprinting = 427,
 
 	//Ped Reset Flags

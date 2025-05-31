@@ -64,7 +64,7 @@ extern bool DisableWantedMusic;
 extern bool DisablePoliceScanner;
 extern bool DisableFlyingMusic;
 extern bool DisableRadioInterruptions;
-extern bool DefaultVehicleRadioOff;
+extern int DefaultVehicleRadioOff;
 extern bool MuteSounds;
 extern char* Sounds;
 extern bool DisablePlayerPainAudio;

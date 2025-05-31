@@ -29,7 +29,6 @@ void ScriptMain()
 {
 	ReadINI();
 	SetupPedFunctions();
-	SET_THIS_SCRIPT_CAN_BE_PAUSED(false);
 	while (true)
 	{
 		update();

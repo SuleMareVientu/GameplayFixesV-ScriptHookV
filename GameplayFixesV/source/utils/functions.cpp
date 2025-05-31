@@ -1473,18 +1473,23 @@ void SetRadiosMusicOnly()
 Vehicle lastVehRadioOff = NULL;
 void DefaultVehicleRadioOff()
 {
-	Vehicle tmpVeh = GET_VEHICLE_PED_IS_USING(GetPlayerPed());
+	const Vehicle tmpVeh = GET_VEHICLE_PED_IS_USING(GetPlayerPed());
 	if (DOES_ENTITY_EXIST(tmpVeh) && tmpVeh != lastVehRadioOff)
 	{
 		lastVehRadioOff = tmpVeh;
-		if (!GET_IS_VEHICLE_ENGINE_RUNNING(tmpVeh) && GET_PED_RESET_FLAG(GetPlayerPed(), PRF_IsEnteringVehicle))
+		if (INI::DefaultVehicleRadioOff == 2)
 			SET_VEH_RADIO_STATION(lastVehRadioOff, "OFF");
+		else
+		{
+			if (!GET_IS_VEHICLE_ENGINE_RUNNING(tmpVeh) && GET_PED_RESET_FLAG(GetPlayerPed(), PRF_IsEnteringVehicle))
+				SET_VEH_RADIO_STATION(lastVehRadioOff, "OFF");
+		}
 	}
 	return;
 }
 
 bool InitializedMuteSounds = false;
-constexpr int maxMutedSounds = 9;
+constexpr int maxMutedSounds = 10;
 std::string mutedSoundsArr[maxMutedSounds]{};
 void MuteSounds()
 {
@@ -1508,6 +1513,7 @@ void MuteSounds()
 			case Joaat("SPEECH"): mutedSoundsArr[i] = "MUTES_SPEECH_SCENE"; break;
 			case Joaat("GUNS"): mutedSoundsArr[i] = "MUTES_GUNS_SCENE"; break;
 			case Joaat("VEHICLES"): mutedSoundsArr[i] = "MUTES_VEHICLES_SCENE"; break;
+			case Joaat("FOOTSTEPS"): mutedSoundsArr[i] = "MUTES_FOOTSTEPS_SCENE"; break;
 			default: mutedSoundsArr[i] = ""; break;
 			}
 		}
@@ -1568,6 +1574,53 @@ void RefreshIni()
 		nAudio::InitializedMuteSounds = false;
 	}
 	return;
+}
+
+void test()
+{
+	SET_CAR_HIGH_SPEED_BUMP_SEVERITY_MULTIPLIER(0.0f);
+
+
+
+	const Vehicle veh = GetVehiclePedIsIn(GetPlayerPed(), true, true);
+	const Hash vehHash = GET_ENTITY_MODEL(veh);
+	if (IS_THIS_MODEL_A_PLANE(vehHash))
+		SET_PLANE_TURBULENCE_MULTIPLIER(veh, 0.0f);
+	else if (IS_THIS_MODEL_A_HELI(vehHash))
+		SET_HELI_TURBULENCE_SCALAR(veh, 0.0f);
+
+
+
+	SET_POLICE_RADAR_BLIPS(false);
+	SET_BLOCK_WANTED_FLASH(true);
+	FORCE_OFF_WANTED_STAR_FLASH(true);
+	HIDE_HUD_COMPONENT_THIS_FRAME(HUD_WANTED_STARS);
+
+	SET_AUDIO_FLAG("WantedMusicDisabled", true);
+	SET_AUDIO_FLAG("WantedMusicOnMission", false);
+	IS_PED_IN_ANY_POLICE_VEHICLE(GetPlayerPed()) ? SET_AUDIO_FLAG("PoliceScannerDisabled", false) : SET_AUDIO_FLAG("PoliceScannerDisabled", true);
+
+
+
+	EnablePedConfigFlag(GetPlayerPed(), PCF_DisableAutoEquipHelmetsInBikes);
+	EnablePedConfigFlag(GetPlayerPed(), PCF_DisableAutoEquipHelmetsInAicraft);
+
+
+
+	// Disable all disaptaches here
+	SET_PED_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
+	SET_SCENARIO_PED_DENSITY_MULTIPLIER_THIS_FRAME(0.0f, 0.0f);
+	SET_RANDOM_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
+	SET_PARKED_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
+	SET_AMBIENT_VEHICLE_RANGE_MULTIPLIER_THIS_FRAME(0.0f);
+	SET_RANDOM_BOATS(false);
+	SET_RANDOM_TRAINS(false);
+	SET_DISABLE_RANDOM_TRAINS_THIS_FRAME(true);
+
+
+	//mute ambient music
+	if (!IS_AUDIO_SCENE_ACTIVE("CREATOR_SCENES_AMBIENCE"))
+		START_AUDIO_SCENE("CREATOR_SCENES_AMBIENCE");
 }
 
 void UpdatePlayerOptions()
@@ -1636,11 +1689,12 @@ void UpdatePlayerOptions()
 	if (INI::DisablePoliceScanner) { nAudio::DisablePoliceScanner(); }
 	if (INI::DisableFlyingMusic) { nAudio::DisableFlightMusic(); }
 	if (INI::DisableRadioInterruptions) { nAudio::SetRadiosMusicOnly(); }
-	if (INI::DefaultVehicleRadioOff) { nAudio::DefaultVehicleRadioOff(); }
+	if (INI::DefaultVehicleRadioOff > 0) { nAudio::DefaultVehicleRadioOff(); }
 	if (INI::MuteSounds) { nAudio::MuteSounds(); }
 	if (INI::DisablePlayerPainAudio) { nAudio::DisablePlayerPainAudio(); }
 
 	//////////////////////////////////////////Peds/////////////////////////////////////////
 	if (INI::DisableScenarios) { nPeds::DisableScenarios(); }
+	test();
 	return;
 }

@@ -73,7 +73,7 @@ bool DisableWantedMusic = false;
 bool DisablePoliceScanner = false;
 bool DisableFlyingMusic = false;
 bool DisableRadioInterruptions = false;
-bool DefaultVehicleRadioOff = false;
+int DefaultVehicleRadioOff = 0;
 bool MuteSounds = false;
 char* Sounds = "AMBIENCE, MUSIC";
 bool DisablePlayerPainAudio = false;
@@ -168,7 +168,7 @@ void ReadINI()
 	DisablePoliceScanner = ini.GetBoolValue(AudioGroup, "DisablePoliceScanner", DisablePoliceScanner);
 	DisableFlyingMusic = ini.GetBoolValue(AudioGroup, "DisableFlyingMusic", DisableFlyingMusic);
 	DisableRadioInterruptions = ini.GetBoolValue(AudioGroup, "DisableRadioInterruptions", DisableRadioInterruptions);
-	DefaultVehicleRadioOff = ini.GetBoolValue(AudioGroup, "DefaultVehicleRadioOff", DefaultVehicleRadioOff);
+	DefaultVehicleRadioOff = static_cast<int>(ini.GetLongValue(AudioGroup, "DefaultVehicleRadioOff", DefaultVehicleRadioOff));
 	MuteSounds = ini.GetBoolValue(AudioGroup, "MuteSounds", MuteSounds);
 	Sounds = const_cast<char*>(ini.GetValue(AudioGroup, "Sounds", Sounds));
 	DisablePlayerPainAudio = ini.GetBoolValue(AudioGroup, "DisablePlayerPainAudio", DisablePlayerPainAudio);
