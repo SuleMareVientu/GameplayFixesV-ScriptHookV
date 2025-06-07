@@ -21,6 +21,7 @@ bool DisarmPlayerWhenShot = true;
 bool CleanWoundsAndDirtInWater = true;
 bool SprintInsideInteriors = true;
 bool AllowWeaponsInsideSafeHouse = false;
+bool SilentWanted = false;
 //Player Controls
 bool DisableAssistedMovement = true;
 bool ToggleFPSWalking = true;
@@ -42,18 +43,21 @@ bool KeepCarHydraulicsPosition = true;
 bool EnableHeliWaterPhysics = true;
 bool DisableRagdollOnVehicleRoof = true;
 float MaxVehicleSpeed = 90.0f;
+bool DisableDragOutCar = false;
 bool DisableFlyThroughWindscreen = false;
 bool DisableBikeKnockOff = false;
-bool DisableDragOutCar = false;
 bool DisableShallowWaterBikeJumpOut = true;
+bool DisableVehicleJitter = true;
+bool DisableAirVehicleTurbulence = false;
+int DisableAutoEquipHelmets = NULL;
 bool DisableStuntJumps = false;
 //HUD
 bool AllowGameExecutionOnPauseMenu = false;
 bool DisablePauseMenuPostFX = false;
 bool DisableHUDPostFX = false;
 bool DisableSpecialAbilityPostFX = false;
-bool EnableBigMapToggle = false;
-bool MinimapSpeedometer = false;
+bool EnableBigMapToggle = true;
+bool MinimapSpeedometer = true;
 float SetRadarZoom = -1.0f;
 bool DisableMinimapTilt = false;
 bool HideMinimapFog = true;
@@ -77,6 +81,7 @@ int DefaultVehicleRadioOff = 0;
 bool MuteSounds = false;
 char* Sounds = "AMBIENCE, MUSIC";
 bool DisablePlayerPainAudio = false;
+bool MuteArtificialAmbientSounds = false;
 
 //Peds Settings
 bool DisableWrithe = true;
@@ -89,6 +94,7 @@ bool DisarmIncludeLeftHand = false;
 bool DisablePedOnlyDamagedByPlayer = true;
 bool DisableDeadPedsJumpOutOfVehicle = true;
 bool DisableScenarios = false;
+bool DisableWorldPopulation = false;
 }
 using namespace INI;
 
@@ -112,6 +118,7 @@ void ReadINI()
 	CleanWoundsAndDirtInWater = ini.GetBoolValue(playerGroup, "CleanWoundsAndDirtInWater", CleanWoundsAndDirtInWater);
 	SprintInsideInteriors = ini.GetBoolValue(playerGroup, "SprintInsideInteriors", SprintInsideInteriors);
 	AllowWeaponsInsideSafeHouse = ini.GetBoolValue(playerGroup, "AllowWeaponsInsideSafeHouse", AllowWeaponsInsideSafeHouse);
+	SilentWanted = ini.GetBoolValue(playerGroup, "SilentWanted", SilentWanted);
 
 	//////////////////////////////////////Player Controls//////////////////////////////////
 	DisableAssistedMovement = ini.GetBoolValue(playerGroup, "DisableAssistedMovement", DisableAssistedMovement);
@@ -140,6 +147,9 @@ void ReadINI()
 	DisableDragOutCar = ini.GetBoolValue(playerGroup, "DisableDragOutCar", DisableDragOutCar);
 	DisableShallowWaterBikeJumpOut = ini.GetBoolValue(playerGroup, "DisableShallowWaterBikeJumpOut", DisableShallowWaterBikeJumpOut);
 	DisableStuntJumps = ini.GetBoolValue(playerGroup, "DisableStuntJumps", DisableStuntJumps);
+	DisableVehicleJitter = ini.GetBoolValue(playerGroup, "DisableVehicleJitter", DisableVehicleJitter);
+	DisableAirVehicleTurbulence = ini.GetBoolValue(playerGroup, "DisableAirVehicleTurbulence", DisableAirVehicleTurbulence);
+	DisableAutoEquipHelmets = static_cast<int>(ini.GetLongValue(playerGroup, "DisableAutoEquipHelmets", DisableAutoEquipHelmets));
 
 	//////////////////////////////////////HUD//////////////////////////////////////////////
 	AllowGameExecutionOnPauseMenu = ini.GetBoolValue(HUDGroup, "AllowGameExecutionOnPauseMenu", AllowGameExecutionOnPauseMenu);
@@ -172,6 +182,7 @@ void ReadINI()
 	MuteSounds = ini.GetBoolValue(AudioGroup, "MuteSounds", MuteSounds);
 	Sounds = const_cast<char*>(ini.GetValue(AudioGroup, "Sounds", Sounds));
 	DisablePlayerPainAudio = ini.GetBoolValue(AudioGroup, "DisablePlayerPainAudio", DisablePlayerPainAudio);
+	MuteArtificialAmbientSounds = ini.GetBoolValue(AudioGroup, "MuteArtificialAmbientSounds", MuteArtificialAmbientSounds);
 
 	//////////////////////////////////////Peds/////////////////////////////////////////////
 	DisableWrithe = ini.GetBoolValue(pedsGroup, "DisableWrithe", DisableWrithe);
@@ -184,5 +195,6 @@ void ReadINI()
 	DisablePedOnlyDamagedByPlayer = ini.GetBoolValue(pedsGroup, "DisablePedOnlyDamagedByPlayer", DisablePedOnlyDamagedByPlayer);
 	DisableDeadPedsJumpOutOfVehicle = ini.GetBoolValue(pedsGroup, "DisableDeadPedsJumpOutOfVehicle", DisableDeadPedsJumpOutOfVehicle);
 	DisableScenarios = ini.GetBoolValue(pedsGroup, "DisableScenarios", DisableScenarios);
+	DisableWorldPopulation = ini.GetBoolValue(pedsGroup, "DisableWorldPopulation", DisableWorldPopulation);
 	return;
 }

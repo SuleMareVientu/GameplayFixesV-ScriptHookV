@@ -560,6 +560,19 @@ void AllowWeaponsInsideSafeHouse()
 	SetFakeWanted(GetPlayer(), true);
 	return;
 }
+
+void SilentWanted()
+{
+	SET_POLICE_RADAR_BLIPS(false);
+	SET_BLOCK_WANTED_FLASH(true);
+	FORCE_OFF_WANTED_STAR_FLASH(true);
+	HIDE_HUD_COMPONENT_THIS_FRAME(HUD_WANTED_STARS);
+
+	SET_AUDIO_FLAG("WantedMusicDisabled", true);
+	SET_AUDIO_FLAG("WantedMusicOnMission", false);
+	IS_PED_IN_ANY_POLICE_VEHICLE(GetPlayerPed()) ? SET_AUDIO_FLAG("PoliceScannerDisabled", false) : SET_AUDIO_FLAG("PoliceScannerDisabled", true);
+	return;
+}
 }	//END nGeneral
 
 /////////////////////////////////////////Player Controls/////////////////////////////////////////
@@ -1124,9 +1137,9 @@ void DisableRagdollOnVehicleRoof()
 	return;
 }
 
+inline void DisableDragOutCar() { SET_PED_CAN_BE_DRAGGED_OUT(GetPlayerPed(), false); return; }	//Same thing as setting CPED_CONFIG_FLAG_DontDragMeOutCar
 inline void DisableFlyThroughWindscreen() { DisablePedConfigFlag(GetPlayerPed(), PCF_WillFlyThroughWindscreen); return; }
 inline void DisableBikeKnockOff() { SET_PED_CAN_BE_KNOCKED_OFF_VEHICLE(GetPlayerPed(), KNOCKOFFVEHICLE_NEVER); return; }
-inline void DisableDragOutCar() { SET_PED_CAN_BE_DRAGGED_OUT(GetPlayerPed(), false); return; }	//Same thing as setting CPED_CONFIG_FLAG_DontDragMeOutCar
 
 void DisableShallowWaterBikeJumpOut()
 {
@@ -1138,6 +1151,35 @@ void DisableShallowWaterBikeJumpOut()
 	}
 
 	EnablePedResetFlag(GetPlayerPed(), PRF_DisableShallowWaterBikeJumpOutThisFrame);
+	return;
+}
+
+inline void DisableVehicleJitter() { SET_CAR_HIGH_SPEED_BUMP_SEVERITY_MULTIPLIER(0.0f); return; }
+
+void DisableAirVehicleTurbulence()
+{
+	const Vehicle veh = GetVehiclePedIsIn(GetPlayerPed(), true, true);
+	const Hash vehHash = GET_ENTITY_MODEL(veh);
+	if (IS_THIS_MODEL_A_PLANE(vehHash))
+		SET_PLANE_TURBULENCE_MULTIPLIER(veh, 0.0f);
+	else if (IS_THIS_MODEL_A_HELI(vehHash))
+		SET_HELI_TURBULENCE_SCALAR(veh, 0.0f);
+
+	return;
+}
+
+void DisableAutoEquipHelmets()
+{
+	if (INI::DisableAutoEquipHelmets == 1)
+		EnablePedConfigFlag(GetPlayerPed(), PCF_DisableAutoEquipHelmetsInBikes);
+	else if (INI::DisableAutoEquipHelmets == 2)
+		EnablePedConfigFlag(GetPlayerPed(), PCF_DisableAutoEquipHelmetsInAicraft);
+	else
+	{
+		EnablePedConfigFlag(GetPlayerPed(), PCF_DisableAutoEquipHelmetsInBikes);
+		EnablePedConfigFlag(GetPlayerPed(), PCF_DisableAutoEquipHelmetsInAicraft);
+	}
+
 	return;
 }
 
@@ -1531,6 +1573,16 @@ void MuteSounds()
 	return;
 }
 
+void MuteArtificialAmbientSounds()
+{
+	// Mute artificial ambient sounds
+	// Affects: ambience_general, ambience_music, positioned_radio, ambience_oneshot_vehicles, ambience_industrial, ambience_birds, ambience_speech
+	if (!IS_AUDIO_SCENE_ACTIVE("CREATOR_SCENES_AMBIENCE"))
+		START_AUDIO_SCENE("CREATOR_SCENES_AMBIENCE");
+
+	return;
+}
+
 inline void DisablePlayerPainAudio() { DISABLE_PED_PAIN_AUDIO(GetPlayerPed(), true); return; }
 }	//END nAudio
 
@@ -1559,6 +1611,20 @@ void DisableScenarios()
 	}
 	return;
 }
+
+void DisableWorldPopulation()
+{
+	nGeneral::SetDispatchServices(false);
+	SET_PED_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
+	SET_SCENARIO_PED_DENSITY_MULTIPLIER_THIS_FRAME(0.0f, 0.0f);
+	SET_RANDOM_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
+	SET_PARKED_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
+	SET_AMBIENT_VEHICLE_RANGE_MULTIPLIER_THIS_FRAME(0.0f);
+	SET_RANDOM_BOATS(false);
+	SET_RANDOM_TRAINS(false);
+	SET_DISABLE_RANDOM_TRAINS_THIS_FRAME(true);
+	return;
+}
 }
 
 Timer timerRefreshIni; //Allow reload every 5s
@@ -1576,53 +1642,6 @@ void RefreshIni()
 	return;
 }
 
-void test()
-{
-	SET_CAR_HIGH_SPEED_BUMP_SEVERITY_MULTIPLIER(0.0f);
-
-
-
-	const Vehicle veh = GetVehiclePedIsIn(GetPlayerPed(), true, true);
-	const Hash vehHash = GET_ENTITY_MODEL(veh);
-	if (IS_THIS_MODEL_A_PLANE(vehHash))
-		SET_PLANE_TURBULENCE_MULTIPLIER(veh, 0.0f);
-	else if (IS_THIS_MODEL_A_HELI(vehHash))
-		SET_HELI_TURBULENCE_SCALAR(veh, 0.0f);
-
-
-
-	SET_POLICE_RADAR_BLIPS(false);
-	SET_BLOCK_WANTED_FLASH(true);
-	FORCE_OFF_WANTED_STAR_FLASH(true);
-	HIDE_HUD_COMPONENT_THIS_FRAME(HUD_WANTED_STARS);
-
-	SET_AUDIO_FLAG("WantedMusicDisabled", true);
-	SET_AUDIO_FLAG("WantedMusicOnMission", false);
-	IS_PED_IN_ANY_POLICE_VEHICLE(GetPlayerPed()) ? SET_AUDIO_FLAG("PoliceScannerDisabled", false) : SET_AUDIO_FLAG("PoliceScannerDisabled", true);
-
-
-
-	EnablePedConfigFlag(GetPlayerPed(), PCF_DisableAutoEquipHelmetsInBikes);
-	EnablePedConfigFlag(GetPlayerPed(), PCF_DisableAutoEquipHelmetsInAicraft);
-
-
-
-	// Disable all disaptaches here
-	SET_PED_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
-	SET_SCENARIO_PED_DENSITY_MULTIPLIER_THIS_FRAME(0.0f, 0.0f);
-	SET_RANDOM_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
-	SET_PARKED_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
-	SET_AMBIENT_VEHICLE_RANGE_MULTIPLIER_THIS_FRAME(0.0f);
-	SET_RANDOM_BOATS(false);
-	SET_RANDOM_TRAINS(false);
-	SET_DISABLE_RANDOM_TRAINS_THIS_FRAME(true);
-
-
-	//mute ambient music
-	if (!IS_AUDIO_SCENE_ACTIVE("CREATOR_SCENES_AMBIENCE"))
-		START_AUDIO_SCENE("CREATOR_SCENES_AMBIENCE");
-}
-
 void UpdatePlayerOptions()
 {
 	if (INI::FriendlyFire) { nGeneral::FriendlyFire(); }
@@ -1632,7 +1651,8 @@ void UpdatePlayerOptions()
 	if (INI::CleanWoundsAndDirtInWater) { nGeneral::CleanWoundsAndDirtInWater(); }
 	if (INI::SprintInsideInteriors) { nGeneral::EnableSprintInsideInteriors(); }
 	if (INI::AllowWeaponsInsideSafeHouse) { nGeneral::AllowWeaponsInsideSafeHouse(); }
-
+	if (INI::SilentWanted) { nGeneral::SilentWanted(); }
+	
 	//////////////////////////////////////Player Controls//////////////////////////////////
 	if (INI::DisableAssistedMovement) { nControls::DisableAssistedMovement(); }
 	if (INI::ToggleFPSWalking) { nControls::ToggleFPSWalking(); }
@@ -1653,10 +1673,13 @@ void UpdatePlayerOptions()
 	if (INI::KeepCarHydraulicsPosition) { nVehicle::KeepCarHydraulicsPosition(); }
 	if (INI::EnableHeliWaterPhysics) { nVehicle::EnableHeliWaterPhysics(); }
 	if (INI::DisableRagdollOnVehicleRoof) { nVehicle::DisableRagdollOnVehicleRoof(); }
+	if (INI::DisableDragOutCar) { nVehicle::DisableDragOutCar(); }
 	if (INI::DisableFlyThroughWindscreen) { nVehicle::DisableFlyThroughWindscreen(); }
 	if (INI::DisableBikeKnockOff) { nVehicle::DisableBikeKnockOff(); }
-	if (INI::DisableDragOutCar) { nVehicle::DisableDragOutCar(); }
 	if (INI::DisableShallowWaterBikeJumpOut) { nVehicle::DisableShallowWaterBikeJumpOut(); }
+	if (INI::DisableVehicleJitter) { nVehicle::DisableVehicleJitter(); }
+	if (INI::DisableAirVehicleTurbulence) { nVehicle::DisableAirVehicleTurbulence(); }
+	if (INI::DisableAutoEquipHelmets > 0) { nVehicle::DisableAutoEquipHelmets(); }
 	if (INI::DisableStuntJumps) { nVehicle::DisableStuntJumps(); }
 
 	///////////////////////////////////////////HUD/////////////////////////////////////////
@@ -1692,9 +1715,10 @@ void UpdatePlayerOptions()
 	if (INI::DefaultVehicleRadioOff > 0) { nAudio::DefaultVehicleRadioOff(); }
 	if (INI::MuteSounds) { nAudio::MuteSounds(); }
 	if (INI::DisablePlayerPainAudio) { nAudio::DisablePlayerPainAudio(); }
-
+	if (INI::MuteArtificialAmbientSounds) { nAudio::MuteArtificialAmbientSounds(); }
+	
 	//////////////////////////////////////////Peds/////////////////////////////////////////
 	if (INI::DisableScenarios) { nPeds::DisableScenarios(); }
-	test();
+	if (INI::DisableWorldPopulation) { nPeds::DisableWorldPopulation(); }
 	return;
 }

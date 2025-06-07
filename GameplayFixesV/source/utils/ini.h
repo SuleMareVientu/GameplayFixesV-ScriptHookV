@@ -12,6 +12,7 @@ extern bool DisarmPlayerWhenShot;
 extern bool CleanWoundsAndDirtInWater;
 extern bool SprintInsideInteriors;
 extern bool AllowWeaponsInsideSafeHouse;
+extern bool SilentWanted;
 //Player Controls
 extern bool DisableAssistedMovement;
 extern int DisableCameraAutoCenter;
@@ -33,10 +34,13 @@ extern bool KeepCarHydraulicsPosition;
 extern bool EnableHeliWaterPhysics;
 extern bool DisableRagdollOnVehicleRoof;
 extern float MaxVehicleSpeed;
+extern bool DisableDragOutCar;
 extern bool DisableFlyThroughWindscreen;
 extern bool DisableBikeKnockOff;
-extern bool DisableDragOutCar;
 extern bool DisableShallowWaterBikeJumpOut;
+extern bool DisableVehicleJitter;
+extern bool DisableAirVehicleTurbulence;
+extern int DisableAutoEquipHelmets;
 extern bool DisableStuntJumps;
 //HUD
 extern bool AllowGameExecutionOnPauseMenu;
@@ -68,6 +72,7 @@ extern int DefaultVehicleRadioOff;
 extern bool MuteSounds;
 extern char* Sounds;
 extern bool DisablePlayerPainAudio;
+extern bool MuteArtificialAmbientSounds;
 
 //Peds Settings
 extern bool DisableWrithe;
@@ -80,6 +85,7 @@ extern bool DisarmIncludeLeftHand;
 extern bool DisablePedOnlyDamagedByPlayer;
 extern bool DisableDeadPedsJumpOutOfVehicle;
 extern bool DisableScenarios;
+extern bool DisableWorldPopulation;
 }
 
 void ReadINI();
