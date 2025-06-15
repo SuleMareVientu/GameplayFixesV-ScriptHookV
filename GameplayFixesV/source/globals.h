@@ -88,13 +88,16 @@ enum ePedFlag {
 	//Ped Config Flags
 	PCF_NoCriticalHits = 2,
 	PCF_NeverEverTargetThisPed = 9,		//script control over player targeting
+	PCF_NotAllowedToCrouch = 22,		// Is this ped allowed to crouch at all?
 	PCF_ForceDieIfInjured = 25,			//script command so missions peds die if injured
 	PCF_ForceDieInCar = 28,				//don't fall out car if killed
 	PCF_WillFlyThroughWindscreen = 32,	// Ped will fly through the vehicle windscreen upon a forward impact at high velocity
 	PCF_DieWhenRagdoll = 33,
 	PCF_AllowLockonToFriendlyPlayers = 45,
 	PCF_IsSitting = 68,					//is the ped sitting
-	PCF_IsAimingGun = 78,			//Is performing an aim task
+	PCF_IsAimingGun = 78,				//Is performing an aim task
+	PCF_UsingCrouchedPedCapsule = 99,	// Set to indicate that the ped's bounds are in the crouched configuration
+	PCF_OpenDoorArmIK = 104,			// Set if the ped should enable open door arm IK
 	PCF_UNUSED_REPLACE_ME = 125,
 	PCF_CanAttackFriendly = 140,		//True allows this ped to attack peds theya re friendly with
 	PCF_IsInjured = 166,				//When true, the ped will use injured movement anim sets and getup animations.
@@ -110,13 +113,18 @@ enum ePedFlag {
 	PCF_AllowPlayerLockOnIfFriendly = 266,		//If this ped is friendly with the player, this will allow the ped to lockon
 	PCF_DisableGoToWritheWhenInjured = 281,		//If set, CPed::DAMAGED_GOTOWRITHE will no longer get set.  In particular, tazer hits wil no longer kill this ped in one hit.
 	PCF_DisableWritheShootFromGround = 327,
+	PRF_DontUseSprintEnergy = 353,				// Player does not get tired when sprinting
 	PCF_DisableAutoEquipHelmetsInBikes = 380,		// Prevents ped from auto-equipping helmets when entering a bike (includes quadbikes)
 	PCF_DisableAutoEquipHelmetsInAicraft = 381,		// Prevents ped from auto-equipping helmets when entering an aircraft
 	PCF_IgnoreInteriorCheckForSprinting = 427,
 
 	//Ped Reset Flags
 	PRF_IsAiming = 27,							//TASK_GUN or TASK_USE_COVER
+	PRF_NotAllowedToChangeCrouchState = 68,		//if set the ped will not be allowed to change their crouch state
+	PRF_DisableCrouchWhileInCover = 88,			//Force the crouch flag to return true while in cover.
+	PRF_DisableDynamicCapsuleRadius = 121,		//Turn off dynamic adjustments to ped capsules
 	PRF_HurtThisFrame = 127,					//The ped has entered the hurt state this frame
+	PRF_ExpandPedCapsuleFromSkeleton = 129,         // Set the ped capsule radius based on skeleton
 	PRF_ShootFromGround = 140,
 	PRF_IsEnteringOrExitingVehicle = 152,		// TASK_ENTER_VEHICLE or TASK_EXIT_VEHICLE
 	PRD_HasGunTaskWithAimingState = 154,		// Ped is running TASK_GUN and task's state is State_Aim
@@ -1296,6 +1304,27 @@ enum eCodeTask {
 	CODE_TASK_VEHICLE_TRANSFORM_TO_SUBMARINE,
 	CODE_TASK_ANIMATED_FALLBACK,
 	CODE_MAX_NUM_TASK_TYPES
+};
+
+enum ePedMotionState {
+	MS_ON_FOOT_IDLE = -1871534317,	// The standing idle pose for on foot movement
+	MS_ON_FOOT_WALK = -668482597,	// Walking straight forward in on foot movement
+	MS_ON_FOOT_RUN = -530524,	// Running straight forward in on foot movement
+	MS_ON_FOOT_SPRINT = -1115154469,	// Sprinting straight forward in on foot movement
+	MS_CROUCH_IDLE = 1140525470,	// The standing idle for crouching movement
+	MS_CROUCH_WALK = 147004056,	// walking straight forward whilst crouching
+	MS_CROUCH_RUN = 898879241,	// running straight forward whilst crouching
+	MS_DO_NOTHING = 247561816,
+	MS_DIVING_IDLE = 1212730861,	// Idling whilst swimming underwater
+	MS_DIVING_SWIM = -1855028596,	// swimming forwards whilst swimming underwater
+	MS_PARACHUTING = -1161760501,	// parachuting
+	MS_AIMING = 1063765679, // aiming
+	MS_ACTIONMODE_IDLE = -633298724,
+	MS_ACTIONMODE_WALK = -762290521,
+	MS_ACTIONMODE_RUN = 834330132,
+	MS_STEALTHMODE_IDLE = 1110276645,
+	MS_STEALTHMODE_WALK = 69908130,
+	MS_STEALTHMODE_RUN = -83133983
 };
 
 enum eControlType {

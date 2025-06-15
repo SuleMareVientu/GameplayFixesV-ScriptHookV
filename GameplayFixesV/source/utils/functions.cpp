@@ -84,6 +84,47 @@ int ShowNotification(const char* str, bool flash)
 }
 #pragma endregion
 
+#pragma region Assets Request
+
+bool RequestModel(Hash model)
+{
+	if (!IS_MODEL_VALID(model))
+		return false;
+
+	if (!HAS_MODEL_LOADED(model))
+	{
+		REQUEST_MODEL(model);
+		return false;
+	}
+	return true;
+}
+
+bool RequestAnimDict(char* animDict)
+{
+	if (!DOES_ANIM_DICT_EXIST(animDict))
+		return false;
+
+	if (!HAS_ANIM_DICT_LOADED(animDict))
+	{
+		REQUEST_ANIM_DICT(animDict);
+		return false;
+	}
+	return true;
+}
+
+// REQUEST_ANIM_SET is deprecated, use REQUEST_CLIP_SET
+bool RequestClipSet(char* animDict)
+{
+	if (!HAS_CLIP_SET_LOADED(animDict))
+	{
+		REQUEST_CLIP_SET(animDict);
+		return false;
+	}
+	return true;
+}
+
+#pragma endregion
+
 #pragma region Misc
 inline int Abs(int n) { return n * ((n > 0) - (n < 0)); }
 inline float Abs(float n) { return n * ((n > 0.0f) - (n < 0.0f)); }
@@ -149,7 +190,9 @@ Vehicle GetVehiclePedIsIn(Ped ped, bool includeEntering, bool includeExiting)
 		(!includeExiting && GET_IS_TASK_ACTIVE(ped, CODE_TASK_EXIT_VEHICLE)))
 	{ veh = NULL; }
 
-	if (!DOES_ENTITY_EXIST(veh)) veh = NULL;
+	if (!DOES_ENTITY_EXIST(veh))
+		veh = NULL;
+
 	return veh;
 }
 
@@ -157,7 +200,9 @@ Vehicle GetVehiclePedIsEntering(Ped ped)
 {
 	Vehicle veh = NULL;
 	if (GET_PED_RESET_FLAG(ped, PRF_IsEnteringVehicle)) veh = GET_VEHICLE_PED_IS_USING(ped);
-	if (!DOES_ENTITY_EXIST(veh)) veh = NULL;
+	if (!DOES_ENTITY_EXIST(veh))
+		veh = NULL;
+
 	return veh;
 }
 
@@ -165,7 +210,9 @@ Vehicle GetVehiclePedIsExiting(Ped ped)
 {
 	Vehicle veh = NULL;
 	if (GET_IS_TASK_ACTIVE(ped, CODE_TASK_EXIT_VEHICLE)) veh = GET_VEHICLE_PED_IS_USING(ped);
-	if (!DOES_ENTITY_EXIST(veh)) veh = NULL;
+	if (!DOES_ENTITY_EXIST(veh))
+		veh = NULL;
+
 	return veh;
 }
 
@@ -177,6 +224,15 @@ Vehicle GetVehiclePedIsEnteringOrExiting(Ped ped)
 	
 	if (!DOES_ENTITY_EXIST(veh)) veh = NULL;
 	return veh;
+}
+
+bool IsPlayerAiming()
+{
+	if (IS_PLAYER_FREE_AIMING(GET_PLAYER_INDEX()) || IS_PED_AIMING_FROM_COVER(GetPlayerPed() ||
+		GET_PED_CONFIG_FLAG(GetPlayerPed(), PCF_IsAimingGun, false) || GET_PED_RESET_FLAG(GetPlayerPed(), PRF_IsAiming)))
+		return true;
+
+	return false;
 }
 
 /*
@@ -191,7 +247,9 @@ bool HasEntityBeenDamagedByAnyPedThisFrame(Ped ped)
 bool HasEntityBeenDamagedByWeaponThisFrame(Ped ped, Hash weaponHash, int weaponType)
 {
 	const bool res = HAS_ENTITY_BEEN_DAMAGED_BY_WEAPON(ped, weaponHash, weaponType);
-	if (res) { CLEAR_ENTITY_LAST_WEAPON_DAMAGE(ped); /*CLEAR_ENTITY_LAST_DAMAGE_ENTITY(ped);*/ }
+	if (res)
+		CLEAR_ENTITY_LAST_WEAPON_DAMAGE(ped);
+
 	return res;
 }
 
@@ -258,7 +316,7 @@ void SetTextStyle(TextStyle Style, bool bDrawBeforeFade)
 
 	//Other
 	SET_TEXT_CENTRE(Style.centre);
-	// SET_TEXT_DROPSHADOW(); // RGB parameters are unused, it's the same as SET_TEXT_DROP_SHADOW();
+	//SET_TEXT_DROPSHADOW(); // RGB parameters are unused, it's the same as SET_TEXT_DROP_SHADOW();
 	//SET_TEXT_EDGE(0, 0, 0, 0, 0); // nullsub
 	return;
 }
@@ -284,11 +342,110 @@ int GetVKFromString(const std::string &str)
 	else
 		return -1;
 }
+
 #pragma endregion
 
 /////////////////////////////////////////////Player//////////////////////////////////////////////
 namespace nGeneral
 {
+bool CanCrouch(Ped ped)
+{
+	if (!DOES_ENTITY_EXIST(ped) || IS_ENTITY_DEAD(ped, false) || IS_PED_DEAD_OR_DYING(ped, true) ||
+		IS_PED_INJURED(ped) || IS_PED_USING_ANY_SCENARIO(ped) || IS_PED_RAGDOLL(ped) ||
+		IS_PED_GETTING_UP(ped) || IS_PED_FALLING(ped) || IS_PED_JUMPING(ped) ||
+		IS_PED_DIVING(ped) || IS_PED_SWIMMING(ped) || IS_PED_GOING_INTO_COVER(ped) ||
+		IS_PED_CLIMBING(ped) || IS_PED_VAULTING(ped) || IS_PED_HANGING_ON_TO_VEHICLE(ped) ||
+		IS_PED_IN_ANY_VEHICLE(ped, true) || IS_PED_IN_COVER(ped, false) || !IS_PED_ON_FOOT(ped) ||
+		IS_PED_TAKING_OFF_HELMET(ped) || GET_ENTITY_SUBMERGED_LEVEL(ped) >= 0.7f || IS_PED_PERFORMING_MELEE_ACTION(ped))
+		return false;
+
+	return true;
+}
+
+// Ensure that movement clipsets are loaded before applying them
+constexpr char* crouchedMovementClipSet = "move_ped_crouched";
+constexpr char* crouchedStrafingClipSet = "move_ped_crouched_strafing";
+constexpr float blendSpeedCrouched = 0.55f;
+bool isCrouched = false;
+void SetCrouch(Ped ped, bool state)
+{
+	if (state)
+	{
+		isCrouched = true;
+		SET_PED_STEALTH_MOVEMENT(ped, false, NULL);
+		SET_PED_MOVEMENT_CLIPSET(ped, crouchedMovementClipSet, blendSpeedCrouched);
+		SET_PED_STRAFE_CLIPSET(ped, crouchedStrafingClipSet);
+		//SET_WEAPON_ANIMATION_OVERRIDE(ped, "Ballistic");
+		DisablePedConfigFlag(ped, PCF_OpenDoorArmIK);
+		EnablePedConfigFlag(ped, PCF_PhoneDisableTextingAnimations);
+		EnablePedConfigFlag(ped, PCF_PhoneDisableTalkingAnimations);
+		EnablePedConfigFlag(ped, PCF_PhoneDisableCameraAnimations);
+		SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, false);
+		SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, false);
+		SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, false);
+		SET_PED_CAN_PLAY_AMBIENT_IDLES(ped, true, true);
+	}
+	else
+	{
+		isCrouched = false;
+		SET_PED_STEALTH_MOVEMENT(ped, false, NULL);
+		RESET_PED_MOVEMENT_CLIPSET(ped, blendSpeedCrouched);
+		RESET_PED_STRAFE_CLIPSET(ped);
+		//RESET_PED_WEAPON_MOVEMENT_CLIPSET(ped);
+		//SET_WEAPON_ANIMATION_OVERRIDE(ped, "DEFAULT");
+		SET_PED_MAX_MOVE_BLEND_RATIO(ped, PEDMOVEBLENDRATIO_SPRINT);
+		EnablePedConfigFlag(ped, PCF_OpenDoorArmIK);
+		DisablePedConfigFlag(ped, PCF_PhoneDisableTextingAnimations);
+		DisablePedConfigFlag(ped, PCF_PhoneDisableTalkingAnimations);
+		DisablePedConfigFlag(ped, PCF_PhoneDisableCameraAnimations);
+		SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, true);
+		SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, true);
+		SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, true);
+		SET_PED_CAN_PLAY_AMBIENT_IDLES(ped, false, false);
+	}
+	return;
+}
+
+Timer timerCrouch;
+constexpr int crouchHold = 250;
+void EnableCrouching()
+{
+	if (!RequestClipSet(crouchedMovementClipSet) || !RequestClipSet(crouchedStrafingClipSet))
+		return;
+
+	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_DUCK))
+	{
+		if (isCrouched)
+			SetCrouch(GetPlayerPed(), false);
+		else
+			timerCrouch.Reset();
+	}
+	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_DUCK) && timerCrouch.Get() > crouchHold)
+	{
+		timerCrouch.Set(INT_MIN);
+		if (!isCrouched && CanCrouch(GetPlayerPed()))
+			SetCrouch(GetPlayerPed(), true);
+	}
+
+	if (isCrouched)
+	{
+		if (!CanCrouch(GetPlayerPed()))
+			SetCrouch(GetPlayerPed(), false);
+		else
+		{
+			EnablePedResetFlag(GetPlayerPed(), PRF_DisableActionMode);
+			EnablePedResetFlag(GetPlayerPed(), PRF_DontUseSprintEnergy);
+			DISABLE_ON_FOOT_FIRST_PERSON_VIEW_THIS_UPDATE();
+
+			if (IsPlayerAiming())
+				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), 0.25f);
+			else
+				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_RUN);
+		}
+	}
+	return;
+}
+
 void FriendlyFire()
 {
 	SET_CAN_ATTACK_FRIENDLY(GetPlayerPed(), true, true);	// Sets PCF_CanAttackFriendly, PCF_AllowLockonToFriendlyPlayers
@@ -1389,12 +1546,12 @@ Timer timerFlashHealth;
 constexpr int flashHealthInterval = 400;
 void ReplaceArmourBarWithStamina()
 {
-	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(GetPlayer()));		//GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then health depletes
+	int staminaPercentage = ROUND(100.0f - GET_PLAYER_SPRINT_STAMINA_REMAINING(GetPlayer()));				//GET_PLAYER_SPRINT_STAMINA_REMAINING goes from 0 to 100 and then health depletes
 	if (INI::MergeHealthAndArmour)
 	{
-		int health = GET_ENTITY_HEALTH(GetPlayerPed()) - 100 + GET_PED_ARMOUR(GetPlayerPed());			//We need to subtract 100 because the player fatal health is 100 not 0
+		int health = GET_ENTITY_HEALTH(GetPlayerPed()) - 100 + GET_PED_ARMOUR(GetPlayerPed());				//We need to subtract 100 because the player fatal health is 100 not 0
 		int maxHealth = GET_ENTITY_MAX_HEALTH(GetPlayerPed()) - 100 + GET_PLAYER_MAX_ARMOUR(GetPlayer());
-		int newHealthPercentage = ROUND(health * 100.0f / maxHealth);							//Always ensure a 100 offset to fix hud ratio
+		int newHealthPercentage = ROUND(health * 100.0f / maxHealth);										//Always ensure a 100 offset to fix hud ratio
 		int realHealthPercentage = ROUND((GET_ENTITY_HEALTH(GetPlayerPed()) - 100.0f) * 100.0f / (GET_ENTITY_MAX_HEALTH(GetPlayerPed()) - 100.0f));
 
 		//Flash health bar every 400ms if health is below 25%
@@ -1575,7 +1732,6 @@ void MuteSounds()
 
 void MuteArtificialAmbientSounds()
 {
-	// Mute artificial ambient sounds
 	// Affects: ambience_general, ambience_music, positioned_radio, ambience_oneshot_vehicles, ambience_industrial, ambience_birds, ambience_speech
 	if (!IS_AUDIO_SCENE_ACTIVE("CREATOR_SCENES_AMBIENCE"))
 		START_AUDIO_SCENE("CREATOR_SCENES_AMBIENCE");
@@ -1614,12 +1770,18 @@ void DisableScenarios()
 
 void DisableWorldPopulation()
 {
-	nGeneral::SetDispatchServices(false);
+	SET_PED_POPULATION_BUDGET(0);
+	SET_REDUCE_PED_MODEL_BUDGET(0);
 	SET_PED_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
 	SET_SCENARIO_PED_DENSITY_MULTIPLIER_THIS_FRAME(0.0f, 0.0f);
+
+	SET_VEHICLE_POPULATION_BUDGET(0);
+	SET_REDUCE_VEHICLE_MODEL_BUDGET(0);
 	SET_RANDOM_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
 	SET_PARKED_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
-	SET_AMBIENT_VEHICLE_RANGE_MULTIPLIER_THIS_FRAME(0.0f);
+	//SET_AMBIENT_VEHICLE_RANGE_MULTIPLIER_THIS_FRAME(0.0f);
+
+	nGeneral::SetDispatchServices(false);
 	SET_RANDOM_BOATS(false);
 	SET_RANDOM_TRAINS(false);
 	SET_DISABLE_RANDOM_TRAINS_THIS_FRAME(true);
@@ -1644,6 +1806,7 @@ void RefreshIni()
 
 void UpdatePlayerOptions()
 {
+	if (INI::EnableCrouching) { nGeneral::EnableCrouching(); }
 	if (INI::FriendlyFire) { nGeneral::FriendlyFire(); }
 	if (INI::EnableStealthForAllPeds) { nGeneral::EnableStealthForAllPeds(); }
 	if (INI::DisableActionMode) { nGeneral::DisableActionMode(); }

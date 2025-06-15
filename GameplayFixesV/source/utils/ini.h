@@ -5,6 +5,7 @@ namespace INI
 //Input Settings
 extern unsigned long ReloadIniKey;
 //Player Settings
+extern bool EnableCrouching;
 extern bool FriendlyFire;
 extern bool EnableStealthForAllPeds;
 extern bool DisableActionMode;

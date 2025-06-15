@@ -14,6 +14,7 @@ namespace INI
 //Input Settings
 unsigned long ReloadIniKey = VK_F12;
 //Player Settings
+bool EnableCrouching = true;
 bool FriendlyFire = true;
 bool EnableStealthForAllPeds = true;
 bool DisableActionMode = false;
@@ -111,6 +112,7 @@ void ReadINI()
 	ReloadIniKey = GetVKFromString(tmpStrArr[0]);
 
 	//////////////////////////////////////Player//////////////////////////////////////////
+	EnableCrouching = ini.GetBoolValue(playerGroup, "EnableCrouching", EnableCrouching);
 	FriendlyFire = ini.GetBoolValue(playerGroup, "FriendlyFire", FriendlyFire);
 	EnableStealthForAllPeds = ini.GetBoolValue(playerGroup, "EnableStealthForAllPeds", EnableStealthForAllPeds);
 	DisableActionMode = ini.GetBoolValue(playerGroup, "DisableActionMode", DisableActionMode);
