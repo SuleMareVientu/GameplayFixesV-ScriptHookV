@@ -930,7 +930,7 @@ namespace ENTITY
 	static int GET_ENTITY_ALPHA(Entity entity) { return invoke<int>(0x5A47B3B5E63E94C6, entity); } // 0x5A47B3B5E63E94C6 0x1560B017 b323
 	static void RESET_ENTITY_ALPHA(Entity entity) { invoke<Void>(0x9B1E824FFBB7027A, entity); } // 0x9B1E824FFBB7027A 0x8A30761C b323
 	static void RESET_PICKUP_ENTITY_GLOW(Entity entity) { invoke<Void>(0x490861B88F4FD846, entity); } // 0x490861B88F4FD846 b944
-	static void SET_PICKUP_COLLIDES_WITH_PROJECTILES(Any p0, Any p1) { invoke<Void>(0xCEA7C8E1B48FF68C, p0, p1); } // 0xCEA7C8E1B48FF68C b678
+	static void SET_PICKUP_COLLIDES_WITH_PROJECTILES(Entity entity, bool collideWithProjectiles) { invoke<Void>(0xCEA7C8E1B48FF68C, entity, collideWithProjectiles); } // 0xCEA7C8E1B48FF68C b678
 	static void SET_ENTITY_SORT_BIAS(Entity entity, float p1) { invoke<Void>(0x5C3B791D580E0BC2, entity, p1); } // 0x5C3B791D580E0BC2 b323
 	static void SET_ENTITY_ALWAYS_PRERENDER(Entity entity, bool toggle) { invoke<Void>(0xACAD101E1FB66689, entity, toggle); } // 0xACAD101E1FB66689 0xD8FF798A b323
 	static void SET_ENTITY_RENDER_SCORCHED(Entity entity, bool toggle) { invoke<Void>(0x730F5F8D3F0F2050, entity, toggle); } // 0x730F5F8D3F0F2050 0xAAC9317B b323

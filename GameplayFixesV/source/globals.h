@@ -1,7 +1,15 @@
 #pragma once
 #include <types.h>
 
+//Json
+#include <windows.h>
+#include "resource.h"
+#include <json.hpp>
+using json = nlohmann::json;
+
 #define LOOP(i, n) for(int i = 0; i < n; ++i)
+
+extern HINSTANCE g_hInstance;
 
 constexpr unsigned int Joaat(const char* str)
 {
@@ -41,6 +49,49 @@ union scrValue
 	unsigned long long Any;
 	bool operator==(const scrValue &val) { return Int == val.Int; }
 };
+
+// Json stuff
+struct WpTintJson {
+	int Index;
+};
+
+struct WpComponentJson {
+	std::string Name;
+};
+
+struct WpLiveryJson {
+	std::string Name;
+};
+
+struct WeaponJson {
+	std::string Name;
+	std::string Category;
+	std::string AmmoType;
+	std::string DamageType;
+	std::vector<WpTintJson> Tints;
+	std::vector<WpComponentJson> Components;
+	std::vector<WpLiveryJson> Liveries;
+};
+
+extern bool hasWeaponJsonLoaded;
+extern std::vector<WeaponJson> weaponInfo;
+
+struct WeaponPickupLivery {
+	Hash LiveryHash;
+	int TintIndex;
+};
+
+struct WeaponPickup {
+	Hash WpHash;
+	Pickup PickupIndex;
+	Blip PickupBlip;
+	int TintIndex;
+	int CamoIndex;	
+	std::vector<Hash> Components;
+	std::vector<WeaponPickupLivery> Liveries;
+};
+
+extern std::vector<WeaponPickup> droppedWeapons;
 
 //Constants
 constexpr Vector3 nullVec{ NULL, NULL, NULL, NULL, NULL, NULL };
@@ -116,6 +167,7 @@ enum ePedFlag {
 	PRF_DontUseSprintEnergy = 353,				// Player does not get tired when sprinting
 	PCF_DisableAutoEquipHelmetsInBikes = 380,		// Prevents ped from auto-equipping helmets when entering a bike (includes quadbikes)
 	PCF_DisableAutoEquipHelmetsInAicraft = 381,		// Prevents ped from auto-equipping helmets when entering an aircraft
+	PCF_BlockAutoSwapOnWeaponPickups = 416,			// Block auto weapon swaps for weapon pickups.
 	PCF_IgnoreInteriorCheckForSprinting = 427,
 
 	//Ped Reset Flags
@@ -362,6 +414,28 @@ enum eRelationshipType
 	ACQUAINTANCE_TYPE_PED_WANTED,
 	ACQUAINTANCE_TYPE_PED_HATE,
 	ACQUAINTANCE_TYPE_PED_DEAD
+};
+
+enum ePickupPlacementFlag {
+	PLACEMENT_FLAG_MAP = 0,								 // only used in MP. This is used for pickups that are created locally on each machine and only networked when collected.
+	PLACEMENT_FLAG_FIXED = 1,							 // sets the pickup as fixed so it cannot move
+	PLACEMENT_FLAG_REGENERATES = 2,						 // sets the pickup as regenerating
+	PLACEMENT_FLAG_SNAP_TO_GROUND = 3,					 // places the pickup on the ground 
+	PLACEMENT_FLAG_ORIENT_TO_GROUND = 4,				 // orientates the pickup correctly on the ground
+	PLACEMENT_FLAG_LOCAL_ONLY = 5,						 // creates the pickup non-networked
+	PLACEMENT_FLAG_BLIPPED_SIMPLE = 6,					 // gives the pickup a simple blip
+	PLACEMENT_FLAG_BLIPPED_COMPLEX = 7,					 // gives the pickup a complex blip
+	PLACEMENT_FLAG_UPRIGHT = 8,							 // Some pickups need to be orientated differently to lie on the ground properly. Use this flag if your pickup is not lying correctly.
+	PLACEMENT_FLAG_ROTATE = 9,							 // Pickup will rotate 
+	PLACEMENT_FLAG_FACEPLAYER = 10,						 // Pickup will always face the player
+	PLACEMENT_FLAG_HIDE_IN_PHOTOS = 11,					 // Pickup will be hidden when the player is using the phone camera
+	PLACEMENT_FLAG_PLAYER_GIFT = 12,					 // The pickup is being dropped as a gift to another player
+	PLACEMENT_FLAG_ON_OBJECT = 13,						 // The pickup is lying on an object and probes for that when snapping or orientating to ground
+	PLACEMENT_FLAG_GLOW_IN_TEAM = 14,					 // Set pickups to glow even if pickup can't be picked up because of team checks
+	PLACEMENT_CREATION_FLAG_AUTO_EQUIP = 15,			 // if set on a weapon pickup, it will auto equip the picked up weapon. It will ignore autoswap logic
+	PLACEMENT_CREATION_FLAG_COLLECTABLE_IN_VEHICLE = 16, // if set the pickup can be collected by a ped in a vehicle
+	PLACEMENT_CREATION_FLAG_DISABLE_WEAPON_HD_MODEL = 17,// if set the weapon pickup will render SD model only (HD<->SD model switch will be disabled)
+	PLACEMENT_CREATION_FLAG_FORCE_DEFERRED_MODEL = 18    // if set the pickup will render as deferred model (no transparency/alpha blending in this render mode)
 };
 
 enum ePedBoneTag {

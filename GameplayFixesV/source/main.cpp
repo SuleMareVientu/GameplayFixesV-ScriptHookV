@@ -1,9 +1,12 @@
 #include <main.h>
 #include "script.h"
 #include "utils\keyboard.h"
+#include "globals.h"
 
+HINSTANCE g_hInstance = nullptr;
 BOOL APIENTRY DllMain(HMODULE hInstance, DWORD reason, LPVOID lpReserved)
 {
+	g_hInstance = hInstance;
 	switch (reason)
 	{
 	case DLL_PROCESS_ATTACH:

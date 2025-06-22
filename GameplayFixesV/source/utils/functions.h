@@ -28,6 +28,13 @@ void PrintFloat(float value, int ms = 1);
 void PrintHelp(char* string, bool playSound = false, int overrideDuration = -1);
 int ShowNotification(const char* str, bool flash = false);
 
+void from_json(const nlohmann::json& j, WpComponentJson& c);
+void from_json(const nlohmann::json& j, WeaponJson& w);
+std::string LoadJSONResource(HINSTANCE hInstance, int resourceID);
+bool LoadWeaponJson();
+Hash DropPlayerWeapon(const bool checkWeaponType, const bool shouldCurse);
+void RestorePlayerRetrievedWeapon();
+
 bool ArrayContains(int value, const int a[], int n);
 void SplitString(const char* charStr, std::string arr[], const int arrSize, const bool toUpper = false);
 int GetRandomIntInRange(int startRange = 0, int endRange = 65535);

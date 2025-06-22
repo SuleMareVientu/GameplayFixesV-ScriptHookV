@@ -1,3 +1,7 @@
+#include "resource.h"
+
+IDR_WEAPONINFOJSON JSON "weapons.json"
+
 FX_ASI_BUILD 1604
 BEGIN
 "\0"
