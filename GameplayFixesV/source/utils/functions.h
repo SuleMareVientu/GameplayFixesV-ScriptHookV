@@ -32,7 +32,7 @@ void from_json(const nlohmann::json& j, WpComponentJson& c);
 void from_json(const nlohmann::json& j, WeaponJson& w);
 std::string LoadJSONResource(HINSTANCE hInstance, int resourceID);
 bool LoadWeaponJson();
-Hash DropPlayerWeapon(const bool checkWeaponType, const bool shouldCurse);
+void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse);
 void RestorePlayerRetrievedWeapon();
 
 bool ArrayContains(int value, const int a[], int n);

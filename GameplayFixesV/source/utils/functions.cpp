@@ -259,13 +259,8 @@ int GetWeaponBlipSprite(const Hash weaponHash)
 	}
 }
 
-std::vector<WeaponPickup> droppedWeapons;
-Hash DropPlayerWeapon(const bool checkWeaponType, const bool shouldCurse)
+bool WillWeaponSpawnPickupWhenDropped(const Hash weaponHash, const bool checkWeaponType)
 {
-	while (!LoadWeaponJson()){}
-
-	Hash weaponHash = NULL;
-	GET_CURRENT_PED_WEAPON(GetPlayerPed(), &weaponHash, false);
 	if (weaponHash == WEAPON_UNARMED || weaponHash == 0)
 		return false;
 
@@ -277,8 +272,16 @@ Hash DropPlayerWeapon(const bool checkWeaponType, const bool shouldCurse)
 			wpGroup == WEAPONGROUP_LOUDHAILER || wpGroup == WEAPONGROUP_DIGISCANNER ||
 			wpGroup == WEAPONGROUP_NIGHTVISION || wpGroup == WEAPONGROUP_PARACHUTE ||
 			wpGroup == WEAPONGROUP_JETPACK || wpGroup == WEAPONGROUP_METALDETECTOR)
-			return NULL;
+			return false;
 	}
+
+	return true;
+}
+
+std::vector<WeaponPickup> droppedWeapons;
+void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse)
+{
+	while (!LoadWeaponJson()){}
 
 	if (shouldCurse && !IS_AMBIENT_SPEECH_PLAYING(GetPlayerPed()))
 		PLAY_PED_AMBIENT_SPEECH_NATIVE(GetPlayerPed(), "GENERIC_CURSE_MED", "SPEECH_PARAMS_FORCE", false);
@@ -289,8 +292,7 @@ Hash DropPlayerWeapon(const bool checkWeaponType, const bool shouldCurse)
 		if (Joaat(weaponInfo[i].Name.c_str()) != weaponHash)
 			continue;
 
-		if (!weaponInfo[i].Components.empty() &&
-			weaponInfo[i].Components[0].Name != "UNK")
+		if (!weaponInfo[i].Components.empty())
 		{
 			wp.WpHash = weaponHash;
 			wp.TintIndex = GET_PED_WEAPON_TINT_INDEX(GetPlayerPed(), weaponHash);
@@ -298,14 +300,22 @@ Hash DropPlayerWeapon(const bool checkWeaponType, const bool shouldCurse)
 			LOOP(j, weaponInfo[i].Components.size())
 			{
 				const Hash component = Joaat(weaponInfo[i].Components[j].Name.c_str());
+				if (component == Joaat("UNK"))
+					continue;
+
 				if (HAS_PED_GOT_WEAPON_COMPONENT(GetPlayerPed(), weaponHash, component))
 					wp.Components.push_back(component);
-
 			}
+		}
 
+		if (!weaponInfo[i].Liveries.empty())
+		{
 			LOOP(j, weaponInfo[i].Liveries.size())
 			{
 				const Hash livery = Joaat(weaponInfo[i].Liveries[j].Name.c_str());
+				if (livery == Joaat("UNK"))
+					continue;
+				
 				const int liveryTint = GET_PED_WEAPON_COMPONENT_TINT_INDEX(GetPlayerPed(), weaponHash, livery);
 				if (liveryTint > -1)
 					wp.Liveries.push_back(WeaponPickupLivery{ livery, liveryTint });
@@ -324,7 +334,7 @@ Hash DropPlayerWeapon(const bool checkWeaponType, const bool shouldCurse)
 	SET_BLIP_SPRITE(wp.PickupBlip, GetWeaponBlipSprite(weaponHash));
 	SET_BLIP_SCALE(wp.PickupBlip, 0.7f);
 	droppedWeapons.push_back(wp);
-	return weaponHash;
+	return;
 }
 
 bool retrievedWeaponThisFrame = false;
@@ -823,17 +833,34 @@ void DisarmPlayerWhenShot()
 	if ((CanDisarmPed(GetPlayerPed(), true) && GetWeightedBool(70)) ||
 		HasEntityBeenDamagedByWeaponThisFrame(GetPlayerPed(), WEAPON_STUNGUN, GENERALWEAPON_TYPE_INVALID))
 	{
-		DropPlayerWeapon(true, false);
+		Hash wp = NULL; GET_CURRENT_PED_WEAPON(GetPlayerPed(), &wp, false);
+		if (WillWeaponSpawnPickupWhenDropped(wp, true))
+			DropPlayerWeapon(wp, true);
 	}
 	return;
 }
 
+Hash lastRagdollWp = NULL;
 void DropPlayerWeaponWhenRagdolling()
 {
 	RestorePlayerRetrievedWeapon();
 
-	if (IS_PED_RAGDOLL(GetPlayerPed()))
-		DropPlayerWeapon(true, false);
+	Hash tmp = NULL;
+	const bool res = GET_CURRENT_PED_WEAPON(GetPlayerPed(), &tmp, false);
+
+	if (tmp == lastRagdollWp)
+	{
+		if (IS_PED_RAGDOLL(GetPlayerPed()) && WillWeaponSpawnPickupWhenDropped(lastRagdollWp, true))
+			DropPlayerWeapon(lastRagdollWp, false);
+	}
+
+	// GET_CURRENT_PED_WEAPON returns true when a weapon is usable (i.e. in their hand). we do this to check if
+	// the player was holding the gun correctly
+	if (res)
+		lastRagdollWp = tmp;
+	else
+		lastRagdollWp = NULL;
+
 	return;
 }
 
@@ -1041,7 +1068,7 @@ void AllowWeaponsInsideSafeHouse()
 	else
 		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(GetPlayerPed());
 
-	//If all cheks pass, set fake wanted level
+	//If all checks pass, set fake wanted level
 	SetFakeWanted(GetPlayer(), true);
 	return;
 }

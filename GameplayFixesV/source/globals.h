@@ -52,43 +52,43 @@ union scrValue
 
 // Json stuff
 struct WpTintJson {
-	int Index;
+	int Index = -1;
 };
 
 struct WpComponentJson {
-	std::string Name;
+	std::string Name = "UNK";
 };
 
 struct WpLiveryJson {
-	std::string Name;
+	std::string Name = "UNK";
 };
 
 struct WeaponJson {
-	std::string Name;
-	std::string Category;
-	std::string AmmoType;
-	std::string DamageType;
-	std::vector<WpTintJson> Tints;
-	std::vector<WpComponentJson> Components;
-	std::vector<WpLiveryJson> Liveries;
+	std::string Name = "UNK";
+	std::string Category = "UNK";
+	std::string AmmoType = "UNK";
+	std::string DamageType = "UNK";
+	std::vector<WpTintJson> Tints = {};
+	std::vector<WpComponentJson> Components = {};
+	std::vector<WpLiveryJson> Liveries = {};
 };
 
 extern bool hasWeaponJsonLoaded;
 extern std::vector<WeaponJson> weaponInfo;
 
 struct WeaponPickupLivery {
-	Hash LiveryHash;
-	int TintIndex;
+	Hash LiveryHash = 0;
+	int TintIndex = -1;
 };
 
 struct WeaponPickup {
-	Hash WpHash;
-	Pickup PickupIndex;
-	Blip PickupBlip;
-	int TintIndex;
-	int CamoIndex;	
-	std::vector<Hash> Components;
-	std::vector<WeaponPickupLivery> Liveries;
+	Hash WpHash = 0;
+	Pickup PickupIndex = -1;
+	Blip PickupBlip = 0;
+	int TintIndex = -1;
+	int CamoIndex = -1;
+	std::vector<Hash> Components = {};
+	std::vector<WeaponPickupLivery> Liveries = {};
 };
 
 extern std::vector<WeaponPickup> droppedWeapons;
