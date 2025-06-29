@@ -71,12 +71,14 @@ struct WeaponJson {
 	std::vector<WpTintJson> Tints = {};
 	std::vector<WpComponentJson> Components = {};
 	std::vector<WpLiveryJson> Liveries = {};
+	bool operator==(const std::string& n) const { return (Name == n); }
+	bool operator==(const Hash& h) const { return (Joaat(Name.c_str()) == h); }
 };
 
 extern bool hasWeaponJsonLoaded;
 extern std::vector<WeaponJson> weaponInfo;
 
-struct WeaponPickupLivery {
+struct WpPickupLivery {
 	Hash LiveryHash = 0;
 	int TintIndex = -1;
 };
@@ -88,7 +90,8 @@ struct WeaponPickup {
 	int TintIndex = -1;
 	int CamoIndex = -1;
 	std::vector<Hash> Components = {};
-	std::vector<WeaponPickupLivery> Liveries = {};
+	std::vector<WpPickupLivery> Liveries = {};
+	bool operator==(const Hash& h) const { return (WpHash == h); }
 };
 
 extern std::vector<WeaponPickup> droppedWeapons;
@@ -308,6 +311,69 @@ enum eWheelList {
 	WHEEL_BIKE_FRONT,
 	WHEEL_BIKE_REAR,
 	MAX_WHEELS
+};
+
+enum eVehModtype {
+	MOD_SPOILER = 0,
+	MOD_BUMPER_F,
+	MOD_BUMPER_R,
+	MOD_SKIRT,
+	MOD_EXHAUST,
+	MOD_CHASSIS,
+	MOD_GRILL,
+	MOD_BONNET,
+	MOD_WING_L,
+	MOD_WING_R,
+	MOD_ROOF,
+
+	MOD_ENGINE,
+	MOD_BRAKES,
+	MOD_GEARBOX,
+	MOD_HORN,
+	MOD_SUSPENSION,
+	MOD_ARMOUR,
+
+	MOD_TOGGLE_NITROUS,
+	MOD_TOGGLE_TURBO,
+	MOD_TOGGLE_SUBWOOFER,
+	MOD_TOGGLE_TYRE_SMOKE,
+	MOD_TOGGLE_HYDRAULICS,
+	MOD_TOGGLE_XENON_LIGHTS,
+
+	MOD_WHEELS,
+	MOD_REAR_WHEELS,
+
+	// Lowrider
+	MOD_PLTHOLDER,
+	MOD_PLTVANITY,
+
+	MOD_INTERIOR1,
+	MOD_INTERIOR2,
+	MOD_INTERIOR3,
+	MOD_INTERIOR4,
+	MOD_INTERIOR5,
+	MOD_SEATS,
+	MOD_STEERING,
+	MOD_KNOB,
+	MOD_PLAQUE,
+	MOD_ICE,
+
+	MOD_TRUNK,
+	MOD_HYDRO,
+
+	MOD_ENGINEBAY1,
+	MOD_ENGINEBAY2,
+	MOD_ENGINEBAY3,
+
+	MOD_CHASSIS2,
+	MOD_CHASSIS3,
+	MOD_CHASSIS4,
+	MOD_CHASSIS5,
+
+	MOD_DOOR_L,
+	MOD_DOOR_R,
+
+	MOD_LIVERY
 };
 
 enum eDispatchType {

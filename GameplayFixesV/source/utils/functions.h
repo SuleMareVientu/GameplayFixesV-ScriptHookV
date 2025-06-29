@@ -1,7 +1,7 @@
 #pragma once
 #include <natives.h>
 #include <string>
-#include <unordered_map>
+#include <filesystem>
 #include "..\globals.h"
 
 class Timer {
@@ -22,9 +22,10 @@ void DisablePedConfigFlag(Ped ped, int flag);
 void EnablePedResetFlag(Ped ped, int flag);
 void DisablePedResetFlag(Ped ped, int flag);
 
-void Print(char* string, int ms = 1);
-void PrintInt(int value, int ms = 1);
-void PrintFloat(float value, int ms = 1);
+void Print(char* string, int ms = 0);
+void Print(std::string string, int ms = 0);
+void PrintInt(int value, int ms = 0);
+void PrintFloat(float value, int ms = 0);
 void PrintHelp(char* string, bool playSound = false, int overrideDuration = -1);
 int ShowNotification(const char* str, bool flash = false);
 
@@ -35,6 +36,7 @@ bool LoadWeaponJson();
 void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse);
 void RestorePlayerRetrievedWeapon();
 
+std::filesystem::path AbsoluteModulePath(HINSTANCE module);
 bool ArrayContains(int value, const int a[], int n);
 void SplitString(const char* charStr, std::string arr[], const int arrSize, const bool toUpper = false);
 int GetRandomIntInRange(int startRange = 0, int endRange = 65535);

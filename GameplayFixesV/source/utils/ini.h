@@ -33,6 +33,7 @@ extern bool DisableEngineFire;
 extern bool LeaveEngineOnWhenExitingVehicles;
 extern bool DisableWheelsAutoCenterOnCarExit;
 extern bool KeepCarHydraulicsPosition;
+extern bool EnableBrakeLightsOnStoppedVehicles;
 extern bool EnableHeliWaterPhysics;
 extern bool DisableRagdollOnVehicleRoof;
 extern float MaxVehicleSpeed;

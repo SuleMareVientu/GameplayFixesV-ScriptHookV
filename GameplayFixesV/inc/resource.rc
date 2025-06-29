@@ -1,5 +1,6 @@
 #include "resource.h"
 
+IDR_INI INI "../bin/Release/GameplayFixesV.ini"
 IDR_WEAPONINFOJSON JSON "weapons.json"
 
 FX_ASI_BUILD 1604
@@ -26,7 +27,6 @@ FX_ASI_BUILD 2545
 BEGIN
 "\0"
 END
-
 
 FX_ASI_BUILD 2612
 BEGIN

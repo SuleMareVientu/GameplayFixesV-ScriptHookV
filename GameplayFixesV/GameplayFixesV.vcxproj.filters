@@ -38,6 +38,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="inc\FiveM.rc" />
+    <ResourceCompile Include="inc\resource.rc" />
   </ItemGroup>
 </Project>

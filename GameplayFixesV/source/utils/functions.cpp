@@ -1,14 +1,19 @@
 //ScriptHook
 #include <natives.h>
 // #include <types.h> //Already included in globals.h
-//Custom
-#include "functions.h"
-#include <random>
+
+//std
 #include <string>
 #include <sstream>
-#include <algorithm>
 #include <math.h>
+#include <algorithm>
+#include <random>
 #include <numeric>
+#include <set>
+#include <filesystem>
+
+//Custom
+#include "functions.h"
 #include "keyboard.h"
 #include "ini.h"
 #include "peds.h"
@@ -48,6 +53,14 @@ void Print(char* string, int ms)
 {
 	BEGIN_TEXT_COMMAND_PRINT("STRING");
 	ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(string);
+	END_TEXT_COMMAND_PRINT(ms, 1);
+	return;
+}
+
+void Print(std::string string, int ms)
+{
+	BEGIN_TEXT_COMMAND_PRINT("STRING");
+	ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(const_cast<char*>(string.c_str()));
 	END_TEXT_COMMAND_PRINT(ms, 1);
 	return;
 }
@@ -193,9 +206,10 @@ std::string LoadJSONResource(HINSTANCE hInstance, int resourceID)
 	HGLOBAL hData = LoadResource(hInstance, hRes);
 	if (!hData) throw std::runtime_error("Failed to load resource");
 
-	DWORD size = SizeofResource(hInstance, hRes);
 	const char* data = static_cast<const char*>(LockResource(hData));
 	if (!data) throw std::runtime_error("Failed to lock resource");
+
+	DWORD size = SizeofResource(hInstance, hRes);
 
 	return std::string(data, size);
 }
@@ -287,19 +301,18 @@ void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse)
 		PLAY_PED_AMBIENT_SPEECH_NATIVE(GetPlayerPed(), "GENERIC_CURSE_MED", "SPEECH_PARAMS_FORCE", false);
 
 	WeaponPickup wp;
-	LOOP(i, weaponInfo.size())
-	{
-		if (Joaat(weaponInfo[i].Name.c_str()) != weaponHash)
-			continue;
 
-		if (!weaponInfo[i].Components.empty())
+	const auto it = std::find(weaponInfo.begin(), weaponInfo.end(), weaponHash);
+	if (it != weaponInfo.end())
+	{
+		if (!it->Components.empty())
 		{
 			wp.WpHash = weaponHash;
 			wp.TintIndex = GET_PED_WEAPON_TINT_INDEX(GetPlayerPed(), weaponHash);
 			wp.CamoIndex = GET_PED_WEAPON_CAMO_INDEX(GetPlayerPed(), weaponHash);
-			LOOP(j, weaponInfo[i].Components.size())
+			LOOP(i, it->Components.size())
 			{
-				const Hash component = Joaat(weaponInfo[i].Components[j].Name.c_str());
+				const Hash component = Joaat(it->Components[i].Name.c_str());
 				if (component == Joaat("UNK"))
 					continue;
 
@@ -308,17 +321,17 @@ void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse)
 			}
 		}
 
-		if (!weaponInfo[i].Liveries.empty())
+		if (!it->Liveries.empty())
 		{
-			LOOP(j, weaponInfo[i].Liveries.size())
+			LOOP(i, it->Liveries.size())
 			{
-				const Hash livery = Joaat(weaponInfo[i].Liveries[j].Name.c_str());
+				const Hash livery = Joaat(it->Liveries[i].Name.c_str());
 				if (livery == Joaat("UNK"))
 					continue;
 				
 				const int liveryTint = GET_PED_WEAPON_COMPONENT_TINT_INDEX(GetPlayerPed(), weaponHash, livery);
 				if (liveryTint > -1)
-					wp.Liveries.push_back(WeaponPickupLivery{ livery, liveryTint });
+					wp.Liveries.push_back(WpPickupLivery{ livery, liveryTint });
 			}
 		}
 	}
@@ -451,6 +464,13 @@ void RestorePlayerRetrievedWeapon()
 #pragma endregion
 
 #pragma region Misc
+std::filesystem::path AbsoluteModulePath(HINSTANCE module)
+{
+	wchar_t path[FILENAME_MAX] = { 0 };
+	GetModuleFileNameW(module, path, FILENAME_MAX);
+	return std::filesystem::path(path);
+}
+
 inline int Abs(int n) { return n * ((n > 0) - (n < 0)); }
 inline float Abs(float n) { return n * ((n > 0.0f) - (n < 0.0f)); }
 
@@ -508,6 +528,8 @@ bool GetWeightedBool(int chance)	//Chance out of 100
 	return dist(gen);
 }
 
+inline Vehicle GetVehiclePedIsUsing(Ped ped) { return GET_VEHICLE_PED_IS_USING(ped); }
+
 Vehicle GetVehiclePedIsIn(Ped ped, bool includeEntering, bool includeExiting)
 {
 	Vehicle veh = GET_VEHICLE_PED_IS_USING(ped);
@@ -524,9 +546,12 @@ Vehicle GetVehiclePedIsIn(Ped ped, bool includeEntering, bool includeExiting)
 Vehicle GetVehiclePedIsEntering(Ped ped)
 {
 	Vehicle veh = NULL;
-	if (GET_PED_RESET_FLAG(ped, PRF_IsEnteringVehicle)) veh = GET_VEHICLE_PED_IS_USING(ped);
-	if (!DOES_ENTITY_EXIST(veh))
-		veh = NULL;
+	if (GET_PED_RESET_FLAG(ped, PRF_IsEnteringVehicle))
+	{
+		veh = GET_VEHICLE_PED_IS_USING(ped);
+		if (!DOES_ENTITY_EXIST(veh))
+			veh = NULL;
+	}
 
 	return veh;
 }
@@ -534,9 +559,12 @@ Vehicle GetVehiclePedIsEntering(Ped ped)
 Vehicle GetVehiclePedIsExiting(Ped ped)
 {
 	Vehicle veh = NULL;
-	if (GET_IS_TASK_ACTIVE(ped, CODE_TASK_EXIT_VEHICLE)) veh = GET_VEHICLE_PED_IS_USING(ped);
-	if (!DOES_ENTITY_EXIST(veh))
-		veh = NULL;
+	if (GET_IS_TASK_ACTIVE(ped, CODE_TASK_EXIT_VEHICLE))
+	{
+		veh = GET_VEHICLE_PED_IS_USING(ped);
+		if (!DOES_ENTITY_EXIST(veh))
+			veh = NULL;
+	}
 
 	return veh;
 }
@@ -544,10 +572,15 @@ Vehicle GetVehiclePedIsExiting(Ped ped)
 Vehicle GetVehiclePedIsEnteringOrExiting(Ped ped)
 {
 	Vehicle veh = NULL;
-	if (GET_PED_RESET_FLAG(ped, PRF_IsEnteringVehicle) || GET_IS_TASK_ACTIVE(ped, CODE_TASK_EXIT_VEHICLE))
+	if (GET_PED_RESET_FLAG(ped, PRF_IsEnteringVehicle) ||
+		GET_IS_TASK_ACTIVE(ped, CODE_TASK_EXIT_VEHICLE) ||
+		GET_PED_RESET_FLAG(ped, PRF_IsEnteringOrExitingVehicle))
+	{
 		veh = GET_VEHICLE_PED_IS_USING(ped);
-	
-	if (!DOES_ENTITY_EXIST(veh)) veh = NULL;
+		if (!DOES_ENTITY_EXIST(veh))
+			veh = NULL;
+	}
+
 	return veh;
 }
 
@@ -1194,7 +1227,7 @@ void CamFollowVehicleDuringHandbrake()
 	const int timePressed = INI::CamFollowVehDelay;
 	constexpr int delay = 300;
 
-	const Vehicle veh = GET_VEHICLE_PED_IS_USING(GetPlayerPed());
+	const Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
@@ -1241,7 +1274,7 @@ void DisableFirstPersonView()
 	if (IS_FOLLOW_VEHICLE_CAM_ACTIVE())
 	{
 		const bool isUsingHoodCam = GET_IS_USING_HOOD_CAMERA();	//Requires b372
-		const int vehModel = GET_ENTITY_MODEL(GET_VEHICLE_PED_IS_USING(GetPlayerPed()));
+		const int vehModel = GET_ENTITY_MODEL(GetVehiclePedIsUsing(GetPlayerPed()));
 		if (IS_THIS_MODEL_A_CAR(vehModel) || (IS_THIS_MODEL_A_BOAT(vehModel) && !IS_THIS_MODEL_A_JETSKI(vehModel)) ||
 			IS_THIS_MODEL_A_PLANE(vehModel) || IS_THIS_MODEL_A_HELI(vehModel))
 		{
@@ -1368,7 +1401,7 @@ bool wasSetAsMissionEntity = false;
 Timer timerCarExplosion;
 void DisableForcedCarExplosionOnImpact()
 {
-	Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
+	Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
@@ -1450,7 +1483,7 @@ Timer timerEngineControl;
 constexpr int TURN_OFF_ENGINE_DURATION = 250;
 void LeaveEngineOnWhenExitingVehicles()
 {
-	Vehicle veh = GetVehiclePedIsIn(GetPlayerPed(), true, true);
+	Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
@@ -1475,7 +1508,7 @@ void DisableWheelsAutoCenterOnCarExit()
 {
 	constexpr float maxVehSpeedDetach = 10.0f;
 
-	const Vehicle veh = GET_VEHICLE_PED_IS_USING(GetPlayerPed());
+	const Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
 	if (!DOES_ENTITY_EXIST(veh))
 		return;
 
@@ -1539,48 +1572,110 @@ void DisableWheelsAutoCenterOnCarExit()
 	return;
 }
 
-Timer hydraulicsTimer;
-Vehicle lastHydraulicsVeh = NULL;
-Vehicle lastUsedHydraulicsVeh = NULL;
-float hydraulicsState[MAX_WHEELS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+struct VehicleHydraulicsState {
+	Vehicle veh = NULL;
+	bool update = false;
+	float hydState[MAX_WHEELS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	bool operator==(const Vehicle& v) const { return (veh == v); }
+};
+
+std::vector<VehicleHydraulicsState> VehHydraulics;
+bool wasPlayerEnteringOrExitingVehLastFrame = false;
 void KeepCarHydraulicsPosition()
 {
-	if (IS_PED_IN_ANY_VEHICLE(GetPlayerPed(), false) && !GET_PED_RESET_FLAG(GetPlayerPed(), PRF_IsEnteringOrExitingVehicle))
+	Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
+	if (DOES_ENTITY_EXIST(veh) &&
+		IS_VEHICLE_DRIVEABLE(veh, false))
 	{
-		const Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
-		if (!DOES_ENTITY_EXIST(veh) || !IS_THIS_MODEL_A_CAR(GET_ENTITY_MODEL(veh)) || !IS_VEHICLE_DRIVEABLE(veh, false))
-			return;
-
-		if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT))
+		VehicleHydraulicsState* ptr = nullptr;
+		const auto itr = std::find(VehHydraulics.begin(), VehHydraulics.end(), veh);
+		if (itr == VehHydraulics.end())
 		{
-			LOOP(i, MAX_WHEELS) { hydraulicsState[i] = GET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(lastHydraulicsVeh, i); }
+			VehicleHydraulicsState state;
+			state.veh = veh;
+			bool isHydraulic = false;
+			LOOP(i, MAX_WHEELS)
+			{
+				state.hydState[i] = GET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(veh, i);
+				if (state.hydState[i] != NULL)
+					isHydraulic = true;
+			}
+
+			if (isHydraulic)
+			{
+				VehHydraulics.push_back(state);
+				ptr = &VehHydraulics.back();
+			}
 		}
+		else
+			ptr = &(*itr);
 
-		lastHydraulicsVeh = veh;
-		if (veh != lastUsedHydraulicsVeh) lastUsedHydraulicsVeh = NULL;
+		if (GetVehiclePedIsEnteringOrExiting(GetPlayerPed()) == veh && ptr)
+		{
+			if (!wasPlayerEnteringOrExitingVehLastFrame)
+			{
+				LOOP(i, MAX_WHEELS)
+				{
+					ptr->hydState[i] = GET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(ptr->veh, i);
+				}
+			}
+
+			ptr->update = true;
+			LOOP(i, MAX_WHEELS)
+			{
+				SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(ptr->veh, i, ptr->hydState[i]);
+			}
+
+			wasPlayerEnteringOrExitingVehLastFrame = true;
+		}
+		else
+			wasPlayerEnteringOrExitingVehLastFrame = false;
 	}
 
-	if (GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
+	LOOP(i, VehHydraulics.size())
 	{
-		hydraulicsTimer.Reset();
-		LOOP(i, MAX_WHEELS) { SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(lastHydraulicsVeh, i, hydraulicsState[i]); }
-		lastUsedHydraulicsVeh = lastHydraulicsVeh;
+		if (!DOES_ENTITY_EXIST(VehHydraulics[i].veh))
+			VehHydraulics.erase(VehHydraulics.begin() + i);
+		else if (VehHydraulics[i].veh != veh && VehHydraulics[i].update)
+		{
+			VehHydraulics[i].update = false;
+			LOOP(j, MAX_WHEELS)
+			{
+				SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(VehHydraulics[i].veh, j, VehHydraulics[i].hydState[j]);
+			}
+		}
 	}
-	else if (hydraulicsTimer.Get() < 500)
+	return;
+}
+
+std::set<Vehicle> VehBrakeLights;
+void EnableBrakeLightsOnStoppedVehicles()
+{
+	const Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
+	if (DOES_ENTITY_EXIST(veh))
 	{
-		LOOP(i, MAX_WHEELS) { SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(lastHydraulicsVeh, i, hydraulicsState[i]); }
+		Hash model = GET_ENTITY_MODEL(veh);
+		if (!IS_THIS_MODEL_A_BOAT(model) && !IS_THIS_MODEL_A_JETSKI(model) &&
+			!IS_THIS_MODEL_A_PLANE(model) && !IS_THIS_MODEL_A_HELI(model) &&
+			!IS_THIS_MODEL_A_TRAIN(model) && !IS_THIS_MODEL_A_BICYCLE(model))
+		{
+			VehBrakeLights.insert(veh);
+		}
 	}
 
-	if (DOES_ENTITY_EXIST(lastUsedHydraulicsVeh) && GetVehiclePedIsEntering(GetPlayerPed()) == lastUsedHydraulicsVeh)
+	for (Vehicle itr : VehBrakeLights)
 	{
-		LOOP(i, MAX_WHEELS) { SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(lastHydraulicsVeh, i, hydraulicsState[i]); }
+		if (!DOES_ENTITY_EXIST(itr))
+			VehBrakeLights.erase(itr);
+		else if (GET_IS_VEHICLE_ENGINE_RUNNING(itr) && IS_VEHICLE_STOPPED(itr))
+			SET_VEHICLE_BRAKE_LIGHTS(itr, true);
 	}
 	return;
 }
 
 void EnableHeliWaterPhysics()
 {
-	Vehicle heli = GET_VEHICLE_PED_IS_USING(GetPlayerPed());
+	Vehicle heli = GetVehiclePedIsUsing(GetPlayerPed());
 	if (!DOES_ENTITY_EXIST(heli) || !IS_THIS_MODEL_A_HELI(GET_ENTITY_MODEL(heli)) ||
 		!GET_IS_VEHICLE_ENGINE_RUNNING(heli))
 		return;
@@ -1655,7 +1750,7 @@ inline void DisableBikeKnockOff() { SET_PED_CAN_BE_KNOCKED_OFF_VEHICLE(GetPlayer
 
 void DisableShallowWaterBikeJumpOut()
 {
-	const Vehicle veh = GetVehiclePedIsIn(GetPlayerPed(), false, false);
+	const Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
 	if (DOES_ENTITY_EXIST(veh))
 	{
 		if (GET_ENTITY_SUBMERGED_LEVEL(veh) > 0.9f || (IS_ENTITY_IN_WATER(veh) && !IS_VEHICLE_DRIVEABLE(veh, false)))
@@ -1670,7 +1765,7 @@ inline void DisableVehicleJitter() { SET_CAR_HIGH_SPEED_BUMP_SEVERITY_MULTIPLIER
 
 void DisableAirVehicleTurbulence()
 {
-	const Vehicle veh = GetVehiclePedIsIn(GetPlayerPed(), true, true);
+	const Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
 	const Hash vehHash = GET_ENTITY_MODEL(veh);
 	if (IS_THIS_MODEL_A_PLANE(vehHash))
 		SET_PLANE_TURBULENCE_MULTIPLIER(veh, 0.0f);
@@ -1715,7 +1810,7 @@ int RequestMinimapScaleform()
 
 bool HasPlayerVehicleAbility()
 {
-	Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
+	Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
 	if (DOES_ENTITY_EXIST(veh) && (GET_VEHICLE_HAS_KERS(veh) || GET_HAS_ROCKET_BOOST(veh) || GET_CAR_HAS_JUMP(veh)))
 		return true;
 
@@ -2027,7 +2122,7 @@ void SetRadiosMusicOnly()
 Vehicle lastVehRadioOff = NULL;
 void DefaultVehicleRadioOff()
 {
-	const Vehicle tmpVeh = GET_VEHICLE_PED_IS_USING(GetPlayerPed());
+	const Vehicle tmpVeh = GetVehiclePedIsUsing(GetPlayerPed());
 	if (DOES_ENTITY_EXIST(tmpVeh) && tmpVeh != lastVehRadioOff)
 	{
 		lastVehRadioOff = tmpVeh;
@@ -2193,6 +2288,7 @@ void UpdatePlayerOptions()
 	if (INI::LeaveEngineOnWhenExitingVehicles) { nVehicle::LeaveEngineOnWhenExitingVehicles(); }
 	if (INI::DisableWheelsAutoCenterOnCarExit) { nVehicle::DisableWheelsAutoCenterOnCarExit(); }
 	if (INI::KeepCarHydraulicsPosition) { nVehicle::KeepCarHydraulicsPosition(); }
+	if (INI::EnableBrakeLightsOnStoppedVehicles) { nVehicle::EnableBrakeLightsOnStoppedVehicles(); }
 	if (INI::EnableHeliWaterPhysics) { nVehicle::EnableHeliWaterPhysics(); }
 	if (INI::DisableRagdollOnVehicleRoof) { nVehicle::DisableRagdollOnVehicleRoof(); }
 	if (INI::DisableDragOutCar) { nVehicle::DisableDragOutCar(); }

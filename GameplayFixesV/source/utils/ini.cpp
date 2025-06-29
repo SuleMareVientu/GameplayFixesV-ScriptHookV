@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "ini.h"
 #include <SimpleIni.h>
 #include "functions.h"
@@ -42,6 +46,7 @@ bool DisableEngineFire = false;
 bool LeaveEngineOnWhenExitingVehicles = true;
 bool DisableWheelsAutoCenterOnCarExit = true;
 bool KeepCarHydraulicsPosition = true;
+bool EnableBrakeLightsOnStoppedVehicles = true;
 bool EnableHeliWaterPhysics = true;
 bool DisableRagdollOnVehicleRoof = true;
 float MaxVehicleSpeed = 90.0f;
@@ -100,11 +105,36 @@ bool DisableWorldPopulation = false;
 }
 using namespace INI;
 
+void WriteINIResource(HINSTANCE hInstance, int resourceID, const char* path)
+{
+	const HRSRC hRes = FindResource(hInstance, MAKEINTRESOURCE(resourceID), "INI");
+	if (!hRes) throw std::runtime_error("Resource not found");
+
+	const HGLOBAL hData = LoadResource(hInstance, hRes);
+	if (!hData) throw std::runtime_error("Failed to load resource");
+
+	const void* data = LockResource(hData);
+	const DWORD size = SizeofResource(hInstance, hRes);
+
+	FILE* f = fopen(path, "wb");
+	if (f)
+	{
+		#pragma warning( suppress : 6387 )
+		fwrite(data, 1, size, f);
+		fflush(f);
+		fclose(f);
+	}
+	return;
+}
+
 static CSimpleIniA ini;
 void ReadINI()
 {
-	SI_Error res = ini.LoadFile("GameplayFixesV.ini");
-
+	std::string iniName = AbsoluteModulePath(g_hInstance).filename().replace_extension().u8string() + ".ini";	
+	if (!std::filesystem::exists(iniName))
+		WriteINIResource(g_hInstance, IDR_INI, iniName.c_str());
+	
+	SI_Error res = ini.LoadFile(iniName.c_str());
 	if (res != SI_OK)
 		return;
 
@@ -140,6 +170,7 @@ void ReadINI()
 	DisableForcedCarExplosionOnImpact = ini.GetBoolValue(playerGroup, "DisableForcedCarExplosionOnImpact", DisableForcedCarExplosionOnImpact);
 	DisableEngineSmoke = ini.GetBoolValue(playerGroup, "DisableEngineSmoke", DisableEngineSmoke);
 	DisableEngineFire = ini.GetBoolValue(playerGroup, "DisableEngineFire", DisableEngineFire);
+	EnableBrakeLightsOnStoppedVehicles = ini.GetBoolValue(playerGroup, "EnableBrakeLightsOnStoppedVehicles", EnableBrakeLightsOnStoppedVehicles);
 	LeaveEngineOnWhenExitingVehicles = ini.GetBoolValue(playerGroup, "LeaveEngineOnWhenExitingVehicles", LeaveEngineOnWhenExitingVehicles);
 	KeepCarHydraulicsPosition = ini.GetBoolValue(playerGroup, "KeepCarHydraulicsPosition", KeepCarHydraulicsPosition);
 	DisableWheelsAutoCenterOnCarExit = ini.GetBoolValue(playerGroup, "DisableWheelsAutoCenterOnCarExit", DisableWheelsAutoCenterOnCarExit);
