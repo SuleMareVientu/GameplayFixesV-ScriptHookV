@@ -1,15 +1,20 @@
 #pragma once
 #include <types.h>
+#include <string.h>
 
 //Json
 #include <windows.h>
-#include "resource.h"
+#include "..\res\resource.h"
 #include <json.hpp>
 using json = nlohmann::json;
 
 #define LOOP(i, n) for(int i = 0; i < n; ++i)
 
 extern HINSTANCE g_hInstance;
+extern std::string g_hInstanceName;
+extern std::string g_hInstanceNameNoExt;
+extern std::string g_hInstanceIniName;
+extern std::string g_hInstanceLogName;
 
 constexpr unsigned int Joaat(const char* str)
 {

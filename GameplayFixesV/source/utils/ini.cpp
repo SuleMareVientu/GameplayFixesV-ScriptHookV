@@ -2,10 +2,10 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "ini.h"
 #include <SimpleIni.h>
+#include "ini.h"
 #include "functions.h"
-#include "../globals.h"
+#include "globals.h"
 
 static constexpr char* inputGroup = "Input";
 static constexpr char* playerGroup = "Player";
@@ -13,7 +13,7 @@ static constexpr char* HUDGroup = "HUD";
 static constexpr char* AudioGroup = "Audio";
 static constexpr char* pedsGroup = "Peds";
 
-namespace INI
+namespace Ini
 {
 //Input Settings
 unsigned long ReloadIniKey = VK_F12;
@@ -103,38 +103,15 @@ bool DisableDeadPedsJumpOutOfVehicle = true;
 bool DisableScenarios = false;
 bool DisableWorldPopulation = false;
 }
-using namespace INI;
-
-void WriteINIResource(HINSTANCE hInstance, int resourceID, const char* path)
-{
-	const HRSRC hRes = FindResource(hInstance, MAKEINTRESOURCE(resourceID), "INI");
-	if (!hRes) throw std::runtime_error("Resource not found");
-
-	const HGLOBAL hData = LoadResource(hInstance, hRes);
-	if (!hData) throw std::runtime_error("Failed to load resource");
-
-	const void* data = LockResource(hData);
-	const DWORD size = SizeofResource(hInstance, hRes);
-
-	FILE* f = fopen(path, "wb");
-	if (f)
-	{
-		#pragma warning( suppress : 6387 )
-		fwrite(data, 1, size, f);
-		fflush(f);
-		fclose(f);
-	}
-	return;
-}
+using namespace Ini;
 
 static CSimpleIniA ini;
 void ReadINI()
 {
-	std::string iniName = AbsoluteModulePath(g_hInstance).filename().replace_extension().u8string() + ".ini";	
-	if (!std::filesystem::exists(iniName))
-		WriteINIResource(g_hInstance, IDR_INI, iniName.c_str());
+	if (!std::filesystem::exists(g_hInstanceIniName))
+		WriteINIResource(g_hInstance, IDR_INI, g_hInstanceIniName.c_str());
 	
-	SI_Error res = ini.LoadFile(iniName.c_str());
+	const SI_Error res = ini.LoadFile(g_hInstanceIniName.c_str());
 	if (res != SI_OK)
 		return;
 
@@ -231,5 +208,27 @@ void ReadINI()
 	DisableDeadPedsJumpOutOfVehicle = ini.GetBoolValue(pedsGroup, "DisableDeadPedsJumpOutOfVehicle", DisableDeadPedsJumpOutOfVehicle);
 	DisableScenarios = ini.GetBoolValue(pedsGroup, "DisableScenarios", DisableScenarios);
 	DisableWorldPopulation = ini.GetBoolValue(pedsGroup, "DisableWorldPopulation", DisableWorldPopulation);
+	return;
+}
+
+void WriteINIResource(HINSTANCE hInstance, int resourceID, const char* path)
+{
+	const HRSRC hRes = FindResource(hInstance, MAKEINTRESOURCE(resourceID), "INI");
+	if (!hRes) throw std::runtime_error("Resource not found");
+
+	const HGLOBAL hData = LoadResource(hInstance, hRes);
+	if (!hData) throw std::runtime_error("Failed to load resource");
+
+	const void* data = LockResource(hData);
+	const DWORD size = SizeofResource(hInstance, hRes);
+
+	FILE* f = fopen(path, "wb");
+	if (f)
+	{
+#pragma warning( suppress : 6387 )
+		fwrite(data, 1, size, f);
+		fflush(f);
+		fclose(f);
+	}
 	return;
 }

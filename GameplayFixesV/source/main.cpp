@@ -1,6 +1,6 @@
 #include <main.h>
-#include "script.h"
-#include "utils\keyboard.h"
+#include <script.h>
+#include "keyboard.h"
 #include "globals.h"
 
 HINSTANCE g_hInstance = nullptr;

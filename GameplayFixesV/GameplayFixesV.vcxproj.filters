@@ -9,35 +9,95 @@
     <ClCompile Include="source\utils\ini.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="source\globals.h" />
     <ClCompile Include="source\utils\peds.cpp">
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="source\utils\keyboard.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="source\utils\options.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\script.h" />
-    <ClInclude Include="source\utils\ini.h">
-      <Filter>utils</Filter>
+    <ClInclude Include="inc\main.h">
+      <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="source\utils\functions.h">
-      <Filter>utils</Filter>
+    <ClInclude Include="res\resource.h">
+      <Filter>res</Filter>
     </ClInclude>
-    <ClInclude Include="source\utils\peds.h">
-      <Filter>utils</Filter>
+    <ClInclude Include="inc\globals.h">
+      <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="source\utils\keyboard.h">
-      <Filter>utils</Filter>
+    <ClInclude Include="inc\functions.h">
+      <Filter>inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ini.h">
+      <Filter>inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\enums.h">
+      <Filter>inc\shv</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\natives.h">
+      <Filter>inc\shv</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\nativeCaller.h">
+      <Filter>inc\shv</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\types.h">
+      <Filter>inc\shv</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\json.hpp">
+      <Filter>inc\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\json_fwd.hpp">
+      <Filter>inc\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\SimpleIni.h">
+      <Filter>inc\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\script.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\peds.h">
+      <Filter>inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\keyboard.h">
+      <Filter>inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="inc\options.h">
+      <Filter>inc\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="utils">
       <UniqueIdentifier>{f25e103c-7f8c-4cdd-ae74-da437a425289}</UniqueIdentifier>
     </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{1875158b-271d-44c7-a76b-ad994544e8e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="res">
+      <UniqueIdentifier>{ca267bd4-de26-4702-9b3b-6bafa1d84096}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\utils">
+      <UniqueIdentifier>{ccf08308-9126-42a2-9453-5337bd9dcd8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\libs">
+      <UniqueIdentifier>{d5925895-782b-4523-bab8-13ce070b9700}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\shv">
+      <UniqueIdentifier>{cf956610-ffac-4f90-96af-7f88015ba871}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="inc\resource.rc" />
+    <None Include="res\weapons.json">
+      <Filter>res</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res\resource.rc">
+      <Filter>res</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

@@ -1,6 +1,7 @@
 #pragma once
+#include <Windows.h>
 
-namespace INI
+namespace Ini
 {
 //Input Settings
 extern unsigned long ReloadIniKey;
@@ -92,3 +93,4 @@ extern bool DisableWorldPopulation;
 }
 
 void ReadINI();
+void WriteINIResource(HINSTANCE hInstance, int resourceID, const char* path);

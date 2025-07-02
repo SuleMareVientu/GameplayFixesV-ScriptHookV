@@ -9,21 +9,36 @@
   <ItemGroup>
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\script.cpp" />
-    <ClCompile Include="source\globals.h" />
     <ClCompile Include="source\utils\ini.cpp" />
     <ClCompile Include="source\utils\functions.cpp" />
     <ClCompile Include="source\utils\keyboard.cpp" />
+    <ClCompile Include="source\utils\options.cpp" />
     <ClCompile Include="source\utils\peds.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\script.h" />
-    <ClInclude Include="source\utils\ini.h" />
-    <ClInclude Include="source\utils\functions.h" />
-    <ClInclude Include="source\utils\keyboard.h" />
-    <ClInclude Include="source\utils\peds.h" />
+    <ClInclude Include="inc\enums.h" />
+    <ClInclude Include="inc\functions.h" />
+    <ClInclude Include="inc\globals.h" />
+    <ClInclude Include="inc\ini.h" />
+    <ClInclude Include="inc\json.hpp" />
+    <ClInclude Include="inc\json_fwd.hpp" />
+    <ClInclude Include="inc\keyboard.h" />
+    <ClInclude Include="inc\main.h" />
+    <ClInclude Include="inc\nativeCaller.h" />
+    <ClInclude Include="inc\natives.h" />
+    <ClInclude Include="inc\options.h" />
+    <ClInclude Include="inc\peds.h" />
+    <ClInclude Include="inc\script.h" />
+    <ClInclude Include="inc\SimpleIni.h" />
+    <ClInclude Include="inc\types.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="res\resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="inc\resource.rc" />
+    <None Include="res\weapons.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res\resource.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8D82F34A-1D64-465B-84B1-37F89AD3D20B}</ProjectGuid>

@@ -7888,6 +7888,7 @@ class lexer : public lexer_base<BasicJsonType>
             }
 
             // multi-line comments skip input until */ is read
+#pragma warning( suppress : 26819 )
             case '*':
             {
                 while (true)
@@ -7925,6 +7926,7 @@ class lexer : public lexer_base<BasicJsonType>
             // unexpected character after reading '/'
             default:
             {
+#pragma warning( suppress : 26819 )
                 error_message = "invalid comment; expecting '/' or '*' after '/'";
                 return false;
             }
