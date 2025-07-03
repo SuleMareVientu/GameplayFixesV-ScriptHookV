@@ -42,11 +42,12 @@ void ScriptMain()
 
 	ReadINI();
 	SetupPedFunctions();
-	ApplyMemPatches();
+	ApplyExePatches();
 	srand(static_cast<unsigned int>(GetTickCount64()));
 
 	while (true)
 	{
+		//ApplyScriptPatches();
 		update();
 		WAIT(0);
 	}

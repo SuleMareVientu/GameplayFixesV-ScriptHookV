@@ -46,19 +46,14 @@ void SetCrouch(Ped ped, bool state)
 {
 	if (state)
 	{
-		isCrouched = true;
-		SET_PED_STEALTH_MOVEMENT(ped, false, NULL);
-		SET_PED_MOVEMENT_CLIPSET(ped, crouchedMovementClipSet, blendSpeedCrouched);
-		SET_PED_STRAFE_CLIPSET(ped, crouchedStrafingClipSet);
-		//SET_WEAPON_ANIMATION_OVERRIDE(ped, "Ballistic");
 		DisablePedConfigFlag(ped, PCF_OpenDoorArmIK);
 		EnablePedConfigFlag(ped, PCF_PhoneDisableTextingAnimations);
 		EnablePedConfigFlag(ped, PCF_PhoneDisableTalkingAnimations);
 		EnablePedConfigFlag(ped, PCF_PhoneDisableCameraAnimations);
-		SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, false);
-		SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, false);
-		SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, false);
-		SET_PED_CAN_PLAY_AMBIENT_IDLES(ped, true, true);
+
+		isCrouched = true;
+		SET_PED_MOVEMENT_CLIPSET(ped, crouchedMovementClipSet, blendSpeedCrouched);
+		SET_PED_STRAFE_CLIPSET(ped, crouchedStrafingClipSet);
 	}
 	else
 	{
@@ -66,9 +61,6 @@ void SetCrouch(Ped ped, bool state)
 		SET_PED_STEALTH_MOVEMENT(ped, false, NULL);
 		RESET_PED_MOVEMENT_CLIPSET(ped, blendSpeedCrouched);
 		RESET_PED_STRAFE_CLIPSET(ped);
-		//RESET_PED_WEAPON_MOVEMENT_CLIPSET(ped);
-		//SET_WEAPON_ANIMATION_OVERRIDE(ped, "DEFAULT");
-		SET_PED_MAX_MOVE_BLEND_RATIO(ped, PEDMOVEBLENDRATIO_SPRINT);
 		EnablePedConfigFlag(ped, PCF_OpenDoorArmIK);
 		DisablePedConfigFlag(ped, PCF_PhoneDisableTextingAnimations);
 		DisablePedConfigFlag(ped, PCF_PhoneDisableTalkingAnimations);
@@ -76,13 +68,14 @@ void SetCrouch(Ped ped, bool state)
 		SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, true);
 		SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, true);
 		SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, true);
-		SET_PED_CAN_PLAY_AMBIENT_IDLES(ped, false, false);
+		SET_PLAYER_NOISE_MULTIPLIER(GetPlayer(), 1.0f);
 	}
 	return;
 }
 
 Timer timerCrouch;
 constexpr int crouchHold = 250;
+bool stealthState = false;
 void EnableCrouching()
 {
 	if (!RequestClipSet(crouchedMovementClipSet) || !RequestClipSet(crouchedStrafingClipSet))
@@ -93,7 +86,27 @@ void EnableCrouching()
 		if (isCrouched)
 			SetCrouch(GetPlayerPed(), false);
 		else
+		{
 			timerCrouch.Reset();
+			stealthState = GET_PED_STEALTH_MOVEMENT(GetPlayerPed());
+			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), false, NULL);	// Fixes bug when crouching near objects where the player would not be able to stand up
+		}
+	}
+	else if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_DUCK) && Between(timerCrouch.Get(), 0, crouchHold) && stealthState)
+	{
+		stealthState = false;
+		// Enable stealth mode if control is released early and ensure compatibility with non-story peds
+		switch (GET_ENTITY_MODEL(GetPlayerPed()))
+		{
+		case FranklinPed:
+		case MichaelPed:
+		case TrevorPed:
+			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, NULL);
+			break;
+		default:
+			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
+			break;
+		}
 	}
 	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_DUCK) && timerCrouch.Get() > crouchHold)
 	{
@@ -110,6 +123,16 @@ void EnableCrouching()
 		{
 			EnablePedResetFlag(GetPlayerPed(), PRF_DisableActionMode);
 			EnablePedResetFlag(GetPlayerPed(), PRF_DontUseSprintEnergy);
+			EnablePedResetFlag(GetPlayerPed(), PRF_ScriptDisableSecondaryAnimationTasks);
+			EnablePedResetFlag(GetPlayerPed(), PRF_DisableDustOffAnims);
+			EnablePedResetFlag(GetPlayerPed(), PRF_DisableWallHitAnimation);
+
+			SET_PED_CAN_PLAY_AMBIENT_IDLES(GetPlayerPed(), true, true);	// Resets every frame
+			SET_PED_CAN_PLAY_GESTURE_ANIMS(GetPlayerPed(), false);
+			SET_PED_CAN_PLAY_AMBIENT_ANIMS(GetPlayerPed(), false);
+			SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(GetPlayerPed(), false);
+
+			SET_PLAYER_NOISE_MULTIPLIER(GetPlayer(), 0.0f);
 			DISABLE_ON_FOOT_FIRST_PERSON_VIEW_THIS_UPDATE();
 
 			if (IsPlayerAiming())
@@ -125,35 +148,46 @@ void FriendlyFire()
 {
 	SET_CAN_ATTACK_FRIENDLY(GetPlayerPed(), true, true);	// Sets PCF_CanAttackFriendly, PCF_AllowLockonToFriendlyPlayers
 
+	auto EnableLockOn = [](Ped ped)
+		{
+			//int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(GetPlayerPed(), ped);
+			//if (relationship == ACQUAINTANCE_TYPE_PED_RESPECT || relationship == ACQUAINTANCE_TYPE_PED_LIKE)
+				SET_PED_CAN_BE_TARGETTED(ped, true);
+				SET_PED_CAN_BE_TARGETTED_BY_PLAYER(ped, GetPlayer(), true);
+				SET_PED_CAN_BE_TARGETED_WHEN_INJURED(ped, true);
+				SET_ALLOW_LOCKON_TO_PED_IF_FRIENDLY(ped, true);	// same as setting PCF_AllowPlayerLockOnIfFriendly
+				SET_PED_CAN_RAGDOLL(ped, true);
+				CLEAR_RAGDOLL_BLOCKING_FLAGS(ped, RAGDOLL_BLOCKING_FLAGS_ALL);
+				SET_ENTITY_PROOFS(ped, false, false, false, false, false, false, false, false);
+				SET_PED_DIES_WHEN_INJURED(ped, true);
+				SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, false);
+				DisablePedConfigFlag(ped, PCF_PreventAllMeleeTaunts);
+				DisablePedConfigFlag(ped, PCF_NeverEverTargetThisPed);
+				DisablePedConfigFlag(ped, PCF_DisablePlayerLockon);
+				DisablePedResetFlag(ped, PRF_DisablePlayerLockon);
+		};
+
 	Ped ped = NULL;
 	SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);
-	const Vector3 tmpCoords = GetPlayerCoords();
-	if (!GET_CLOSEST_PED(tmpCoords.x, tmpCoords.y, tmpCoords.z, 10.0f, true, true, &ped, false, true, -1))
-		return;
+	if (GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(GetPlayer(), &ped))
+		EnableLockOn(ped);
 
-	int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(GetPlayerPed(), ped);
-	if (relationship == ACQUAINTANCE_TYPE_PED_RESPECT || relationship == ACQUAINTANCE_TYPE_PED_LIKE)
-	{
-		SET_PED_CAN_BE_TARGETTED(ped, true);
-		SET_PED_CAN_BE_TARGETTED_BY_PLAYER(ped, GetPlayer(), true);
-		SET_PED_CAN_BE_TARGETED_WHEN_INJURED(ped, true);
-		SET_ALLOW_LOCKON_TO_PED_IF_FRIENDLY(ped, true);
-		SET_PED_CAN_RAGDOLL(ped, true);
-		CLEAR_RAGDOLL_BLOCKING_FLAGS(ped, RBF_MELEE);
-		CLEAR_RAGDOLL_BLOCKING_FLAGS(ped, RBF_PLAYER_IMPACT);
-		//CLEAR_RAGDOLL_BLOCKING_FLAGS(ped, RBF_BULLET_IMPACT);
-		SET_PED_DIES_WHEN_INJURED(ped, true);
-		SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, false);
-		DisablePedConfigFlag(ped, PCF_PreventAllMeleeTaunts);
-		DisablePedConfigFlag(ped, PCF_NeverEverTargetThisPed);
-		EnablePedConfigFlag(ped, PCF_AllowPlayerLockOnIfFriendly);
-	}
+	SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);
+	if (GET_PLAYER_TARGET_ENTITY(GetPlayer(), &ped))
+		EnableLockOn(ped);
+
+	const Vector3 tmpCoords = GetPlayerCoords();
+	SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);
+	if (GET_CLOSEST_PED(tmpCoords.x, tmpCoords.y, tmpCoords.z, 10.0f, true, true, &ped, false, true, GET_PED_TYPE(GetPlayerPed())))
+		EnableLockOn(ped);
+
 	return;
 }
 
 void EnableStealthForAllPeds()
 {
-	if (!IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_DUCK))
+	if (!IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_DUCK) ||
+		Ini::EnableCrouching)	// Don't enable stealth if crouching is enabled, since it will be handled in EnableCrouching()
 		return;
 
 	switch (GET_ENTITY_MODEL(GetPlayerPed()))
@@ -163,12 +197,9 @@ void EnableStealthForAllPeds()
 	case TrevorPed:
 		return;
 	default:
-		if (IS_PED_ON_FOOT(GetPlayerPed()) && !IS_PED_RAGDOLL(GetPlayerPed()) && !IS_PED_CLIMBING(GetPlayerPed()) &&
-			!IS_PED_DIVING(GetPlayerPed()) && !IS_PED_SWIMMING(GetPlayerPed()) &&
-			GET_PED_STEALTH_MOVEMENT(GetPlayerPed())) // Not an error, GET_PED_STEALTH_MOVEMENT needs to return true here
-		{
+		if (GET_PED_STEALTH_MOVEMENT(GetPlayerPed())) // Not an error, GET_PED_STEALTH_MOVEMENT needs to return true here
 			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
-		}
+
 		return;
 	}
 	return;
@@ -180,8 +211,7 @@ void DisarmPlayerWhenShot()
 {
 	RestorePlayerRetrievedWeapon();
 
-	if ((CanDisarmPed(GetPlayerPed(), true) && GetWeightedBool(70)) ||
-		HasEntityBeenDamagedByWeaponThisFrame(GetPlayerPed(), WEAPON_STUNGUN, GENERALWEAPON_TYPE_INVALID))
+	if (CanDisarmPed(GetPlayerPed(), true) || HasEntityBeenDamagedByWeaponThisFrame(GetPlayerPed(), WEAPON_STUNGUN, GENERALWEAPON_TYPE_INVALID))
 	{
 		Hash wp = NULL; GET_CURRENT_PED_WEAPON(GetPlayerPed(), &wp, false);
 		if (WillWeaponSpawnPickupWhenDropped(wp, true))
@@ -204,7 +234,7 @@ void DropPlayerWeaponWhenRagdolling()
 			DropPlayerWeapon(lastRagdollWp, false);
 	}
 
-	// GET_CURRENT_PED_WEAPON returns true when a weapon is usable (i.e. in their hand). we do this to check if
+	// GET_CURRENT_PED_WEAPON returns true when a weapon is usable (i.e. in their hand). We do this to check if
 	// the player was holding the gun correctly
 	if (res)
 		lastRagdollWp = tmp;
@@ -271,94 +301,6 @@ void DynamicallyCleanWoundsAndDirt()
 
 inline void EnableSprintInsideInteriors() { EnablePedConfigFlag(GetPlayerPed(), PCF_IgnoreInteriorCheckForSprinting); return; }
 
-bool IsPlayerInsideSafehouse()
-{
-	const Vector3 tmpCoords = GetPlayerCoords();
-	constexpr int arrSize = 5;
-	int safehouses[arrSize] = {
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_franklins"),
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_franklinshouse"),
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_michael"),
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_trailer"),
-		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_trevors")
-	};
-
-	int playerInterior = GET_INTERIOR_FROM_ENTITY(GetPlayerPed());
-	LOOP(i, arrSize) 
-	{
-		if (safehouses[i] == playerInterior)
-			return true;
-	}
-
-	//Special check for Trevor's office inside the strip club
-	if (GET_ROOM_KEY_FROM_ENTITY(GetPlayerPed()) == strp3off)	//room key for "strp3off"
-		return true;
-
-	return false;
-}
-
-void SetDispatchServices(bool toggle)
-{
-	ENABLE_DISPATCH_SERVICE(DT_POLICE_AUTOMOBILE, toggle);
-	ENABLE_DISPATCH_SERVICE(DT_POLICE_HELICOPTER, toggle);
-	ENABLE_DISPATCH_SERVICE(DT_SWAT_AUTOMOBILE, toggle);
-	ENABLE_DISPATCH_SERVICE(DT_POLICE_RIDERS, toggle);
-	ENABLE_DISPATCH_SERVICE(DT_POLICE_VEHICLE_REQUEST, toggle);
-	ENABLE_DISPATCH_SERVICE(DT_POLICE_ROAD_BLOCK, toggle);
-	ENABLE_DISPATCH_SERVICE(DT_POLICE_AUTOMOBILE_WAIT_PULLED_OVER, toggle);
-	ENABLE_DISPATCH_SERVICE(DT_POLICE_AUTOMOBILE_WAIT_CRUISING, toggle);
-	ENABLE_DISPATCH_SERVICE(DT_SWAT_HELICOPTER, toggle);
-	ENABLE_DISPATCH_SERVICE(DT_POLICE_BOAT, toggle);
-	ENABLE_DISPATCH_SERVICE(DT_ARMY_VEHICLE, toggle);
-	return;
-}
-
-bool isFakeWanted = false;
-void SetFakeWanted(Player player, bool toggle)
-{
-	Vector3 fakeCoords{ 7000.0f, NULL, 7000.0f, NULL, 0.0f, NULL };
-	switch (toggle)
-	{
-	case true:
-		SET_MAX_WANTED_LEVEL(5);	//Fix for Menyoo never wanted
-		SET_PLAYER_WANTED_LEVEL_NO_DROP(GetPlayer(), 1, true);
-		SET_PLAYER_WANTED_LEVEL_NOW(GetPlayer(), true);
-
-		//Various ignore player commands
-		SET_PLAYER_WANTED_CENTRE_POSITION(GetPlayer(), &fakeCoords);
-		SET_POLICE_IGNORE_PLAYER(GetPlayer(), true);
-		SetDispatchServices(false);
-		SET_DISPATCH_COPS_FOR_PLAYER(GetPlayer(), false);
-		SET_IGNORE_LOW_PRIORITY_SHOCKING_EVENTS(GetPlayer(), true);
-		SET_WANTED_LEVEL_DIFFICULTY(GetPlayer(), 0.001f);
-		SET_WANTED_LEVEL_MULTIPLIER(0.0f);
-		SET_AUDIO_FLAG("PoliceScannerDisabled", true);
-		SET_BLOCK_WANTED_FLASH(true);
-		FORCE_OFF_WANTED_STAR_FLASH(true);
-		HIDE_HUD_COMPONENT_THIS_FRAME(HUD_WANTED_STARS);
-		isFakeWanted = true;
-		break;
-	case false:
-		if (GET_PLAYER_WANTED_LEVEL(GetPlayer()) != 0)
-			CLEAR_PLAYER_WANTED_LEVEL(GetPlayer());
-
-		//Reset ignore player commands
-		SET_POLICE_IGNORE_PLAYER(GetPlayer(), false);
-		SetDispatchServices(true);
-		SET_DISPATCH_COPS_FOR_PLAYER(GetPlayer(), true);
-		SET_IGNORE_LOW_PRIORITY_SHOCKING_EVENTS(GetPlayer(), false);
-		RESET_WANTED_LEVEL_DIFFICULTY(GetPlayer());
-		SET_WANTED_LEVEL_MULTIPLIER(1.0f);
-		SET_AUDIO_FLAG("PoliceScannerDisabled", false);
-		SET_BLOCK_WANTED_FLASH(false);
-		FORCE_OFF_WANTED_STAR_FLASH(false);
-		HIDE_HUD_COMPONENT_THIS_FRAME(HUD_WANTED_STARS);
-		isFakeWanted = false;
-		break;
-	}
-	return;
-}
-
 //This approach isn't great, and could cause a lot of issues with the game's story... Too bad
 //MUST BE CALLED EVERY FRAME
 //A different and more aggressive approach would be to terminate these scripts, which are responsible for the family scenes
@@ -378,7 +320,7 @@ void AllowWeaponsInsideSafeHouse()
 		//reset fakewanted also if player is inside the strip club but not inside the office
 		(GET_INTERIOR_AT_COORDS(113.53f, -1287.61f, 28.64f) == playerInterior /*v_strip3*/ && GET_ROOM_KEY_FROM_ENTITY(GetPlayerPed()) != strp3off))
 	{
-		if (isFakeWanted)
+		if (GetFakeWanted())
 		{
 			timerLastPlayerWeapon.Reset();
 			SetFakeWanted(GetPlayer(), false);
@@ -388,7 +330,7 @@ void AllowWeaponsInsideSafeHouse()
 	}
 
 	//Check if player is inside a safehouse, and not just in a random interior and return if player was already wanted before entering the interior
-	if (!IsPlayerInsideSafehouse() || (!isFakeWanted && GET_PLAYER_WANTED_LEVEL(GetPlayer()) != 0))
+	if (!IsPlayerInsideSafehouse() || (!GetFakeWanted() && GET_PLAYER_WANTED_LEVEL(GetPlayer()) != 0))
 		return;
 
 	//Allow player to switch characters while inside the safehouse
@@ -405,7 +347,7 @@ void AllowWeaponsInsideSafeHouse()
 			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_FRANKLIN) ||
 			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_TREVOR)))
 	{
-		if (isFakeWanted)
+		if (GetFakeWanted())
 			SetFakeWanted(GetPlayer(), false);
 
 		timerLastPlayerWeapon.Reset();
@@ -413,7 +355,7 @@ void AllowWeaponsInsideSafeHouse()
 	}
 
 	//Reset weapon timer
-	if (!isFakeWanted)
+	if (!GetFakeWanted())
 		timerLastPlayerWeapon.Reset();
 	else
 		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(GetPlayerPed());
@@ -769,6 +711,7 @@ void DisableEngineFire()
 		return;
 
 	//Check if vehicle is a car/bike/quad and adjust engine health limit
+	// No need to check if it's Amphibious vehicle, normal car and quadbike functions already handle them
 	const int vehModel = GET_ENTITY_MODEL(veh);
 	if (!IS_THIS_MODEL_A_CAR(vehModel) && !(IS_THIS_MODEL_A_BIKE(vehModel) && !IS_THIS_MODEL_A_BICYCLE(vehModel))
 		&& !IS_THIS_MODEL_A_QUADBIKE(vehModel))
@@ -817,7 +760,7 @@ void LeaveEngineOnWhenExitingVehicles()
 //Very very bad method of doing this, but it works!
 //When a vehicle is physically attached to another vehicle it retains the same steering on exit (thanks to RAGE constraints)
 //Only problem is that the vehicle now inherits most veh flags from parent. 
-//Don't know if this could cause issues, but better then patching memory
+//Don't know if this could cause issues, but better than patching memory
 Timer timerWheelsAutoCenter;
 Vehicle tmpVeh = NULL;
 bool shouldAttachVeh = false;
@@ -972,9 +915,8 @@ void EnableBrakeLightsOnStoppedVehicles()
 	if (DOES_ENTITY_EXIST(veh))
 	{
 		Hash model = GET_ENTITY_MODEL(veh);
-		if (!IS_THIS_MODEL_A_BOAT(model) && !IS_THIS_MODEL_A_JETSKI(model) &&
-			!IS_THIS_MODEL_A_PLANE(model) && !IS_THIS_MODEL_A_HELI(model) &&
-			!IS_THIS_MODEL_A_TRAIN(model) && !IS_THIS_MODEL_A_BICYCLE(model))
+		if (IS_THIS_MODEL_A_CAR(model) || (IS_THIS_MODEL_A_BIKE(model) && !IS_THIS_MODEL_A_BICYCLE(model))
+			|| IS_THIS_MODEL_A_QUADBIKE(model))
 		{
 			VehBrakeLights.insert(veh);
 		}
@@ -1113,35 +1055,6 @@ inline void DisableStuntJumps() { SET_STUNT_JUMPS_CAN_TRIGGER(false); return; }
 ///////////////////////////////////////////////HUD///////////////////////////////////////////////
 namespace nHUD
 {
-int minimapScaleformIndex = NULL;
-int RequestMinimapScaleform()
-{
-	if (!HAS_SCALEFORM_MOVIE_LOADED(minimapScaleformIndex))
-	{
-		minimapScaleformIndex = REQUEST_SCALEFORM_MOVIE("MINIMAP");
-		CALL_SCALEFORM_MOVIE_METHOD(minimapScaleformIndex, "INITIALISE");
-		return NULL;
-	}
-	return minimapScaleformIndex;
-}
-
-bool HasPlayerVehicleAbility()
-{
-	Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
-	if (DOES_ENTITY_EXIST(veh) && (GET_VEHICLE_HAS_KERS(veh) || GET_HAS_ROCKET_BOOST(veh) || GET_CAR_HAS_JUMP(veh)))
-		return true;
-
-	return false;
-}
-
-void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool showDamage = true)
-{
-	SET_HEALTH_HUD_DISPLAY_VALUES(healthPercentage + 100, armourPercentage, showDamage);
-	SET_MAX_HEALTH_HUD_DISPLAY(200);
-	SET_MAX_ARMOUR_HUD_DISPLAY(100);
-	return;
-}
-
 void AllowGameExecutionOnPauseMenu()
 {
 	if (!IS_CONTROL_PRESSED(FRONTEND_CONTROL, INPUT_FRONTEND_PAUSE_ALTERNATE))
@@ -1149,7 +1062,9 @@ void AllowGameExecutionOnPauseMenu()
 
 	if (IS_CONTROL_JUST_PRESSED(FRONTEND_CONTROL, INPUT_FRONTEND_PAUSE) &&
 		GET_CURRENT_FRONTEND_MENU_VERSION() != FE_MENU_VERSION_SP_PAUSE)
-	{ ACTIVATE_FRONTEND_MENU(FE_MENU_VERSION_SP_PAUSE, false, -1); }
+	{
+		ACTIVATE_FRONTEND_MENU(FE_MENU_VERSION_SP_PAUSE, false, -1);
+	}
 
 	return;
 }
@@ -1182,14 +1097,18 @@ void DisablePauseMenuPostFX()
 void DisableHUDPostFX()
 {
 	LOOP(i, AnimPostFXSize)
-	{ ANIMPOSTFX_STOP_AND_FLUSH_REQUESTS(AnimPostFX[i]); }
+	{
+		ANIMPOSTFX_STOP_AND_FLUSH_REQUESTS(AnimPostFX[i]);
+	}
 	return;
 }
 
 void DisableSpecialAbilityPostFX()
 {
 	LOOP(i, AbilityPostFXSize)
-	{ ANIMPOSTFX_STOP_AND_FLUSH_REQUESTS(AbilityPostFX[i]); }
+	{
+		ANIMPOSTFX_STOP_AND_FLUSH_REQUESTS(AbilityPostFX[i]);
+	}
 	return;
 }
 
@@ -1292,7 +1211,7 @@ void AlwaysHideAbilityBar()
 
 void HideAbilityBarForNonMainCharacters()
 {
-	if (IS_SPECIAL_ABILITY_ENABLED(GetPlayer(), 0) || HasPlayerVehicleAbility())
+	if (IS_SPECIAL_ABILITY_ENABLED(GetPlayer(), 0) || DoesVehicleHaveAbility(GetVehiclePedIsIn(GetPlayerPed())))
 	{
 		if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "MULTIPLAYER_IS_ACTIVE"))
 		{
@@ -1347,34 +1266,6 @@ void ReplaceArmourBarWithStamina()
 	return;
 }
 
-int GetHudComponentFromString(std::string str)
-{
-	switch (Joaat(str.c_str()))
-	{
-	case Joaat("HUD_WANTED_STARS"): return HUD_WANTED_STARS;
-	case Joaat("HUD_WEAPON_ICON"): return HUD_WEAPON_ICON;
-	case Joaat("HUD_CASH"): return HUD_CASH;
-	case Joaat("HUD_MP_CASH"): return HUD_MP_CASH;
-	case Joaat("HUD_MP_MESSAGE"): return HUD_MP_MESSAGE;
-	case Joaat("HUD_VEHICLE_NAME"): return HUD_VEHICLE_NAME;
-	case Joaat("HUD_AREA_NAME"): return HUD_AREA_NAME;
-	case Joaat("HUD_UNUSED"): return HUD_UNUSED;
-	case Joaat("HUD_STREET_NAME"): return HUD_STREET_NAME;
-	case Joaat("HUD_HELP_TEXT"): return HUD_HELP_TEXT;
-	case Joaat("HUD_FLOATING_HELP_TEXT_1"): return HUD_FLOATING_HELP_TEXT_1;
-	case Joaat("HUD_FLOATING_HELP_TEXT_2"): return HUD_FLOATING_HELP_TEXT_2;
-	case Joaat("HUD_CASH_CHANGE"): return HUD_CASH_CHANGE;
-	case Joaat("HUD_RETICLE"): return HUD_RETICLE;
-	case Joaat("HUD_SUBTITLE_TEXT"): return HUD_SUBTITLE_TEXT;
-	case Joaat("HUD_RADIO_STATIONS"): return HUD_RADIO_STATIONS;
-	case Joaat("HUD_SAVING_GAME"): return HUD_SAVING_GAME;
-	case Joaat("HUD_GAME_STREAM"): return HUD_GAME_STREAM;
-	case Joaat("HUD_WEAPON_WHEEL"): return HUD_WEAPON_WHEEL;
-	case Joaat("HUD_WEAPON_WHEEL_STATS"): return HUD_WEAPON_WHEEL_STATS;
-	}
-	return -1;
-}
-
 bool InitializedHideHudComponents = false;
 std::string hudComponentsStrArr[MAX_HUD_COMPONENTS]{};
 unsigned int hudComponentsArr[MAX_HUD_COMPONENTS]{};
@@ -1386,7 +1277,7 @@ void HideHudComponents()
 		LOOP(i, MAX_HUD_COMPONENTS)
 		{
 			if (!hudComponentsStrArr[i].empty())
-				hudComponentsArr[i] = GetHudComponentFromString(hudComponentsStrArr[i]);
+				hudComponentsArr[i] = GetHudComponentFromString(hudComponentsStrArr[i].c_str());
 		}
 		InitializedHideHudComponents = true;
 	}
@@ -1548,7 +1439,7 @@ void DisableWorldPopulation()
 	SET_PARKED_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME(0.0f);
 	//SET_AMBIENT_VEHICLE_RANGE_MULTIPLIER_THIS_FRAME(0.0f);
 
-	nGeneral::SetDispatchServices(false);
+	SetDispatchServices(false);
 	SET_RANDOM_BOATS(false);
 	SET_RANDOM_TRAINS(false);
 	SET_DISABLE_RANDOM_TRAINS_THIS_FRAME(true);
@@ -1565,6 +1456,8 @@ void RefreshIni()
 		ShowNotification("GameplayFixesV:~n~Reloaded INI");
 		ReadINI();
 		SetupPedFunctions();
+
+		// Reset vars that need to be reset on reload
 		nHUD::InitializedHideHudComponents = false;
 		nAudio::InitializedMuteSounds = false;
 	}

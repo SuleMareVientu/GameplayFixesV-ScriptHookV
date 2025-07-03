@@ -24,11 +24,29 @@ inline int Abs(const int n) { return n * ((n > 0) - (n < 0)); }
 inline float Abs(const float n) { return n * ((n > 0.0f) - (n < 0.0f)); }
 
 template <typename T>
-inline bool ArrayContains(T value, const T a[], T n)
+inline bool ArrayContains(const T value, const T a[], const T n)
 {
 	unsigned int i = 0;
 	while (i < n && a[i] != value) ++i;
 	return i == n ? false : true;
+}
+
+template <typename T>
+inline bool Between(const T val, const T min, const T max)
+{
+	if (val >= min && val <= max)
+		return true;
+
+	return false;
+}
+
+template <typename T>
+inline bool BetweenExclude(const T val, const T min, const T max)
+{
+	if (val > min && val < max)
+		return true;
+
+	return false;
 }
 
 std::filesystem::path AbsoluteModulePath(HINSTANCE module);
@@ -138,17 +156,30 @@ void RestorePlayerRetrievedWeapon();
 #pragma endregion
 
 #pragma region Vehicle
-inline Vehicle GetVehiclePedIsUsing(Ped ped) { return GET_VEHICLE_PED_IS_USING(ped); }
-Vehicle GetVehiclePedIsIn(Ped ped, bool includeEntering = true, bool includeExiting = false);
-Vehicle GetVehiclePedIsEntering(Ped ped);
-Vehicle GetVehiclePedIsExiting(Ped ped);
-Vehicle GetVehiclePedIsEnteringOrExiting(Ped ped);
+inline Vehicle GetVehiclePedIsUsing(const Ped ped) { return GET_VEHICLE_PED_IS_USING(ped); }
+Vehicle GetVehiclePedIsIn(const Ped ped, const bool includeEntering = true, const bool includeExiting = false);
+Vehicle GetVehiclePedIsEntering(const Ped ped);
+Vehicle GetVehiclePedIsExiting(const Ped ped);
+Vehicle GetVehiclePedIsEnteringOrExiting(const Ped ped);
+bool DoesVehicleHaveAbility(const Vehicle veh);
+#pragma endregion
+
+#pragma region HUD
+int RequestMinimapScaleform();
+void SetTextStyle(TextStyle Style = defaultTextStyle, bool bDrawBeforeFade = false);
+int GetHudComponentFromString(const char* str);
+void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool showDamage = true);
 #pragma endregion
 
 #pragma region Misc
 bool IsPlayerAiming();
-void SetTextStyle(TextStyle Style = defaultTextStyle, bool bDrawBeforeFade = false);
+bool IsPlayerInsideSafehouse();
+void SetDispatchServices(bool toggle);
+bool GetFakeWanted();
+void SetFakeWanted(Player player, bool toggle);
+inline int GetNumberOfScriptInstances(const char* name) { return (GET_NUMBER_OF_THREADS_RUNNING_THE_SCRIPT_WITH_THIS_HASH(Joaat(name))); }
 #pragma endregion
 
-void ApplyMemPatches();
+void ApplyExePatches();
+// void ApplyScriptPatches();
 void UpdatePlayerVars();

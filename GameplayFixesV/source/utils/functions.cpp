@@ -10,6 +10,7 @@
 #include <numeric>
 #include <set>
 #include <fstream>
+#include <pattern16\Pattern16.h>
 
 #include <Psapi.h>
 
@@ -595,7 +596,7 @@ void RestorePlayerRetrievedWeapon()
 #pragma endregion
 
 #pragma region Vehicle
-Vehicle GetVehiclePedIsIn(Ped ped, bool includeEntering, bool includeExiting)
+Vehicle GetVehiclePedIsIn(const Ped ped, const bool includeEntering, const bool includeExiting)
 {
 	Vehicle veh = GET_VEHICLE_PED_IS_USING(ped);
 	if ((!includeEntering && GET_PED_RESET_FLAG(ped, PRF_IsEnteringVehicle)) ||
@@ -610,7 +611,7 @@ Vehicle GetVehiclePedIsIn(Ped ped, bool includeEntering, bool includeExiting)
 	return veh;
 }
 
-Vehicle GetVehiclePedIsEntering(Ped ped)
+Vehicle GetVehiclePedIsEntering(const Ped ped)
 {
 	Vehicle veh = NULL;
 	if (GET_PED_RESET_FLAG(ped, PRF_IsEnteringVehicle))
@@ -623,7 +624,7 @@ Vehicle GetVehiclePedIsEntering(Ped ped)
 	return veh;
 }
 
-Vehicle GetVehiclePedIsExiting(Ped ped)
+Vehicle GetVehiclePedIsExiting(const Ped ped)
 {
 	Vehicle veh = NULL;
 	if (GET_IS_TASK_ACTIVE(ped, CODE_TASK_EXIT_VEHICLE))
@@ -636,7 +637,7 @@ Vehicle GetVehiclePedIsExiting(Ped ped)
 	return veh;
 }
 
-Vehicle GetVehiclePedIsEnteringOrExiting(Ped ped)
+Vehicle GetVehiclePedIsEnteringOrExiting(const Ped ped)
 {
 	Vehicle veh = NULL;
 	if (GET_PED_RESET_FLAG(ped, PRF_IsEnteringVehicle) ||
@@ -650,16 +651,27 @@ Vehicle GetVehiclePedIsEnteringOrExiting(Ped ped)
 
 	return veh;
 }
-#pragma endregion
 
-#pragma region Misc
-bool IsPlayerAiming()
+bool DoesVehicleHaveAbility(const Vehicle veh)
 {
-	if (IS_PLAYER_FREE_AIMING(GET_PLAYER_INDEX()) || IS_PED_AIMING_FROM_COVER(GetPlayerPed() ||
-		GET_PED_CONFIG_FLAG(GetPlayerPed(), PCF_IsAimingGun, false) || GET_PED_RESET_FLAG(GetPlayerPed(), PRF_IsAiming)))
+	if (DOES_ENTITY_EXIST(veh) && (GET_VEHICLE_HAS_KERS(veh) || GET_HAS_ROCKET_BOOST(veh) || GET_CAR_HAS_JUMP(veh)))
 		return true;
 
 	return false;
+}
+#pragma endregion
+
+#pragma region HUD
+int minimapScaleformIndex = NULL;
+int RequestMinimapScaleform()
+{
+	if (!HAS_SCALEFORM_MOVIE_LOADED(minimapScaleformIndex))
+	{
+		minimapScaleformIndex = REQUEST_SCALEFORM_MOVIE("MINIMAP");
+		CALL_SCALEFORM_MOVIE_METHOD(minimapScaleformIndex, "INITIALISE");
+		return NULL;
+	}
+	return minimapScaleformIndex;
 }
 
 void SetTextStyle(TextStyle Style, bool bDrawBeforeFade)
@@ -695,6 +707,142 @@ void SetTextStyle(TextStyle Style, bool bDrawBeforeFade)
 	SET_TEXT_CENTRE(Style.centre);
 	//SET_TEXT_DROPSHADOW(); // RGB parameters are unused, it's the same as SET_TEXT_DROP_SHADOW();
 	//SET_TEXT_EDGE(0, 0, 0, 0, 0); // nullsub
+	return;
+}
+
+int GetHudComponentFromString(const char* str)
+{
+	switch (Joaat(str))
+	{
+	case Joaat("HUD_WANTED_STARS"): return HUD_WANTED_STARS;
+	case Joaat("HUD_WEAPON_ICON"): return HUD_WEAPON_ICON;
+	case Joaat("HUD_CASH"): return HUD_CASH;
+	case Joaat("HUD_MP_CASH"): return HUD_MP_CASH;
+	case Joaat("HUD_MP_MESSAGE"): return HUD_MP_MESSAGE;
+	case Joaat("HUD_VEHICLE_NAME"): return HUD_VEHICLE_NAME;
+	case Joaat("HUD_AREA_NAME"): return HUD_AREA_NAME;
+	case Joaat("HUD_UNUSED"): return HUD_UNUSED;
+	case Joaat("HUD_STREET_NAME"): return HUD_STREET_NAME;
+	case Joaat("HUD_HELP_TEXT"): return HUD_HELP_TEXT;
+	case Joaat("HUD_FLOATING_HELP_TEXT_1"): return HUD_FLOATING_HELP_TEXT_1;
+	case Joaat("HUD_FLOATING_HELP_TEXT_2"): return HUD_FLOATING_HELP_TEXT_2;
+	case Joaat("HUD_CASH_CHANGE"): return HUD_CASH_CHANGE;
+	case Joaat("HUD_RETICLE"): return HUD_RETICLE;
+	case Joaat("HUD_SUBTITLE_TEXT"): return HUD_SUBTITLE_TEXT;
+	case Joaat("HUD_RADIO_STATIONS"): return HUD_RADIO_STATIONS;
+	case Joaat("HUD_SAVING_GAME"): return HUD_SAVING_GAME;
+	case Joaat("HUD_GAME_STREAM"): return HUD_GAME_STREAM;
+	case Joaat("HUD_WEAPON_WHEEL"): return HUD_WEAPON_WHEEL;
+	case Joaat("HUD_WEAPON_WHEEL_STATS"): return HUD_WEAPON_WHEEL_STATS;
+	}
+	return -1;
+}
+
+void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool showDamage)
+{
+	SET_HEALTH_HUD_DISPLAY_VALUES(healthPercentage + 100, armourPercentage, showDamage);
+	SET_MAX_HEALTH_HUD_DISPLAY(200);
+	SET_MAX_ARMOUR_HUD_DISPLAY(100);
+	return;
+}
+#pragma endregion
+
+#pragma region Misc
+bool IsPlayerAiming()
+{
+	if (IS_PLAYER_FREE_AIMING(GET_PLAYER_INDEX()) || IS_PED_AIMING_FROM_COVER(GetPlayerPed() ||
+		GET_PED_CONFIG_FLAG(GetPlayerPed(), PCF_IsAimingGun, false) || GET_PED_RESET_FLAG(GetPlayerPed(), PRF_IsAiming)))
+		return true;
+
+	return false;
+}
+
+bool IsPlayerInsideSafehouse()
+{
+	const Vector3 tmpCoords = GetPlayerCoords();
+	constexpr int arrSize = 5;
+	int safehouses[arrSize] = {
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_franklins"),
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_franklinshouse"),
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_michael"),
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_trailer"),
+		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_trevors")
+	};
+
+	int playerInterior = GET_INTERIOR_FROM_ENTITY(GetPlayerPed());
+	LOOP(i, arrSize)
+	{
+		if (safehouses[i] == playerInterior)
+			return true;
+	}
+
+	//Special check for Trevor's office inside the strip club
+	if (GET_ROOM_KEY_FROM_ENTITY(GetPlayerPed()) == strp3off)	//room key for "strp3off"
+		return true;
+
+	return false;
+}
+
+void SetDispatchServices(bool toggle)
+{
+	ENABLE_DISPATCH_SERVICE(DT_POLICE_AUTOMOBILE, toggle);
+	ENABLE_DISPATCH_SERVICE(DT_POLICE_HELICOPTER, toggle);
+	ENABLE_DISPATCH_SERVICE(DT_SWAT_AUTOMOBILE, toggle);
+	ENABLE_DISPATCH_SERVICE(DT_POLICE_RIDERS, toggle);
+	ENABLE_DISPATCH_SERVICE(DT_POLICE_VEHICLE_REQUEST, toggle);
+	ENABLE_DISPATCH_SERVICE(DT_POLICE_ROAD_BLOCK, toggle);
+	ENABLE_DISPATCH_SERVICE(DT_POLICE_AUTOMOBILE_WAIT_PULLED_OVER, toggle);
+	ENABLE_DISPATCH_SERVICE(DT_POLICE_AUTOMOBILE_WAIT_CRUISING, toggle);
+	ENABLE_DISPATCH_SERVICE(DT_SWAT_HELICOPTER, toggle);
+	ENABLE_DISPATCH_SERVICE(DT_POLICE_BOAT, toggle);
+	ENABLE_DISPATCH_SERVICE(DT_ARMY_VEHICLE, toggle);
+	return;
+}
+
+bool isFakeWanted = false;
+bool GetFakeWanted() { return isFakeWanted; }
+void SetFakeWanted(Player player, bool toggle)
+{
+	Vector3 fakeCoords{ 7000.0f, NULL, 7000.0f, NULL, 0.0f, NULL };
+	switch (toggle)
+	{
+	case true:
+		SET_MAX_WANTED_LEVEL(5);	//Fix for Menyoo never wanted
+		SET_PLAYER_WANTED_LEVEL_NO_DROP(GetPlayer(), 1, true);
+		SET_PLAYER_WANTED_LEVEL_NOW(GetPlayer(), true);
+
+		//Various ignore player commands
+		SET_PLAYER_WANTED_CENTRE_POSITION(GetPlayer(), &fakeCoords);
+		SET_POLICE_IGNORE_PLAYER(GetPlayer(), true);
+		SetDispatchServices(false);
+		SET_DISPATCH_COPS_FOR_PLAYER(GetPlayer(), false);
+		SET_IGNORE_LOW_PRIORITY_SHOCKING_EVENTS(GetPlayer(), true);
+		SET_WANTED_LEVEL_DIFFICULTY(GetPlayer(), 0.001f);
+		SET_WANTED_LEVEL_MULTIPLIER(0.0f);
+		SET_AUDIO_FLAG("PoliceScannerDisabled", true);
+		SET_BLOCK_WANTED_FLASH(true);
+		FORCE_OFF_WANTED_STAR_FLASH(true);
+		HIDE_HUD_COMPONENT_THIS_FRAME(HUD_WANTED_STARS);
+		isFakeWanted = true;
+		break;
+	case false:
+		if (GET_PLAYER_WANTED_LEVEL(GetPlayer()) != 0)
+			CLEAR_PLAYER_WANTED_LEVEL(GetPlayer());
+
+		//Reset ignore player commands
+		SET_POLICE_IGNORE_PLAYER(GetPlayer(), false);
+		SetDispatchServices(true);
+		SET_DISPATCH_COPS_FOR_PLAYER(GetPlayer(), true);
+		SET_IGNORE_LOW_PRIORITY_SHOCKING_EVENTS(GetPlayer(), false);
+		RESET_WANTED_LEVEL_DIFFICULTY(GetPlayer());
+		SET_WANTED_LEVEL_MULTIPLIER(1.0f);
+		SET_AUDIO_FLAG("PoliceScannerDisabled", false);
+		SET_BLOCK_WANTED_FLASH(false);
+		FORCE_OFF_WANTED_STAR_FLASH(false);
+		HIDE_HUD_COMPONENT_THIS_FRAME(HUD_WANTED_STARS);
+		isFakeWanted = false;
+		break;
+	}
 	return;
 }
 #pragma endregion
@@ -739,34 +887,62 @@ void WriteLog(const char* szInfo, const char* szFormat, ...)
 	RawLog(std::string(szInfo), std::string(szBuf));
 }
 
-ULONG_PTR FindPattern(const char* szPattern, const char* szMask)
+ULONG_PTR FindPattern(std::string signature)
 {
-	MODULEINFO stInfo;
-
-	if (GetModuleInformation(GetCurrentProcess(),
-		GetModuleHandle(NULL), &stInfo, sizeof(MODULEINFO)))
+	MODULEINFO modInfo;
+	if (GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL), &modInfo, sizeof(MODULEINFO)))
 	{
-		SIZE_T index = 0;
-		ULONG_PTR startAddr = (ULONG_PTR)stInfo.lpBaseOfDll;
-		for (SIZE_T i = 0; i < stInfo.SizeOfImage; i++)
-		{
-			if (*(PBYTE)(startAddr + i) == (BYTE)szPattern[index] ||
-				szMask[index] == '?')
-			{
-				if (szMask[index + 1] == NULL)
-					return (ULONG_PTR)((startAddr + i) - (strlen(szMask) - 1));
-				index++;
-			}
-			else
-			{
-				index = 0;
-			}
-		}
+		void* result = Pattern16::scan(modInfo.lpBaseOfDll, modInfo.SizeOfImage, signature);
+		if (result)
+			return reinterpret_cast<ULONG_PTR>(result);
 	}
 	else
 		WriteLog("Error", "GetModuleInformation() failed! [%d]", GetLastError());
 
-	return 0;
+	return 0; // Pattern not found
+}
+
+ULONG_PTR FindPatternGlobal(std::string signature)
+{
+	SYSTEM_INFO sysInfo;
+	GetSystemInfo(&sysInfo);
+
+	const SIZE_T minAddr = reinterpret_cast<SIZE_T>(sysInfo.lpMinimumApplicationAddress);
+	const SIZE_T maxAddr = reinterpret_cast<SIZE_T>(sysInfo.lpMaximumApplicationAddress);
+
+	MODULEINFO modInfo = { 0 };
+	if (!GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL), &modInfo, sizeof(MODULEINFO))) {
+		WriteLog("Error", "GetModuleInformation() failed! [%d]", GetLastError());
+		return 0;
+	}
+
+	const SIZE_T exeStart = reinterpret_cast<SIZE_T>(modInfo.lpBaseOfDll);
+	const SIZE_T exeEnd = exeStart + modInfo.SizeOfImage;
+
+	MEMORY_BASIC_INFORMATION mbi;
+	SIZE_T address = minAddr;
+
+	while (address < maxAddr)
+	{
+		if (!VirtualQuery(reinterpret_cast<LPCVOID>(address), &mbi, sizeof(mbi)))
+			break;
+
+		const bool isAccessible = (!(mbi.Protect & PAGE_NOACCESS) && !(mbi.Protect & PAGE_GUARD)) &&
+			((mbi.Protect & PAGE_READWRITE) || (mbi.Protect & PAGE_EXECUTE_READWRITE));
+
+		// Filter: committed, readable, not guarded, private memory, not part of main EXE
+		if ((mbi.State == MEM_COMMIT) && isAccessible && (mbi.Type == MEM_PRIVATE) &&
+			((address + mbi.RegionSize < exeStart) || (address > exeEnd)))
+		{
+			LPCVOID result = Pattern16::scan(reinterpret_cast<void*>(address), mbi.RegionSize, signature);
+			if (result)
+				return reinterpret_cast<ULONG_PTR>(result);
+		}
+
+		address += mbi.RegionSize;
+	}
+
+	return 0; // Pattern not found
 }
 
 // Credits aint-no-other-option: https://github.com/aint-no-other-option/CopBumpSteeringPatch
@@ -774,23 +950,22 @@ void CopBumpSteeringPatch(bool& bError)
 {
 	constexpr int nBytes = 8;
 
+	WriteLog("Info", "--------------------------- Cop Bump ---------------------------");
 	WriteLog("Operation", "Finding cop bump address...");
 
-	ULONG_PTR address = FindPattern("\x33\xf6\xf3\x0f\x11\x87\x00\x00\x00\x00\x45\x84\xed\x74\x25", "xxxxxx????xxxxx");
+	ULONG_PTR address = FindPattern("33 F6 F3 0F 11 87 ?? ?? ?? ?? 45 84 ED 74 25");
 	if (address)
 	{
-		WriteLog("Operation", "Found address! Patching %d bytes...", nBytes);
-		memset((void*)(address + 2), 0x90, nBytes);
+		WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes);
+		memset(reinterpret_cast<void*>(address + 2), 0x90, nBytes);
 		WriteLog("Operation", "Done!");
-		WriteLog("Info", "If a crash occurs then wrong address got patched. Try again or wait for an update.");
 	}
 	else
 	{
-		WriteLog("Error", "Could not find address! Either try again or the game has been updated and the address changed.");
+		WriteLog("Error", "Could not find address!");
 		bError = true;
 	}
 
-	WriteLog("Info", "----------------------------------------------------------------");
 	return;
 }
 
@@ -801,49 +976,47 @@ void CenterSteeringPatch(bool& bError)
 	constexpr int nBytes2 = 6;
 
 	/* Address of centering when getting out of car normally */
+	WriteLog("Info", "----------------------- Center Steering ------------------------");
 	WriteLog("Operation", "Finding steering address 1...");
-	ULONG_PTR address = FindPattern("\x44\x89\xbb\x00\x00\x00\x00\x8b\x0d", "xxx????xx");
+	ULONG_PTR address = FindPattern("44 89 BB ?? ?? ?? ?? 8B 0D");
 	if (address)
 	{
-		WriteLog("Operation", "Found address! Patching %d bytes...", nBytes1);
-		memset((void*)address, 0x90, nBytes1);
+		WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes1);
+		memset(reinterpret_cast<void*>(address), 0x90, nBytes1);
 
 		/* Address of centering when diving out */
 		WriteLog("Operation", "Finding steering address 2...");
-		address = FindPattern("\x89\x82\x00\x00\x00\x00\x38\x81", "xx????xx");
+		address = FindPattern("89 82 ?? ?? ?? ?? 38 81");
 		if (address)
 		{
-			WriteLog("Operation", "Found address! Patching %d bytes...", nBytes2);
-			memset((void*)address, 0x90, nBytes2);
+			WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes2);
+			memset(reinterpret_cast<void*>(address), 0x90, nBytes2);
 			WriteLog("Operation", "Done!");
-			WriteLog("Info", "If a crash occurs then wrong address got patched. Try again or wait for mod update.");
 		}
 		else
 		{
-			WriteLog("Error", "Could not find address! Either try again or the game has been updated and the address changed.");
+			WriteLog("Error", "Could not find address!");
 			bError = true;
 		}
 	}
 	else
 	{
-		WriteLog("Error", "Could not find address! Either try again or the game has been updated and the address changed.");
+		WriteLog("Error", "Could not find address!");
 		bError = true;
 	}
 
-	WriteLog("Info", "----------------------------------------------------------------");
 	return;
 }
 
-bool hasAppliedMemPatches = false;
-void ApplyMemPatches()
+bool hasAppliedExePatches = false;
+void ApplyExePatches()
 {
-	if (hasAppliedMemPatches)
+	if (hasAppliedExePatches)
 		return;
 
 	bool bError = false;
 	ClearLog();
 	WriteLog("Started", "%s v%d.%d", g_hInstanceName.c_str(), VER_MAX, VER_MIN);
-	WriteLog("Info", "----------------------------------------------------------------");
 
 	CopBumpSteeringPatch(bError);
 	CenterSteeringPatch(bError);
@@ -853,9 +1026,120 @@ void ApplyMemPatches()
 	else
 		WriteLog("Finished", "Patching complete.");
 
-	hasAppliedMemPatches = true;
+	hasAppliedExePatches = true;
 	return;
 }
+
+void TerminateAllScriptsWithThisName(const char* name, int exceptId = 0)
+{
+	if (!exceptId)
+	{
+		TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME(name);
+		return;
+	}
+
+	// Ensure only one instance of the script is running
+	const int n = GetNumberOfScriptInstances(name) - 1;
+	int count = 0;
+	SCRIPT_THREAD_ITERATOR_RESET();
+	while (count <= n)
+	{
+		const int id = SCRIPT_THREAD_ITERATOR_GET_NEXT_THREAD_ID();
+		if (id == exceptId)
+			continue;
+
+		if (name == GET_NAME_OF_SCRIPT_WITH_THIS_ID(id))
+		{
+			TERMINATE_THREAD(id);
+			count++;
+		}
+	}
+
+	return;
+}
+
+int GetFirstIdFromScriptName(const char* name)
+{
+	SCRIPT_THREAD_ITERATOR_RESET();
+	int id = 0; int count = 0;
+	while (!id && count < 4096)
+	{
+		const int tmp = SCRIPT_THREAD_ITERATOR_GET_NEXT_THREAD_ID();
+		if (name == GET_NAME_OF_SCRIPT_WITH_THIS_ID(tmp))
+			id = tmp;
+
+		count++;
+	}
+
+	return id;
+}
+
+/*
+bool patchedF0 = false; bool patchedF1 = false;
+bool patchedM = false;
+bool patchedT0 = false; bool patchedT1 = false;
+void WeaponsInsideSafehousePatch()
+{
+	bool firstPrint = true;
+	auto PatchScript = [&](const char* name, bool& b)
+		{
+			constexpr int nBytes = 3;
+			if (GetNumberOfScriptInstances(name) == 0)
+			{
+				b = false;
+				return;
+			}
+			else if (b)
+				return;
+
+			if (firstPrint)
+			{
+				WriteLog("Info", "------------------- Weapons Inside Safehouse -------------------");
+				firstPrint = false;
+			}
+
+			LOOP(i, GetNumberOfScriptInstances(name))
+			{
+				std::string tmp = name; tmp = "Patching script: " + tmp;
+				WriteLog("Info", tmp.c_str());
+				WriteLog("Operation", "Finding address...");
+
+				ULONG_PTR address = FindPatternGlobal("71 25 2F 72 2C 0C ?? ?? 71 25 26 72 2C 0C ?? ?? 71 25 16 72");
+				if (address)
+				{
+					WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes);
+					memset(reinterpret_cast<void*>(address - 6), 0x00, nBytes);
+					memset(reinterpret_cast<void*>(address), 0x00, 20);	// Prevent pattern from being found again
+					WriteLog("Operation", "Done!");
+				}
+				else
+					WriteLog("Error", "Could not find address!");
+			}
+			b = true;
+		};
+
+	PatchScript("family_scene_f0", patchedF0);
+	PatchScript("family_scene_f1", patchedF1);
+	PatchScript("family_scene_m", patchedM);
+	PatchScript("family_scene_t0", patchedT0);
+	PatchScript("family_scene_t1", patchedT1);
+	return;
+}
+
+bool initializedScriptPatches = false;
+void ApplyScriptPatches()
+{
+	if (!initializedScriptPatches)
+	{
+		initializedScriptPatches = true;
+		WriteLog("Info", "------------------------ Script Patches ------------------------");
+		WriteLog("Operation", "Applying script patches...");
+	}
+
+	WeaponsInsideSafehousePatch();
+	return;
+}
+*/
 #pragma endregion
 
 void UpdatePlayerVars()

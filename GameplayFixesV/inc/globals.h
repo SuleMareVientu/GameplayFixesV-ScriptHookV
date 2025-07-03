@@ -145,60 +145,64 @@ enum eCamViewMode {
 
 enum ePedFlag {
 	//Ped Config Flags
-	PCF_NoCriticalHits = 2,
-	PCF_NeverEverTargetThisPed = 9,		//script control over player targeting
-	PCF_NotAllowedToCrouch = 22,		// Is this ped allowed to crouch at all?
-	PCF_ForceDieIfInjured = 25,			//script command so missions peds die if injured
-	PCF_ForceDieInCar = 28,				//don't fall out car if killed
-	PCF_WillFlyThroughWindscreen = 32,	// Ped will fly through the vehicle windscreen upon a forward impact at high velocity
+	PCF_NoCriticalHits = 2,							// ped cannot be killed by a single bullet
+	PCF_NeverEverTargetThisPed = 9,					// script control over player targeting
+	PCF_NotAllowedToCrouch = 22,					// Is this ped allowed to crouch at all?
+	PCF_ForceDieIfInjured = 25,						// script command so missions peds die if injured
+	PCF_ForceDieInCar = 28,							// don't fall out car if killed
+	PCF_WillFlyThroughWindscreen = 32,				// Ped will fly through the vehicle windscreen upon a forward impact at high velocity
 	PCF_DieWhenRagdoll = 33,
+	PCF_DisablePlayerLockon = 43,
 	PCF_AllowLockonToFriendlyPlayers = 45,
-	PCF_IsSitting = 68,					//is the ped sitting
-	PCF_IsAimingGun = 78,				//Is performing an aim task
-	PCF_UsingCrouchedPedCapsule = 99,	// Set to indicate that the ped's bounds are in the crouched configuration
-	PCF_OpenDoorArmIK = 104,			// Set if the ped should enable open door arm IK
+	PCF_IsSitting = 68,								// is the ped sitting
+	PCF_IsAimingGun = 78,							// Is performing an aim task
+	PCF_UsingCrouchedPedCapsule = 99,				// Set to indicate that the ped's bounds are in the crouched configuration
+	PCF_OpenDoorArmIK = 104,						// Set if the ped should enable open door arm IK
 	PCF_UNUSED_REPLACE_ME = 125,
-	PCF_CanAttackFriendly = 140,		//True allows this ped to attack peds theya re friendly with
-	PCF_IsInjured = 166,				//When true, the ped will use injured movement anim sets and getup animations.
-	PCF_PreventAllMeleeTaunts = 169,
-	PCF_EnableWeaponBlocking = 186,		//When enabled, Non-player peds can use WeaponBlocking behaviors
+	PCF_CanAttackFriendly = 140,					// True allows this ped to attack peds theya re friendly with
+	PCF_IsInjured = 166,							// When true, the ped will use injured movement anim sets and getup animations.
+	PCF_PreventAllMeleeTaunts = 169,				// Disable all melee taunts for this particular ped
+	PCF_EnableWeaponBlocking = 186,					// When enabled, Non-player peds can use WeaponBlocking behaviors
 	PCF_HasHurtStarted = 187,
-	PCF_DisableHurt = 188,						//Will prevent the peds go into hurt combat mode
-	PCF_LeaveEngineOnWhenExitingVehicles = 241,	//The player will leave the engine running when leaving vehicles
-	PCF_PhoneDisableTextingAnimations = 242,
-	PCF_PhoneDisableTalkingAnimations = 243,
-	PCF_PhoneDisableCameraAnimations = 244,
-	PCF_PlayerCanJackFriendlyPlayers = 252,		//If a friendly player is driving the vehicle, if the player taps to enter, they will enter as a passenger, if they hold, they'll jack the driver
-	PCF_AllowPlayerLockOnIfFriendly = 266,		//If this ped is friendly with the player, this will allow the ped to lockon
-	PCF_DisableGoToWritheWhenInjured = 281,		//If set, CPed::DAMAGED_GOTOWRITHE will no longer get set.  In particular, tazer hits wil no longer kill this ped in one hit.
-	PCF_DisableWritheShootFromGround = 327,
-	PRF_DontUseSprintEnergy = 353,				// Player does not get tired when sprinting
+	PCF_DisableHurt = 188,							// Will prevent the peds go into hurt combat mode
+	PCF_LeaveEngineOnWhenExitingVehicles = 241,		// The player will leave the engine running when leaving vehicles
+	PCF_PhoneDisableTextingAnimations = 242,		// tells taskmobile phone to not texting animations.  Currently don't play these in MP
+	PCF_PhoneDisableTalkingAnimations = 243,		// tells taskmobile phone to not talking animations.  Currently don't play these in MP
+	PCF_PhoneDisableCameraAnimations = 244,			// tells taskmobile phone to not camera animations.  Currently don't play these in MP
+	PCF_PlayerCanJackFriendlyPlayers = 252,			// If a friendly player is driving the vehicle, if the player taps to enter, they will enter as a passenger, if they hold, they'll jack the driver
+	PCF_AllowPlayerLockOnIfFriendly = 266,			// If this ped is friendly with the player, this will allow the ped to lockon
+	PCF_DisableGoToWritheWhenInjured = 281,			// If set, CPed::DAMAGED_GOTOWRITHE will no longer get set.  In particular, tazer hits wil no longer kill this ped in one hit.
+	PCF_DisableWritheShootFromGround = 327,			// If set, the ped will no longer shoot while writhing.
+	PRF_DontUseSprintEnergy = 353,					// Player does not get tired when sprinting
 	PCF_DisableAutoEquipHelmetsInBikes = 380,		// Prevents ped from auto-equipping helmets when entering a bike (includes quadbikes)
 	PCF_DisableAutoEquipHelmetsInAicraft = 381,		// Prevents ped from auto-equipping helmets when entering an aircraft
 	PCF_BlockAutoSwapOnWeaponPickups = 416,			// Block auto weapon swaps for weapon pickups.
-	PCF_IgnoreInteriorCheckForSprinting = 427,
+	PCF_IgnoreInteriorCheckForSprinting = 427,		// When set, player will be able to sprint inside interriors even if it is tagged to prevent it.
 
 	//Ped Reset Flags
-	PRF_IsAiming = 27,							//TASK_GUN or TASK_USE_COVER
-	PRF_NotAllowedToChangeCrouchState = 68,		//if set the ped will not be allowed to change their crouch state
-	PRF_DisableCrouchWhileInCover = 88,			//Force the crouch flag to return true while in cover.
-	PRF_DisableDynamicCapsuleRadius = 121,		//Turn off dynamic adjustments to ped capsules
-	PRF_HurtThisFrame = 127,					//The ped has entered the hurt state this frame
-	PRF_ExpandPedCapsuleFromSkeleton = 129,         // Set the ped capsule radius based on skeleton
+	PRF_IsAiming = 27,								// TASK_GUN or TASK_USE_COVER
+	PRF_DisablePlayerLockon = 43,
+	PRF_ScriptDisableSecondaryAnimationTasks = 58,
+	PRF_NotAllowedToChangeCrouchState = 68,			// if set the ped will not be allowed to change their crouch state
+	PRF_DisableCrouchWhileInCover = 88,				// Force the crouch flag to return true while in cover.
+	PRF_DisableDynamicCapsuleRadius = 121,			// Turn off dynamic adjustments to ped capsules
+	PRF_HurtThisFrame = 127,						// The ped has entered the hurt state this frame
+	PRF_ExpandPedCapsuleFromSkeleton = 129,			// Set the ped capsule radius based on skeleton
 	PRF_ShootFromGround = 140,
-	PRF_IsEnteringOrExitingVehicle = 152,		// TASK_ENTER_VEHICLE or TASK_EXIT_VEHICLE
-	PRD_HasGunTaskWithAimingState = 154,		// Ped is running TASK_GUN and task's state is State_Aim
-	PRF_MakeHeadInvisible = 166,				// If set, scale the head of the ped to 0.001
-	PRF_IsExitingVehicle = 199,					// TASK_EXIT_VEHICLE
-	PRF_DisableActionMode = 200,				// Disable combat anims for ped.
-	PRF_IsEnteringVehicle = 230,				// TASK_ENTER_VEHICLE
-	PRF_BlockRagdollFromVehicleFallOff = 274,	//Disables ped from ragdolling while ot top of vehicles
+	PRF_IsEnteringOrExitingVehicle = 152,			// TASK_ENTER_VEHICLE or TASK_EXIT_VEHICLE
+	PRD_HasGunTaskWithAimingState = 154,			// Ped is running TASK_GUN and task's state is State_Aim
+	PRF_MakeHeadInvisible = 166,					// If set, scale the head of the ped to 0.001
+	PRF_IsExitingVehicle = 199,						// TASK_EXIT_VEHICLE
+	PRF_DisableActionMode = 200,					// Disable combat anims for ped.
+	PRF_IsEnteringVehicle = 230,					// TASK_ENTER_VEHICLE
+	PRF_BlockRagdollFromVehicleFallOff = 274,		// Disables ped from ragdolling while ot top of vehicles
+	PRF_DisableDustOffAnims = 334,					// Disable ambient dust off animations
 	PRF_IsInVehicleChase = 338,
-	PRF_RemoveHelmet = 367,						//Forces a ped to remove its helmet.
-	PRF_IsRemovingHelmet = 368,					//Returns true if ped is removing its helmet.
-	PRF_NeverRagdoll = 370,						//Disable all attempts by this ped to ragdoll.
-	PRF_DisableWallHitAnimation = 371,			//Disable stuck wall hit animation for the ped this frame.
-	PRF_SuppressTakedownMeleeActions = 438,		//This will suppress all takedown melee actions (RA_IS_TAKEDOWN or RA_IS_STEALTH_KILL, defined in action_table.meta)
+	PRF_RemoveHelmet = 367,							// Forces a ped to remove its helmet.
+	PRF_IsRemovingHelmet = 368,						// Returns true if ped is removing its helmet.
+	PRF_NeverRagdoll = 370,							// Disable all attempts by this ped to ragdoll.
+	PRF_DisableWallHitAnimation = 371,				// Disable stuck wall hit animation for the ped this frame.
+	PRF_SuppressTakedownMeleeActions = 438,			// This will suppress all takedown melee actions (RA_IS_TAKEDOWN or RA_IS_STEALTH_KILL, defined in action_table.meta)
 	PRF_DisableShallowWaterBikeJumpOutThisFrame = 445
 };
 
@@ -474,6 +478,7 @@ enum eRagdollBlockingFlags
 	RBF_PED_RAGDOLL_BUMP = 32768,
 	RBF_VEHICLE_GRAB = 65536
 };
+constexpr int RAGDOLL_BLOCKING_FLAGS_ALL = (RBF_BULLET_IMPACT | RBF_VEHICLE_IMPACT | RBF_FIRE | RBF_ELECTROCUTION | RBF_PLAYER_IMPACT | RBF_EXPLOSION | RBF_IMPACT_OBJECT | RBF_MELEE | RBF_RUBBER_BULLET | RBF_FALLING | RBF_WATER_JET | RBF_DROWNING | RBF_ALLOW_BLOCK_DEAD_PED | RBF_PLAYER_BUMP | RBF_PLAYER_RAGDOLL_BUMP | RBF_PED_RAGDOLL_BUMP | RBF_VEHICLE_GRAB);
 
 enum eRelationshipType
 {
