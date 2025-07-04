@@ -50,6 +50,8 @@ inline bool BetweenExclude(const T val, const T min, const T max)
 }
 
 std::filesystem::path AbsoluteModulePath(HINSTANCE module);
+ULONG_PTR FindPattern(std::string signature);
+ULONG_PTR FindPatternGlobal(std::string signature);
 void SplitString(const char* charStr, std::string arr[], const int arrSize, const bool toUpper = false);
 int GetRandomIntInRange(int startRange = 0, int endRange = 65535);
 bool GetWeightedBool(int chance);
@@ -117,6 +119,12 @@ static const std::unordered_map<std::string, int> mapVKs = {
 int GetVKFromString(const std::string& str);
 #pragma endregion
 
+#pragma region Log
+void ClearLog();
+void RawLog(const std::string& szInfo, const std::string& szData);
+void WriteLog(const char* szInfo, const char* szFormat, ...);
+#pragma endregion
+
 #pragma region JSON
 std::string LoadJSONResource(HINSTANCE hInstance, int resourceID);
 bool LoadWeaponJson();
@@ -180,6 +188,21 @@ void SetFakeWanted(Player player, bool toggle);
 inline int GetNumberOfScriptInstances(const char* name) { return (GET_NUMBER_OF_THREADS_RUNNING_THE_SCRIPT_WITH_THIS_HASH(Joaat(name))); }
 #pragma endregion
 
+#pragma region Game Functions
+namespace nGame
+{
+ULONG_PTR GetScriptEntity(Entity entity);
+int GetFragInstNmGtaOffset();
+ULONG_PTR CreateNmMessage();
+void GivePedNMMessage(ULONG_PTR msgMemPtr, const Ped ped, const char* message);
+void SetNMMessageInt(ULONG_PTR msgMemPtr, const char* message, int i);
+void SetNMMessageBool(ULONG_PTR msgMemPtr, const char* message, bool b);
+void SetNMMessageFloat(ULONG_PTR msgMemPtr, const char* message, float f);
+void SetNMMessageString(ULONG_PTR msgMemPtr, const char* message, const char* str);
+void SetNMMessageVec3(ULONG_PTR msgMemPtr, const char* message, float x, float y, float z);
+}
+#pragma endregion
+
 void ApplyExePatches();
-// void ApplyScriptPatches();
+void GetGameFunctionsAddresses();
 void UpdatePlayerVars();

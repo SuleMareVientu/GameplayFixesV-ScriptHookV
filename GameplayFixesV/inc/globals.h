@@ -8,13 +8,16 @@
 #include <json.hpp>
 using json = nlohmann::json;
 
-#define LOOP(i, n) for(int i = 0; i < n; ++i)
+#define VER_MAX 2
+#define VER_MIN 1
 
-extern HINSTANCE g_hInstance;
-extern std::string g_hInstanceName;
-extern std::string g_hInstanceNameNoExt;
-extern std::string g_hInstanceIniName;
-extern std::string g_hInstanceLogName;
+HINSTANCE GetDllInstance();
+const char* GetDllInstanceName();
+const char* GetDllInstanceNameNoExt();
+const char* GetDllInstanceIniName();
+const char* GetDllInstanceLogName();
+
+#define LOOP(i, n) for(int i = 0; i < n; ++i)
 
 constexpr unsigned int Joaat(const char* str)
 {

@@ -28,6 +28,64 @@ std::filesystem::path AbsoluteModulePath(HINSTANCE module)
 	return std::filesystem::path(path);
 }
 
+ULONG_PTR FindPattern(std::string signature)
+{
+	MODULEINFO modInfo;
+	if (GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL), &modInfo, sizeof(MODULEINFO)))
+	{
+		void* result = Pattern16::scan(modInfo.lpBaseOfDll, modInfo.SizeOfImage, signature);
+		if (result)
+			return reinterpret_cast<ULONG_PTR>(result);
+	}
+	else
+		WriteLog("Error", "GetModuleInformation() failed! [%d]", GetLastError());
+
+	return 0; // Pattern not found
+}
+
+ULONG_PTR FindPatternGlobal(std::string signature)
+{
+	SYSTEM_INFO sysInfo;
+	GetSystemInfo(&sysInfo);
+
+	const SIZE_T minAddr = reinterpret_cast<SIZE_T>(sysInfo.lpMinimumApplicationAddress);
+	const SIZE_T maxAddr = reinterpret_cast<SIZE_T>(sysInfo.lpMaximumApplicationAddress);
+
+	MODULEINFO modInfo = { 0 };
+	if (!GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL), &modInfo, sizeof(MODULEINFO))) {
+		WriteLog("Error", "GetModuleInformation() failed! [%d]", GetLastError());
+		return 0;
+	}
+
+	const SIZE_T exeStart = reinterpret_cast<SIZE_T>(modInfo.lpBaseOfDll);
+	const SIZE_T exeEnd = exeStart + modInfo.SizeOfImage;
+
+	MEMORY_BASIC_INFORMATION mbi;
+	SIZE_T address = minAddr;
+
+	while (address < maxAddr)
+	{
+		if (!VirtualQuery(reinterpret_cast<LPCVOID>(address), &mbi, sizeof(mbi)))
+			break;
+
+		const bool isAccessible = (!(mbi.Protect & PAGE_NOACCESS) && !(mbi.Protect & PAGE_GUARD)) &&
+			((mbi.Protect & PAGE_READWRITE) || (mbi.Protect & PAGE_EXECUTE_READWRITE));
+
+		// Filter: committed, readable, not guarded, private memory, not part of main EXE
+		if ((mbi.State == MEM_COMMIT) && isAccessible && (mbi.Type == MEM_PRIVATE) &&
+			((address + mbi.RegionSize < exeStart) || (address > exeEnd)))
+		{
+			LPCVOID result = Pattern16::scan(reinterpret_cast<void*>(address), mbi.RegionSize, signature);
+			if (result)
+				return reinterpret_cast<ULONG_PTR>(result);
+		}
+
+		address += mbi.RegionSize;
+	}
+
+	return 0; // Pattern not found
+}
+
 void SplitString(const char* charStr, std::string arr[], const int arrSize, const bool toUpper)
 {
 	constexpr char space = 0x20; constexpr char tab = 0x09; constexpr char comma = 0x2C;
@@ -95,6 +153,57 @@ int GetVKFromString(const std::string& str)
 		return it->second;
 	else
 		return -1;
+}
+#pragma endregion
+
+#pragma region Log
+void ClearLog()
+{
+	std::ofstream ofFile(GetDllInstanceLogName(), std::ofstream::out | std::ofstream::trunc);
+	ofFile.close();
+}
+
+void RawLog(const std::string& szInfo, const std::string& szData)
+{
+	std::ofstream ofFile(GetDllInstanceLogName(), std::ios_base::out | std::ios_base::app);
+
+	if (ofFile.is_open())
+	{
+		SYSTEMTIME stCurrTime;
+		GetLocalTime(&stCurrTime);
+
+		ofFile << "|" <<
+			std::setw(2) << std::setfill('0') << stCurrTime.wHour << ":" <<
+			std::setw(2) << std::setfill('0') << stCurrTime.wMinute << ":" <<
+			std::setw(2) << std::setfill('0') << stCurrTime.wSecond << "." <<
+			std::setw(3) << std::setfill('0') << stCurrTime.wMilliseconds <<
+			"|[" << szInfo << "] -- " << szData << "\n";
+
+		ofFile.close();
+	}
+}
+
+bool hasWrittenToLog = false;
+constexpr int logBufferSize = 2048;
+void WriteLog(const char* szInfo, const char* szFormat, ...)
+{
+	if (!hasWrittenToLog)
+	{
+		ClearLog();
+
+		char szBuf[logBufferSize];
+		snprintf(szBuf, logBufferSize, "%s v%d.%d", "GameplayFixesV", VER_MAX, VER_MIN);
+		RawLog(std::string("Started"), std::string(szBuf));
+
+		hasWrittenToLog = true;
+	}
+
+	char szBuf[logBufferSize];
+	va_list args;
+	va_start(args, szFormat);
+	vsnprintf(szBuf, logBufferSize, szFormat, args);
+	va_end(args);
+	RawLog(std::string(szInfo), std::string(szBuf));
 }
 #pragma endregion
 
@@ -180,7 +289,7 @@ bool LoadWeaponJson()
 {
 	if (!hasWeaponJsonLoaded)
 	{
-		std::string jsonText = LoadJSONResource(g_hInstance, IDR_WEAPONINFOJSON);
+		std::string jsonText = LoadJSONResource(GetDllInstance(), IDR_WEAPONINFOJSON);
 		json j = json::parse(jsonText);
 		weaponInfo = j.get<std::vector<WeaponJson>>();
 		hasWeaponJsonLoaded = true;
@@ -847,106 +956,244 @@ void SetFakeWanted(Player player, bool toggle)
 }
 #pragma endregion
 
-#pragma region Memory Patching
 
-#define BUFFER_SIZE 2048
-
-void ClearLog()
+#pragma region Game Functions
+namespace nUnsafe
 {
-	std::ofstream ofFile(g_hInstanceLogName, std::ofstream::out | std::ofstream::trunc);
-	ofFile.close();
+ULONG_PTR(*GetScriptEntity)(Entity) = nullptr;
+int fragInstNmGtaOffset = 0;
+ULONG_PTR(*CreateNmMessage)(ULONG_PTR, ULONG_PTR, int) = nullptr;
+void (*GivePedNMMessage)(ULONG_PTR, const char*, ULONG_PTR) = nullptr;
+bool (*SetNMMessageInt)(ULONG_PTR, const char*, int) = nullptr;
+bool (*SetNMMessageBool)(ULONG_PTR, const char*, bool) = nullptr;
+bool (*SetNMMessageFloat)(ULONG_PTR, const char*, float) = nullptr;
+bool (*SetNMMessageString)(ULONG_PTR, const char*, const char*) = nullptr;
+bool (*SetNMMessageVec3)(ULONG_PTR, const char*, float, float, float) = nullptr;
 }
 
-void RawLog(const std::string& szInfo, const std::string& szData)
+bool hasSearchedForGameFunctions = false;
+void GetGameFunctionsAddresses()
 {
-	std::ofstream ofFile(g_hInstanceLogName, std::ios_base::out | std::ios_base::app);
+	if (hasSearchedForGameFunctions)
+		return;
 
-	if (ofFile.is_open())
+	WriteLog("Info", "---------------------- General Functions -----------------------");
+
+	ULONG_PTR adr = FindPattern("85 ED 74 0F 8B CD E8 ?? ?? ?? ?? 48 8B F8 48 85 C0 74 2E") - 15;
+	if (adr)
 	{
-		SYSTEMTIME stCurrTime;
-		GetLocalTime(&stCurrTime);
-
-		ofFile << "|" <<
-			std::setw(2) << std::setfill('0') << stCurrTime.wHour << ":" <<
-			std::setw(2) << std::setfill('0') << stCurrTime.wMinute << ":" <<
-			std::setw(2) << std::setfill('0') << stCurrTime.wSecond << "." <<
-			std::setw(3) << std::setfill('0') << stCurrTime.wMilliseconds <<
-			"|[" << szInfo << "] -- " << szData << "\n";
-
-		ofFile.close();
-	}
-}
-
-void WriteLog(const char* szInfo, const char* szFormat, ...)
-{
-	char szBuf[BUFFER_SIZE];
-	va_list args;
-	va_start(args, szFormat);
-	vsnprintf(szBuf, BUFFER_SIZE, szFormat, args);
-	va_end(args);
-	RawLog(std::string(szInfo), std::string(szBuf));
-}
-
-ULONG_PTR FindPattern(std::string signature)
-{
-	MODULEINFO modInfo;
-	if (GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL), &modInfo, sizeof(MODULEINFO)))
-	{
-		void* result = Pattern16::scan(modInfo.lpBaseOfDll, modInfo.SizeOfImage, signature);
-		if (result)
-			return reinterpret_cast<ULONG_PTR>(result);
+		WriteLog("Operation", "Found address of \"GetScriptEntity\" at 0x%X!", adr);
+		nUnsafe::GetScriptEntity = reinterpret_cast<ULONG_PTR(*)(Entity)>((adr + 11) + (*reinterpret_cast<ULONG_PTR*>(adr + 7)));
 	}
 	else
-		WriteLog("Error", "GetModuleInformation() failed! [%d]", GetLastError());
+		WriteLog("Error", "Could not find address of \"GetScriptEntity\"!");
 
-	return 0; // Pattern not found
+	WriteLog("Info", "------------------------- NM Functions -------------------------");
+
+	adr = FindPattern("48 83 EC 28 48 8B 42 ?? 48 85 C0 74 09 48 3B 82 ?? ?? ?? ?? 74 21");
+	if (adr)
+	{
+		WriteLog("Operation", "Found address of \"FragInstNmGtaOffset\" at 0x%X!", adr);
+		nUnsafe::fragInstNmGtaOffset = *reinterpret_cast<int*>(adr + 16);
+	}
+	else
+		WriteLog("Error", "Could not find address of \"FragInstNmGtaOffset\"!");
+
+	adr = FindPattern("40 53 48 83 EC 20 83 61 0C 00 44 89 41 08 49 63 C0");
+	if (adr)
+	{
+		WriteLog("Operation", "Found address of \"CreateNmMessage\" at 0x%X!", adr);
+		nUnsafe::CreateNmMessage = reinterpret_cast<ULONG_PTR(*)(ULONG_PTR, ULONG_PTR, int)>(adr);
+	}
+	else
+		WriteLog("Error", "Could not find address of \"CreateNmMessage\"!");
+
+	adr = FindPattern("0F 84 8B 00 00 00 48 8B 47 30 48 8B 48 10 48 8B 51 20 80 7A 10 0A");
+	if (adr)
+	{
+		WriteLog("Operation", "Found address of \"GiveNmMessage\" at 0x%X!", adr);
+		nUnsafe::GivePedNMMessage = reinterpret_cast<void(*)(ULONG_PTR, const char*, ULONG_PTR)>((adr - 0x1A) + (*reinterpret_cast<ULONG_PTR*>(adr - 0x1E)));
+	}
+	else
+		WriteLog("Error", "Could not find address of \"GiveNmMessage\"!");
+
+	adr = FindPattern("48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 48 63 49 0C 41 8B F8");
+	if (adr)
+	{
+		WriteLog("Operation", "Found address of \"SetNmParameterInt\" at 0x%X!", adr);
+		nUnsafe::SetNMMessageInt = reinterpret_cast<bool(*)(ULONG_PTR, const char*, int)>(adr);
+	}
+	else
+		WriteLog("Error", "Could not find address of \"SetNmParameterInt\"!");
+
+	adr = FindPattern("48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 48 63 49 0C 41 8A F8");
+	if (adr)
+	{
+		WriteLog("Operation", "Found address of \"SetNmParameterBool\" at 0x%X!", adr);
+		nUnsafe::SetNMMessageBool = reinterpret_cast<bool(*)(ULONG_PTR, const char*, bool)>(adr);
+	}
+	else
+		WriteLog("Error", "Could not find address of \"SetNmParameterBool\"!");
+
+	adr = FindPattern("40 53 48 83 EC 30 48 8B D9 48 63 49 0C");
+	if (adr)
+	{
+		WriteLog("Operation", "Found address of \"SetNmParameterFloat\" at 0x%X!", adr);
+		nUnsafe::SetNMMessageFloat = reinterpret_cast<bool(*)(ULONG_PTR, const char*, float)>(adr);
+	}
+	else
+		WriteLog("Error", "Could not find address of \"SetNmParameterFloat\"!");
+
+	adr = FindPattern("57 48 83 EC 20 48 8B D9 48 63 49 0C 49 8B E8") - 15;
+	if (adr)
+	{
+		WriteLog("Operation", "Found address of \"SetNmParameterString\" at 0x%X!", adr);
+		nUnsafe::SetNMMessageString = reinterpret_cast<bool(*)(ULONG_PTR, const char*, const char*)>(adr);
+	}
+	else
+		WriteLog("Error", "Could not find address of \"SetNmParameterString\"!");
+
+	adr = FindPattern("40 53 48 83 EC 40 48 8B D9 48 63 49 0C");
+	if (adr)
+	{
+		WriteLog("Operation", "Found address of \"SetNmParameterVector\" at 0x%X!", adr);
+		nUnsafe::SetNMMessageVec3 = reinterpret_cast<bool(*)(ULONG_PTR, const char*, float, float, float)>(adr);
+	}
+	else
+		WriteLog("Error", "Could not find address of \"SetNmParameterVector\"!");
+
+	hasSearchedForGameFunctions = true;
+	return;
 }
 
-ULONG_PTR FindPatternGlobal(std::string signature)
+namespace nGame
 {
-	SYSTEM_INFO sysInfo;
-	GetSystemInfo(&sysInfo);
-
-	const SIZE_T minAddr = reinterpret_cast<SIZE_T>(sysInfo.lpMinimumApplicationAddress);
-	const SIZE_T maxAddr = reinterpret_cast<SIZE_T>(sysInfo.lpMaximumApplicationAddress);
-
-	MODULEINFO modInfo = { 0 };
-	if (!GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL), &modInfo, sizeof(MODULEINFO))) {
-		WriteLog("Error", "GetModuleInformation() failed! [%d]", GetLastError());
+ULONG_PTR GetScriptEntity(Entity entity)
+{
+	if (nUnsafe::GetScriptEntity == nullptr)
+	{
+		WriteLog("Error", "Script tried to access invalid function \"GetScriptEntity\"!");
 		return 0;
 	}
 
-	const SIZE_T exeStart = reinterpret_cast<SIZE_T>(modInfo.lpBaseOfDll);
-	const SIZE_T exeEnd = exeStart + modInfo.SizeOfImage;
-
-	MEMORY_BASIC_INFORMATION mbi;
-	SIZE_T address = minAddr;
-
-	while (address < maxAddr)
-	{
-		if (!VirtualQuery(reinterpret_cast<LPCVOID>(address), &mbi, sizeof(mbi)))
-			break;
-
-		const bool isAccessible = (!(mbi.Protect & PAGE_NOACCESS) && !(mbi.Protect & PAGE_GUARD)) &&
-			((mbi.Protect & PAGE_READWRITE) || (mbi.Protect & PAGE_EXECUTE_READWRITE));
-
-		// Filter: committed, readable, not guarded, private memory, not part of main EXE
-		if ((mbi.State == MEM_COMMIT) && isAccessible && (mbi.Type == MEM_PRIVATE) &&
-			((address + mbi.RegionSize < exeStart) || (address > exeEnd)))
-		{
-			LPCVOID result = Pattern16::scan(reinterpret_cast<void*>(address), mbi.RegionSize, signature);
-			if (result)
-				return reinterpret_cast<ULONG_PTR>(result);
-		}
-
-		address += mbi.RegionSize;
-	}
-
-	return 0; // Pattern not found
+	return nUnsafe::GetScriptEntity(entity);
 }
 
+int GetFragInstNmGtaOffset()
+{
+	if (nUnsafe::fragInstNmGtaOffset == 0)
+	{
+		WriteLog("Error", "Script tried to access invalid variable \"fragInstNmGtaOffset\"!");
+		return 0;
+	}
+
+	return nUnsafe::fragInstNmGtaOffset;
+}
+
+ULONG_PTR CreateNmMessage()
+{
+	if (nUnsafe::CreateNmMessage == nullptr)
+	{
+		WriteLog("Error", "Script tried to access invalid function \"CreateNmMessage\"!");
+		return 0;
+	}
+
+	ULONG_PTR msgMemPtr = reinterpret_cast<ULONG_PTR>(malloc(0x1218));
+	if (!msgMemPtr)
+		return 0;
+
+	nUnsafe::CreateNmMessage(msgMemPtr, msgMemPtr + 0x18, 0x40);
+	return msgMemPtr;
+}
+
+void GivePedNMMessage(ULONG_PTR msgMemPtr, const Ped ped, const char* message)
+{
+	if (nUnsafe::GivePedNMMessage == nullptr)
+	{
+		WriteLog("Error", "Script tried to access invalid function \"GivePedNMMessage\"!");
+		return;
+	}
+
+	ULONG_PTR pedAddress = nGame::GetScriptEntity(ped);
+	if (!pedAddress)
+	{
+		free(reinterpret_cast<void*>(msgMemPtr));
+		return;
+	}
+
+	nGame::SetNMMessageBool(msgMemPtr, "start", true);
+
+	ULONG_PTR fragInstNmGtaAddress = *reinterpret_cast<ULONG_PTR*>(pedAddress + GetFragInstNmGtaOffset());
+	const char* messageString = message;
+	nUnsafe::GivePedNMMessage(fragInstNmGtaAddress, messageString, msgMemPtr);
+	free(reinterpret_cast<void*>(msgMemPtr));
+}
+
+void SetNMMessageInt(ULONG_PTR msgMemPtr, const char* message, int i)
+{
+	if (nUnsafe::SetNMMessageInt == nullptr)
+	{
+		WriteLog("Error", "Script tried to access invalid function \"SetNMMessageInt\"!");
+		return;
+	}
+
+	nUnsafe::SetNMMessageInt(msgMemPtr, message, i);
+	return;
+}
+
+void SetNMMessageBool(ULONG_PTR msgMemPtr, const char* message, bool b)
+{
+	if (nUnsafe::SetNMMessageBool == nullptr)
+	{
+		WriteLog("Error", "Script tried to access invalid function \"SetNMMessageBool\"!");
+		return;
+	}
+
+	nUnsafe::SetNMMessageInt(msgMemPtr, message, b);
+	return;
+}
+
+void SetNMMessageFloat(ULONG_PTR msgMemPtr, const char* message, float f)
+{
+	if (nUnsafe::SetNMMessageFloat == nullptr)
+	{
+		WriteLog("Error", "Script tried to access invalid function \"SetNMMessageFloat\"!");
+		return;
+	}
+
+	nUnsafe::SetNMMessageFloat(msgMemPtr, message, f);
+	return;
+}
+
+void SetNMMessageString(ULONG_PTR msgMemPtr, const char* message, const char* str)
+{
+	if (nUnsafe::SetNMMessageString == nullptr)
+	{
+		WriteLog("Error", "Script tried to access invalid function \"SetNMMessageString\"!");
+		return;
+	}
+
+	nUnsafe::SetNMMessageString(msgMemPtr, message, str);
+	return;
+}
+
+void SetNMMessageVec3(ULONG_PTR msgMemPtr, const char* message, float x, float y, float z)
+{
+	if (nUnsafe::SetNMMessageVec3 == nullptr)
+	{
+		WriteLog("Error", "Script tried to access invalid function \"SetNMMessageVec3\"!");
+		return;
+	}
+
+	nUnsafe::SetNMMessageVec3(msgMemPtr, message, x, y, z);
+	return;
+}
+}
+#pragma endregion
+
+#pragma region Memory Patching
 // Credits aint-no-other-option: https://github.com/aint-no-other-option/CopBumpSteeringPatch
-void CopBumpSteeringPatch(bool& bError)
+void CopBumpSteeringPatch()
 {
 	constexpr int nBytes = 8;
 
@@ -961,16 +1208,13 @@ void CopBumpSteeringPatch(bool& bError)
 		WriteLog("Operation", "Done!");
 	}
 	else
-	{
 		WriteLog("Error", "Could not find address!");
-		bError = true;
-	}
 
 	return;
 }
 
 // Credits aint-no-other-option: https://github.com/aint-no-other-option/CenterSteeringPatch/
-void CenterSteeringPatch(bool& bError)
+void CenterSteeringPatch()
 {
 	constexpr int nBytes1 = 7;
 	constexpr int nBytes2 = 6;
@@ -994,16 +1238,10 @@ void CenterSteeringPatch(bool& bError)
 			WriteLog("Operation", "Done!");
 		}
 		else
-		{
 			WriteLog("Error", "Could not find address!");
-			bError = true;
-		}
 	}
 	else
-	{
 		WriteLog("Error", "Could not find address!");
-		bError = true;
-	}
 
 	return;
 }
@@ -1014,22 +1252,22 @@ void ApplyExePatches()
 	if (hasAppliedExePatches)
 		return;
 
-	bool bError = false;
-	ClearLog();
-	WriteLog("Started", "%s v%d.%d", g_hInstanceName.c_str(), VER_MAX, VER_MIN);
-
-	CopBumpSteeringPatch(bError);
-	CenterSteeringPatch(bError);
-
-	if (bError)
-		WriteLog("Finished", "Error patching addresses.");
-	else
-		WriteLog("Finished", "Patching complete.");
+	CopBumpSteeringPatch();
+	CenterSteeringPatch();
 
 	hasAppliedExePatches = true;
 	return;
 }
+#pragma endregion
 
+void UpdatePlayerVars()
+{
+	retrievedWeaponThisFrame = false;
+	return;
+}
+
+#pragma region Memory Patching Test
+/*
 void TerminateAllScriptsWithThisName(const char* name, int exceptId = 0)
 {
 	if (!exceptId)
@@ -1074,7 +1312,7 @@ int GetFirstIdFromScriptName(const char* name)
 	return id;
 }
 
-/*
+
 bool patchedF0 = false; bool patchedF1 = false;
 bool patchedM = false;
 bool patchedT0 = false; bool patchedT1 = false;
@@ -1141,9 +1379,3 @@ void ApplyScriptPatches()
 }
 */
 #pragma endregion
-
-void UpdatePlayerVars()
-{
-	retrievedWeaponThisFrame = false;
-	return;
-}

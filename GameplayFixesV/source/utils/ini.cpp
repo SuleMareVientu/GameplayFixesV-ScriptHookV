@@ -108,10 +108,10 @@ using namespace Ini;
 static CSimpleIniA ini;
 void ReadINI()
 {
-	if (!std::filesystem::exists(g_hInstanceIniName))
-		WriteINIResource(g_hInstance, IDR_INI, g_hInstanceIniName.c_str());
+	if (!std::filesystem::exists(GetDllInstanceIniName()))
+		WriteINIResource(GetDllInstance(), IDR_INI, GetDllInstanceIniName());
 	
-	const SI_Error res = ini.LoadFile(g_hInstanceIniName.c_str());
+	const SI_Error res = ini.LoadFile(GetDllInstanceIniName());
 	if (res != SI_OK)
 		return;
 

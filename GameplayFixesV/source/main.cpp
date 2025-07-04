@@ -3,10 +3,12 @@
 #include "keyboard.h"
 #include "globals.h"
 
-HINSTANCE g_hInstance = nullptr;
+HINSTANCE dllInstance = nullptr;
+HINSTANCE GetDllInstance() { return dllInstance; }
+
 BOOL APIENTRY DllMain(HMODULE hInstance, DWORD reason, LPVOID lpReserved)
 {
-	g_hInstance = hInstance;
+	dllInstance = hInstance;
 	switch (reason)
 	{
 	case DLL_PROCESS_ATTACH:
