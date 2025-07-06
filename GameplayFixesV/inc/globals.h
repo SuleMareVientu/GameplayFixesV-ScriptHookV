@@ -16,6 +16,8 @@ const char* GetDllInstanceName();
 const char* GetDllInstanceNameNoExt();
 const char* GetDllInstanceIniName();
 const char* GetDllInstanceLogName();
+const int GetGameVersion();
+const bool GetIsEnhancedVersion();
 
 #define LOOP(i, n) for(int i = 0; i < n; ++i)
 
@@ -694,12 +696,6 @@ typedef struct {
 	float WrapStartX, WrapEndX;
 } TextStyle;
 constexpr TextStyle defaultTextStyle = { FONT_STANDARD, 0.35f, 0.35f, RGBA{255, 255, 255, 255}, DROPSTYLE_NONE, false, 0.0f, 1.0f };
-
-enum eStartRagdollTask {
-	TASK_RELAX = 0,
-	TASK_NM_SCRIPT,
-	TASK_NM_BALANCE
-};
 
 /*
 constexpr int AllHandsBonetagsSize = 34;

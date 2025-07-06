@@ -10,6 +10,9 @@
 #include <numeric>
 #include <set>
 #include <fstream>
+#include <functional>
+#include <vector>
+#include <memory>
 
 #include <Psapi.h>
 
@@ -1447,6 +1450,109 @@ void DisableWorldPopulation()
 }
 }
 
+#define REGISTER_OPTION(mngr, opt, nspace) mngr.RegisterOption(std::make_unique<PlayerOption>(iniValue(Ini::opt), []() { nspace::opt(); }, #opt))
+#define REGISTER_OPTION_INI(mngr, opt, nspace, nm) mngr.RegisterOption(std::make_unique<PlayerOption>(iniValue(Ini::nm), []() { nspace::opt(); }, #opt))
+
+OptionManager playerOptionsManager;
+void RegisterPlayerOptions()
+{
+	playerOptionsManager.UnregisterAllOptions();
+
+	REGISTER_OPTION(playerOptionsManager, EnableCrouching, nGeneral);
+	REGISTER_OPTION(playerOptionsManager, FriendlyFire, nGeneral);
+	REGISTER_OPTION(playerOptionsManager, EnableStealthForAllPeds, nGeneral);
+	REGISTER_OPTION(playerOptionsManager, DisableActionMode, nGeneral);
+	REGISTER_OPTION(playerOptionsManager, DisarmPlayerWhenShot, nGeneral);
+	REGISTER_OPTION(playerOptionsManager, DropPlayerWeaponWhenRagdolling, nGeneral);
+	REGISTER_OPTION(playerOptionsManager, DynamicallyCleanWoundsAndDirt, nGeneral);
+	REGISTER_OPTION_INI(playerOptionsManager, EnableSprintInsideInteriors, nGeneral, SprintInsideInteriors);
+	REGISTER_OPTION(playerOptionsManager, AllowWeaponsInsideSafeHouse, nGeneral);
+	REGISTER_OPTION(playerOptionsManager, SilentWanted, nGeneral);
+
+	//////////////////////////////////////Player Controls//////////////////////////////////
+	REGISTER_OPTION(playerOptionsManager, DisableAssistedMovement, nControls);
+	REGISTER_OPTION(playerOptionsManager, ToggleFPSWalking, nControls);
+	REGISTER_OPTION(playerOptionsManager, DisableCameraAutoCenter, nControls);
+	REGISTER_OPTION(playerOptionsManager, CamFollowVehicleDuringHandbrake, nControls);
+	REGISTER_OPTION(playerOptionsManager, DisableFirstPersonView, nControls);
+	REGISTER_OPTION(playerOptionsManager, DisableIdleCamera, nControls);
+	REGISTER_OPTION(playerOptionsManager, DisableRecording, nControls);
+	REGISTER_OPTION(playerOptionsManager, DisableMobilePhone, nControls);
+
+	//////////////////////////////////////Player Vehicle///////////////////////////////////
+	REGISTER_OPTION(playerOptionsManager, DisableCarMidAirAndRollControl, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableForcedCarExplosionOnImpact, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableEngineSmoke, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableEngineFire, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, LeaveEngineOnWhenExitingVehicles, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableWheelsAutoCenterOnCarExit, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, KeepCarHydraulicsPosition, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, EnableBrakeLightsOnStoppedVehicles, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, EnableHeliWaterPhysics, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableRagdollOnVehicleRoof, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableDragOutCar, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableFlyThroughWindscreen, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableBikeKnockOff, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableShallowWaterBikeJumpOut, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableVehicleJitter, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableAirVehicleTurbulence, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableAutoEquipHelmets, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableStuntJumps, nVehicle);
+
+	///////////////////////////////////////////HUD/////////////////////////////////////////
+	REGISTER_OPTION(playerOptionsManager, AllowGameExecutionOnPauseMenu, nHUD);
+	REGISTER_OPTION(playerOptionsManager, DisableHUDPostFX, nHUD);
+	REGISTER_OPTION(playerOptionsManager, DisablePauseMenuPostFX, nHUD);
+	REGISTER_OPTION(playerOptionsManager, DisableSpecialAbilityPostFX, nHUD);
+	REGISTER_OPTION(playerOptionsManager, EnableBigMapToggle, nHUD);
+	REGISTER_OPTION(playerOptionsManager, MinimapSpeedometer, nHUD);
+	REGISTER_OPTION(playerOptionsManager, SetRadarZoom, nHUD);
+	REGISTER_OPTION(playerOptionsManager, DisableMinimapTilt, nHUD);
+	REGISTER_OPTION(playerOptionsManager, HideMinimapFog, nHUD);
+	REGISTER_OPTION_INI(playerOptionsManager, HideSatNav, nHUD, HideMinimapSatNav);
+	REGISTER_OPTION(playerOptionsManager, HideMinimapDepth, nHUD);
+	if (REGISTER_OPTION(playerOptionsManager, HideMinimapBars, nHUD))
+	{
+		if (!REGISTER_OPTION(playerOptionsManager, AlwaysHideAbilityBar, nHUD))
+		{
+			REGISTER_OPTION(playerOptionsManager, HideAbilityBarForNonMainCharacters, nHUD);
+		}
+		REGISTER_OPTION(playerOptionsManager, ReplaceArmourBarWithStamina, nHUD);
+	}
+	REGISTER_OPTION(playerOptionsManager, HideHudComponents, nHUD);
+	REGISTER_OPTION(playerOptionsManager, HideWeaponReticle, nHUD);
+	REGISTER_OPTION(playerOptionsManager, HideEnemiesBlips, nHUD);
+
+	//////////////////////////////////////////Audio////////////////////////////////////////
+
+	REGISTER_OPTION(playerOptionsManager, DisableWantedMusic, nAudio);
+	REGISTER_OPTION(playerOptionsManager, DisablePoliceScanner, nAudio);
+	REGISTER_OPTION_INI(playerOptionsManager, DisableFlightMusic, nAudio, DisableFlyingMusic);
+	REGISTER_OPTION_INI(playerOptionsManager, SetRadiosMusicOnly, nAudio, DisableRadioInterruptions);
+	REGISTER_OPTION(playerOptionsManager, MuteSounds, nAudio);
+	REGISTER_OPTION(playerOptionsManager, MuteArtificialAmbientSounds, nAudio);
+	REGISTER_OPTION(playerOptionsManager, DisablePlayerPainAudio, nAudio);
+
+	//////////////////////////////////////////Peds/////////////////////////////////////////
+	REGISTER_OPTION(playerOptionsManager, DisableScenarios, nPeds);
+	REGISTER_OPTION(playerOptionsManager, DisableWorldPopulation, nPeds);
+	return;
+}
+
+bool hasRegisteredPlayerOptions = false;
+void UpdatePlayerOptions()
+{
+	if (!hasRegisteredPlayerOptions)
+	{
+		RegisterPlayerOptions();
+		hasRegisteredPlayerOptions = true;
+	}
+
+	UpdatePlayerVars();
+	playerOptionsManager.ApplyOptions();
+	return;
+}
+
 Timer timerRefreshIni; //Allow reload every 5s
 void RefreshIni()
 {
@@ -1455,98 +1561,12 @@ void RefreshIni()
 		timerRefreshIni.Reset();
 		ShowNotification("GameplayFixesV:~n~Reloaded INI");
 		ReadINI();
-		SetupPedFunctions();
+		RegisterPedOptions();
+		RegisterPlayerOptions();
 
 		// Reset vars that need to be reset on reload
 		nHUD::InitializedHideHudComponents = false;
 		nAudio::InitializedMuteSounds = false;
 	}
-	return;
-}
-
-void UpdatePlayerOptions()
-{
-	//Vars that need to be set every frame
-	UpdatePlayerVars();
-
-	if (Ini::EnableCrouching) { nGeneral::EnableCrouching(); }
-	if (Ini::FriendlyFire) { nGeneral::FriendlyFire(); }
-	if (Ini::EnableStealthForAllPeds) { nGeneral::EnableStealthForAllPeds(); }
-	if (Ini::DisableActionMode) { nGeneral::DisableActionMode(); }
-	if (Ini::DisarmPlayerWhenShot) { nGeneral::DisarmPlayerWhenShot(); }
-	if (Ini::DropPlayerWeaponWhenRagdolling) { nGeneral::DropPlayerWeaponWhenRagdolling(); }
-	if (Ini::DynamicallyCleanWoundsAndDirt) { nGeneral::DynamicallyCleanWoundsAndDirt(); }
-	if (Ini::SprintInsideInteriors) { nGeneral::EnableSprintInsideInteriors(); }
-	if (Ini::AllowWeaponsInsideSafeHouse) { nGeneral::AllowWeaponsInsideSafeHouse(); }
-	if (Ini::SilentWanted) { nGeneral::SilentWanted(); }
-	
-	//////////////////////////////////////Player Controls//////////////////////////////////
-	if (Ini::DisableAssistedMovement) { nControls::DisableAssistedMovement(); }
-	if (Ini::ToggleFPSWalking) { nControls::ToggleFPSWalking(); }
-	if (Ini::DisableCameraAutoCenter > 0) { nControls::DisableCameraAutoCenter(); }
-	if (Ini::CamFollowVehicleDuringHandbrake) { nControls::CamFollowVehicleDuringHandbrake(); }
-	if (Ini::DisableFirstPersonView) { nControls::DisableFirstPersonView(); }
-	if (Ini::DisableIdleCamera) { nControls::DisableIdleCamera(); }
-	if (Ini::DisableRecording) { nControls::DisableRecording(); }
-	if (Ini::DisableMobilePhone) { nControls::DisableMobilePhone(); }
-
-	//////////////////////////////////////Player Vehicle///////////////////////////////////
-	if (Ini::DisableCarMidAirAndRollControl) { nVehicle::DisableCarMidAirAndRollControl(); }
-	if (Ini::DisableForcedCarExplosionOnImpact) { nVehicle::DisableForcedCarExplosionOnImpact(); }
-	if (Ini::DisableEngineSmoke) { nVehicle::DisableEngineSmoke(); }
-	if (Ini::DisableEngineFire) { nVehicle::DisableEngineFire(); }
-	if (Ini::LeaveEngineOnWhenExitingVehicles) { nVehicle::LeaveEngineOnWhenExitingVehicles(); }
-	if (Ini::DisableWheelsAutoCenterOnCarExit) { nVehicle::DisableWheelsAutoCenterOnCarExit(); }
-	if (Ini::KeepCarHydraulicsPosition) { nVehicle::KeepCarHydraulicsPosition(); }
-	if (Ini::EnableBrakeLightsOnStoppedVehicles) { nVehicle::EnableBrakeLightsOnStoppedVehicles(); }
-	if (Ini::EnableHeliWaterPhysics) { nVehicle::EnableHeliWaterPhysics(); }
-	if (Ini::DisableRagdollOnVehicleRoof) { nVehicle::DisableRagdollOnVehicleRoof(); }
-	if (Ini::DisableDragOutCar) { nVehicle::DisableDragOutCar(); }
-	if (Ini::DisableFlyThroughWindscreen) { nVehicle::DisableFlyThroughWindscreen(); }
-	if (Ini::DisableBikeKnockOff) { nVehicle::DisableBikeKnockOff(); }
-	if (Ini::DisableShallowWaterBikeJumpOut) { nVehicle::DisableShallowWaterBikeJumpOut(); }
-	if (Ini::DisableVehicleJitter) { nVehicle::DisableVehicleJitter(); }
-	if (Ini::DisableAirVehicleTurbulence) { nVehicle::DisableAirVehicleTurbulence(); }
-	if (Ini::DisableAutoEquipHelmets > 0) { nVehicle::DisableAutoEquipHelmets(); }
-	if (Ini::DisableStuntJumps) { nVehicle::DisableStuntJumps(); }
-
-	///////////////////////////////////////////HUD/////////////////////////////////////////
-	if (Ini::AllowGameExecutionOnPauseMenu) { nHUD::AllowGameExecutionOnPauseMenu(); }
-	if (Ini::DisableHUDPostFX) { nHUD::DisableHUDPostFX(); }
-	if (Ini::DisablePauseMenuPostFX) { nHUD::DisablePauseMenuPostFX(); }
-	if (Ini::DisableSpecialAbilityPostFX) { nHUD::DisableSpecialAbilityPostFX(); }
-	if (Ini::EnableBigMapToggle) { nHUD::EnableBigMapToggle(); }
-	if (Ini::MinimapSpeedometer) { nHUD::MinimapSpeedometer(); }
-	if (Ini::SetRadarZoom >= 0.0f) { nHUD::SetRadarZoom(); }
-	if (Ini::DisableMinimapTilt) { nHUD::DisableMinimapTilt(); }
-	if (Ini::HideMinimapFog) { nHUD::HideMinimapFog(); }
-	if (Ini::HideMinimapSatNav) { nHUD::HideSatNav(); }
-	if (Ini::HideMinimapDepth) { nHUD::HideMinimapDepth(); }
-
-	if (Ini::HideMinimapBars) nHUD::HideMinimapBars();
-	else
-	{
-		if (Ini::AlwaysHideAbilityBar) { nHUD::AlwaysHideAbilityBar(); }
-		else if (Ini::HideAbilityBarForNonMainCharacters) nHUD::HideAbilityBarForNonMainCharacters();
-		if (Ini::ReplaceArmourBarWithStamina) { nHUD::ReplaceArmourBarWithStamina(); }
-	}
-
-	if (Ini::HideHudComponents) { nHUD::HideHudComponents(); }
-	if (Ini::HideWeaponReticle) { nHUD::HideWeaponReticle(); }
-	if (Ini::HideEnemiesBlips) { nHUD::HideEnemiesBlips(); }
-
-	//////////////////////////////////////////Audio////////////////////////////////////////
-	if (Ini::DisableWantedMusic) { nAudio::DisableWantedMusic(); }
-	if (Ini::DisablePoliceScanner) { nAudio::DisablePoliceScanner(); }
-	if (Ini::DisableFlyingMusic) { nAudio::DisableFlightMusic(); }
-	if (Ini::DisableRadioInterruptions) { nAudio::SetRadiosMusicOnly(); }
-	if (Ini::DefaultVehicleRadioOff > 0) { nAudio::DefaultVehicleRadioOff(); }
-	if (Ini::MuteSounds) { nAudio::MuteSounds(); }
-	if (Ini::DisablePlayerPainAudio) { nAudio::DisablePlayerPainAudio(); }
-	if (Ini::MuteArtificialAmbientSounds) { nAudio::MuteArtificialAmbientSounds(); }
-	
-	//////////////////////////////////////////Peds/////////////////////////////////////////
-	if (Ini::DisableScenarios) { nPeds::DisableScenarios(); }
-	if (Ini::DisableWorldPopulation) { nPeds::DisableWorldPopulation(); }
 	return;
 }

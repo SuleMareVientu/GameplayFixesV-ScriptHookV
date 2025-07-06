@@ -979,11 +979,15 @@ void GetGameFunctionsAddresses()
 
 	WriteLog("Info", "---------------------- General Functions -----------------------");
 
-	ULONG_PTR adr = FindPattern("85 ED 74 0F 8B CD E8 ?? ?? ?? ?? 48 8B F8 48 85 C0 74 2E") - 15;
+	// FiveM - GetScriptEntity
+	// ULONG_PTR adr = FindPattern("44 8B C1 49 8B 41 08 41 C1 F8 08 41 38 0C 00");
+	// nUnsafe::GetScriptEntity = reinterpret_cast<ULONG_PTR(*)(Entity)>(adr - 12);
+
+	ULONG_PTR adr = FindPattern("85 ED 74 0F 8B CD E8 ?? ?? ?? ?? 48 8B F8 48 85 C0 74 2E");
 	if (adr)
 	{
-		WriteLog("Operation", "Found address of \"GetScriptEntity\" at 0x%X!", adr);
-		nUnsafe::GetScriptEntity = reinterpret_cast<ULONG_PTR(*)(Entity)>((adr + 11) + (*reinterpret_cast<ULONG_PTR*>(adr + 7)));
+		nUnsafe::GetScriptEntity = reinterpret_cast<ULONG_PTR(*)(Entity)>((adr + 11) + (*reinterpret_cast<const int*>(adr + 7)));
+		WriteLog("Operation", "Found address of \"GetScriptEntity\" at 0x%X!", nUnsafe::GetScriptEntity);
 	}
 	else
 		WriteLog("Error", "Could not find address of \"GetScriptEntity\"!");
@@ -993,8 +997,8 @@ void GetGameFunctionsAddresses()
 	adr = FindPattern("48 83 EC 28 48 8B 42 ?? 48 85 C0 74 09 48 3B 82 ?? ?? ?? ?? 74 21");
 	if (adr)
 	{
-		WriteLog("Operation", "Found address of \"FragInstNmGtaOffset\" at 0x%X!", adr);
 		nUnsafe::fragInstNmGtaOffset = *reinterpret_cast<int*>(adr + 16);
+		WriteLog("Operation", "Found address of \"FragInstNmGtaOffset\" at 0x%X!", (adr + 16));
 	}
 	else
 		WriteLog("Error", "Could not find address of \"FragInstNmGtaOffset\"!");
@@ -1002,8 +1006,8 @@ void GetGameFunctionsAddresses()
 	adr = FindPattern("40 53 48 83 EC 20 83 61 0C 00 44 89 41 08 49 63 C0");
 	if (adr)
 	{
-		WriteLog("Operation", "Found address of \"CreateNmMessage\" at 0x%X!", adr);
 		nUnsafe::CreateNmMessage = reinterpret_cast<ULONG_PTR(*)(ULONG_PTR, ULONG_PTR, int)>(adr);
+		WriteLog("Operation", "Found address of \"CreateNmMessage\" at 0x%X!", nUnsafe::CreateNmMessage);
 	}
 	else
 		WriteLog("Error", "Could not find address of \"CreateNmMessage\"!");
@@ -1011,8 +1015,8 @@ void GetGameFunctionsAddresses()
 	adr = FindPattern("0F 84 8B 00 00 00 48 8B 47 30 48 8B 48 10 48 8B 51 20 80 7A 10 0A");
 	if (adr)
 	{
-		WriteLog("Operation", "Found address of \"GiveNmMessage\" at 0x%X!", adr);
-		nUnsafe::GivePedNMMessage = reinterpret_cast<void(*)(ULONG_PTR, const char*, ULONG_PTR)>((adr - 0x1A) + (*reinterpret_cast<ULONG_PTR*>(adr - 0x1E)));
+		nUnsafe::GivePedNMMessage = reinterpret_cast<void(*)(ULONG_PTR, const char*, ULONG_PTR)>((adr - 0x1A) + (*reinterpret_cast<const int*>(adr - 0x1E)));
+		WriteLog("Operation", "Found address of \"GiveNmMessage\" at 0x%X!", nUnsafe::GivePedNMMessage);
 	}
 	else
 		WriteLog("Error", "Could not find address of \"GiveNmMessage\"!");
@@ -1020,8 +1024,8 @@ void GetGameFunctionsAddresses()
 	adr = FindPattern("48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 48 63 49 0C 41 8B F8");
 	if (adr)
 	{
-		WriteLog("Operation", "Found address of \"SetNmParameterInt\" at 0x%X!", adr);
 		nUnsafe::SetNMMessageInt = reinterpret_cast<bool(*)(ULONG_PTR, const char*, int)>(adr);
+		WriteLog("Operation", "Found address of \"SetNmParameterInt\" at 0x%X!", nUnsafe::SetNMMessageInt);
 	}
 	else
 		WriteLog("Error", "Could not find address of \"SetNmParameterInt\"!");
@@ -1029,8 +1033,8 @@ void GetGameFunctionsAddresses()
 	adr = FindPattern("48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 48 63 49 0C 41 8A F8");
 	if (adr)
 	{
-		WriteLog("Operation", "Found address of \"SetNmParameterBool\" at 0x%X!", adr);
 		nUnsafe::SetNMMessageBool = reinterpret_cast<bool(*)(ULONG_PTR, const char*, bool)>(adr);
+		WriteLog("Operation", "Found address of \"SetNmParameterBool\" at 0x%X!", nUnsafe::SetNMMessageBool);
 	}
 	else
 		WriteLog("Error", "Could not find address of \"SetNmParameterBool\"!");
@@ -1038,17 +1042,17 @@ void GetGameFunctionsAddresses()
 	adr = FindPattern("40 53 48 83 EC 30 48 8B D9 48 63 49 0C");
 	if (adr)
 	{
-		WriteLog("Operation", "Found address of \"SetNmParameterFloat\" at 0x%X!", adr);
 		nUnsafe::SetNMMessageFloat = reinterpret_cast<bool(*)(ULONG_PTR, const char*, float)>(adr);
+		WriteLog("Operation", "Found address of \"SetNmParameterFloat\" at 0x%X!", nUnsafe::SetNMMessageFloat);
 	}
 	else
 		WriteLog("Error", "Could not find address of \"SetNmParameterFloat\"!");
 
-	adr = FindPattern("57 48 83 EC 20 48 8B D9 48 63 49 0C 49 8B E8") - 15;
+	adr = FindPattern("57 48 83 EC 20 48 8B D9 48 63 49 0C 49 8B E8");
 	if (adr)
 	{
-		WriteLog("Operation", "Found address of \"SetNmParameterString\" at 0x%X!", adr);
-		nUnsafe::SetNMMessageString = reinterpret_cast<bool(*)(ULONG_PTR, const char*, const char*)>(adr);
+		nUnsafe::SetNMMessageString = reinterpret_cast<bool(*)(ULONG_PTR, const char*, const char*)>(adr - 15);
+		WriteLog("Operation", "Found address of \"SetNmParameterString\" at 0x%X!", nUnsafe::SetNMMessageString);
 	}
 	else
 		WriteLog("Error", "Could not find address of \"SetNmParameterString\"!");
@@ -1056,8 +1060,8 @@ void GetGameFunctionsAddresses()
 	adr = FindPattern("40 53 48 83 EC 40 48 8B D9 48 63 49 0C");
 	if (adr)
 	{
-		WriteLog("Operation", "Found address of \"SetNmParameterVector\" at 0x%X!", adr);
 		nUnsafe::SetNMMessageVec3 = reinterpret_cast<bool(*)(ULONG_PTR, const char*, float, float, float)>(adr);
+		WriteLog("Operation", "Found address of \"SetNmParameterVector\" at 0x%X!", nUnsafe::SetNMMessageVec3);
 	}
 	else
 		WriteLog("Error", "Could not find address of \"SetNmParameterVector\"!");
@@ -1110,9 +1114,15 @@ void GivePedNMMessage(ULONG_PTR msgMemPtr, const Ped ped, const char* message)
 {
 	if (nUnsafe::GivePedNMMessage == nullptr)
 	{
+		if (msgMemPtr)
+			free(reinterpret_cast<void*>(msgMemPtr));
+
 		WriteLog("Error", "Script tried to access invalid function \"GivePedNMMessage\"!");
 		return;
 	}
+
+	if (!msgMemPtr)
+		return;
 
 	ULONG_PTR pedAddress = nGame::GetScriptEntity(ped);
 	if (!pedAddress)
@@ -1121,15 +1131,14 @@ void GivePedNMMessage(ULONG_PTR msgMemPtr, const Ped ped, const char* message)
 		return;
 	}
 
-	nGame::SetNMMessageBool(msgMemPtr, "start", true);
-
-	ULONG_PTR fragInstNmGtaAddress = *reinterpret_cast<ULONG_PTR*>(pedAddress + GetFragInstNmGtaOffset());
-	const char* messageString = message;
-	nUnsafe::GivePedNMMessage(fragInstNmGtaAddress, messageString, msgMemPtr);
+	nGame::SetNMMessageParam(msgMemPtr, "start", true);
+	
+	ULONG_PTR fragInstNmGtaAddress = *(reinterpret_cast<ULONG_PTR*>(pedAddress + nGame::GetFragInstNmGtaOffset()));
+	nUnsafe::GivePedNMMessage(fragInstNmGtaAddress, message, msgMemPtr);
 	free(reinterpret_cast<void*>(msgMemPtr));
 }
 
-void SetNMMessageInt(ULONG_PTR msgMemPtr, const char* message, int i)
+void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, int i)
 {
 	if (nUnsafe::SetNMMessageInt == nullptr)
 	{
@@ -1137,11 +1146,14 @@ void SetNMMessageInt(ULONG_PTR msgMemPtr, const char* message, int i)
 		return;
 	}
 
-	nUnsafe::SetNMMessageInt(msgMemPtr, message, i);
+	if (!msgMemPtr)
+		return;
+
+	nUnsafe::SetNMMessageInt(msgMemPtr, msgParam, i);
 	return;
 }
 
-void SetNMMessageBool(ULONG_PTR msgMemPtr, const char* message, bool b)
+void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, bool b)
 {
 	if (nUnsafe::SetNMMessageBool == nullptr)
 	{
@@ -1149,11 +1161,14 @@ void SetNMMessageBool(ULONG_PTR msgMemPtr, const char* message, bool b)
 		return;
 	}
 
-	nUnsafe::SetNMMessageInt(msgMemPtr, message, b);
+	if (!msgMemPtr)
+		return;
+
+	nUnsafe::SetNMMessageInt(msgMemPtr, msgParam, b);
 	return;
 }
 
-void SetNMMessageFloat(ULONG_PTR msgMemPtr, const char* message, float f)
+void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, float f)
 {
 	if (nUnsafe::SetNMMessageFloat == nullptr)
 	{
@@ -1161,11 +1176,14 @@ void SetNMMessageFloat(ULONG_PTR msgMemPtr, const char* message, float f)
 		return;
 	}
 
-	nUnsafe::SetNMMessageFloat(msgMemPtr, message, f);
+	if (!msgMemPtr)
+		return;
+
+	nUnsafe::SetNMMessageFloat(msgMemPtr, msgParam, f);
 	return;
 }
 
-void SetNMMessageString(ULONG_PTR msgMemPtr, const char* message, const char* str)
+void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, const char* str)
 {
 	if (nUnsafe::SetNMMessageString == nullptr)
 	{
@@ -1173,11 +1191,14 @@ void SetNMMessageString(ULONG_PTR msgMemPtr, const char* message, const char* st
 		return;
 	}
 
-	nUnsafe::SetNMMessageString(msgMemPtr, message, str);
+	if (!msgMemPtr)
+		return;
+
+	nUnsafe::SetNMMessageString(msgMemPtr, msgParam, str);
 	return;
 }
 
-void SetNMMessageVec3(ULONG_PTR msgMemPtr, const char* message, float x, float y, float z)
+void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, float x, float y, float z)
 {
 	if (nUnsafe::SetNMMessageVec3 == nullptr)
 	{
@@ -1185,7 +1206,10 @@ void SetNMMessageVec3(ULONG_PTR msgMemPtr, const char* message, float x, float y
 		return;
 	}
 
-	nUnsafe::SetNMMessageVec3(msgMemPtr, message, x, y, z);
+	if (!msgMemPtr)
+		return;
+
+	nUnsafe::SetNMMessageVec3(msgMemPtr, msgParam, x, y, z);
 	return;
 }
 }

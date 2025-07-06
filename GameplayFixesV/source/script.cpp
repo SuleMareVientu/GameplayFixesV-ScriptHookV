@@ -10,14 +10,19 @@
 #include "ini.h"
 #include "globals.h"
 
-char dllInstanceName[MAX_PATH];
-char dllInstanceNameNoExt[MAX_PATH];
-char dllInstanceIniName[MAX_PATH];
-char dllInstanceLogName[MAX_PATH];
-const char* GetDllInstanceName() { return dllInstanceName; }
-const char* GetDllInstanceNameNoExt() { return dllInstanceNameNoExt; }
-const char* GetDllInstanceIniName() { return dllInstanceIniName; }
-const char* GetDllInstanceLogName() { return dllInstanceLogName; }
+std::string dllInstanceName = "GameplayFixesV.asi";
+std::string dllInstanceNameNoExt = "GameplayFixesV";
+std::string dllInstanceIniName = "GameplayFixesV.ini";
+std::string dllInstanceLogName = "GameplayFixesV.log";
+int gameVersion = -1;
+bool isEnhancedVersion = false;
+
+const char* GetDllInstanceName() { return dllInstanceName.c_str(); }
+const char* GetDllInstanceNameNoExt() { return dllInstanceNameNoExt.c_str(); }
+const char* GetDllInstanceIniName() { return dllInstanceIniName.c_str(); }
+const char* GetDllInstanceLogName() { return dllInstanceLogName.c_str(); }
+const int GetGameVersion() { return gameVersion; }
+const bool GetIsEnhancedVersion() { return isEnhancedVersion; }
 
 static void update()
 {
@@ -39,16 +44,33 @@ void ScriptMain()
 {
 	//Initialize globals
 	const std::filesystem::path modulePath = AbsoluteModulePath(GetDllInstance());
-	strcpy_s(dllInstanceName, modulePath.filename().u8string().c_str());
-	strcpy_s(dllInstanceNameNoExt, modulePath.filename().replace_extension().u8string().c_str());
-	strcpy_s(dllInstanceIniName, dllInstanceNameNoExt); strcat_s(dllInstanceIniName, ".ini");
-	strcpy_s(dllInstanceLogName, dllInstanceNameNoExt); strcat_s(dllInstanceLogName, ".log");
+	dllInstanceName = modulePath.filename().u8string();
+	dllInstanceNameNoExt = modulePath.filename().replace_extension().u8string();
+	dllInstanceIniName = dllInstanceNameNoExt + ".ini";
+	dllInstanceLogName = dllInstanceNameNoExt + ".log";
+	gameVersion = getGameVersion();
+	std::filesystem::path gamePath = AbsoluteModulePath(GetModuleHandle(NULL));
+	if (std::filesystem::exists(gamePath.replace_filename("GTA5_Enhanced.exe")) ||
+		std::filesystem::exists(gamePath.replace_filename("GFSDK_Aftermath_Lib.x64.dll")) ||
+		std::filesystem::exists(gamePath.replace_filename("oo2core_5_win64.dll")))
+	{
+		isEnhancedVersion = true;
+	}
 
 	ReadINI();
-	SetupPedFunctions();
-	GetGameFunctionsAddresses();
-	ApplyExePatches();
 	srand(static_cast<unsigned int>(GetTickCount64()));
+
+	if (GetIsEnhancedVersion())
+	{
+		WriteLog("Info",
+			"Memory patches and associated functions are not currently available on the Enhanced version of the game."
+		);
+	}
+	else
+	{
+		GetGameFunctionsAddresses();
+		ApplyExePatches();
+	}
 
 	while (true)
 	{

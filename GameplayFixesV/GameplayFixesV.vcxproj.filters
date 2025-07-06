@@ -69,6 +69,9 @@
     <ClInclude Include="inc\options.h">
       <Filter>inc\utils</Filter>
     </ClInclude>
+    <ClInclude Include="inc\nm.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="utils">

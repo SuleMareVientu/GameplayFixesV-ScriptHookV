@@ -7,14 +7,8 @@
 #include "ini.h"
 #include "globals.h"
 
-typedef void (*pedFunc)(Ped);
-
 namespace
 {
-constexpr int arrSizePedFuncs = 10;
-pedFunc arrPedFuncs[arrSizePedFuncs];
-int countPedFuncs = NULL;
-
 inline void DisableWrithe(const Ped ped)
 {
 	EnablePedConfigFlag(ped, PCF_DisableGoToWritheWhenInjured);
@@ -110,38 +104,40 @@ inline void DisableDeadPedsJumpOutOfVehicle(const Ped ped)
 	EnablePedConfigFlag(ped, PCF_ForceDieInCar);
 	return;
 }
-
-void AddPedFuncToArr(pedFunc func)
-{
-	//Check that the number of functions doesn't exceed the size of the array
-	if (countPedFuncs < arrSizePedFuncs)
-		arrPedFuncs[countPedFuncs] = func;
-
-	++countPedFuncs;
-	return;
-}
 }
 
-//Using an array of functions saves us from checking ini bools for every ped
-void SetupPedFunctions()
+#define REGISTER_OPTION(mngr, opt, pedptr) mngr.RegisterOption(std::make_unique<PedOption>(iniValue(Ini::opt), [](Ped ped) { opt(ped); }, pedptr, #opt))
+#define REGISTER_OPTION_INI(mngr, opt, pedptr, nm) mngr.RegisterOption(std::make_unique<PedOption>(iniValue(Ini::nm), []() { opt(); }, pedptr, #opt))
+
+OptionManager pedOptionsManager;
+Ped initCurrentPed = 0;
+Ped* currentPedPtr = &initCurrentPed;	// ensure this is set after calling RegisterPedOptions
+void RegisterPedOptions()
 {
-	countPedFuncs = NULL;
-	if (Ini::DisableWrithe) AddPedFuncToArr(DisableWrithe);
-	if (Ini::DisableHurt) AddPedFuncToArr(DisableHurt);
-	if (Ini::DisableShootFromGround) AddPedFuncToArr(DisableShootFromGround);
-	if (Ini::DisableSittingPedsInstantDeath) AddPedFuncToArr(DisableSittingPedsInstantDeath);
-	if (Ini::DisarmPedWhenShot) AddPedFuncToArr(DisarmPedWhenShot);
-	if (Ini::DisablePedOnlyDamagedByPlayer) AddPedFuncToArr(DisablePedOnlyDamagedByPlayer);
-	if (Ini::DisableDeadPedsJumpOutOfVehicle) AddPedFuncToArr(DisableDeadPedsJumpOutOfVehicle);
+	pedOptionsManager.UnregisterAllOptions();
+
+	REGISTER_OPTION(pedOptionsManager, DisableWrithe, currentPedPtr);
+	REGISTER_OPTION(pedOptionsManager, DisableHurt, currentPedPtr);
+	REGISTER_OPTION(pedOptionsManager, DisableShootFromGround, currentPedPtr);
+	REGISTER_OPTION(pedOptionsManager, DisableSittingPedsInstantDeath, currentPedPtr);
+	REGISTER_OPTION(pedOptionsManager, DisarmPedWhenShot, currentPedPtr);
+	REGISTER_OPTION(pedOptionsManager, DisablePedOnlyDamagedByPlayer, currentPedPtr);
+	REGISTER_OPTION(pedOptionsManager, DisableDeadPedsJumpOutOfVehicle, currentPedPtr);
 	return;
 }
 
 //Heavy, uses gamepools
+bool hasRegisteredPedOptions = false;
 void UpdatePedsPool()
 {
+	if (!hasRegisteredPedOptions)
+	{
+		RegisterPedOptions();
+		hasRegisteredPedOptions = true;
+	}
+
 	//Get all peds
-	constexpr int ARR_SIZE = 1024;
-	Ped peds[ARR_SIZE];
+	constexpr int ARR_SIZE = 1024; Ped peds[ARR_SIZE];
 	const int count = worldGetAllPeds(peds, ARR_SIZE);
 
 	LOOP(i, count)
@@ -149,10 +145,8 @@ void UpdatePedsPool()
 		if (peds[i] == GetPlayerPed() || !IS_ENTITY_A_PED(peds[i]) || !IS_PED_HUMAN(peds[i]) || IS_ENTITY_DEAD(peds[i], false))
 			continue;
 
-		LOOP(j, countPedFuncs)
-		{
-			arrPedFuncs[j](peds[i]);
-		}
+		currentPedPtr = &peds[i];
+		pedOptionsManager.ApplyOptions();
 	}
 	return;
 }

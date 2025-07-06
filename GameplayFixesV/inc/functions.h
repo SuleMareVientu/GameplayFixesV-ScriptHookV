@@ -4,6 +4,7 @@
 #include <string>
 #include <filesystem>
 #include <script.h>
+#include "nm.h"
 #include <globals.h>
 
 class Timer {
@@ -195,14 +196,33 @@ ULONG_PTR GetScriptEntity(Entity entity);
 int GetFragInstNmGtaOffset();
 ULONG_PTR CreateNmMessage();
 void GivePedNMMessage(ULONG_PTR msgMemPtr, const Ped ped, const char* message);
-void SetNMMessageInt(ULONG_PTR msgMemPtr, const char* message, int i);
-void SetNMMessageBool(ULONG_PTR msgMemPtr, const char* message, bool b);
-void SetNMMessageFloat(ULONG_PTR msgMemPtr, const char* message, float f);
-void SetNMMessageString(ULONG_PTR msgMemPtr, const char* message, const char* str);
-void SetNMMessageVec3(ULONG_PTR msgMemPtr, const char* message, float x, float y, float z);
+void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, int i);
+void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, bool b);
+void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, float f);
+void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, const char* str);
+void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, float x, float y, float z);
+inline void GivePedNMMessage(ULONG_PTR msgMemPtr, const Ped ped, eNMStr message) { GivePedNMMessage(msgMemPtr, ped, NMStrings[message]); return; }
+inline void SetNMMessageParam(ULONG_PTR msgMemPtr, eNMStr msgParam, int i) { SetNMMessageParam(msgMemPtr, NMStrings[msgParam], i); return; }
+inline void SetNMMessageParam(ULONG_PTR msgMemPtr, eNMStr msgParam, bool b) { SetNMMessageParam(msgMemPtr, NMStrings[msgParam], b); return; }
+inline void SetNMMessageParam(ULONG_PTR msgMemPtr, eNMStr msgParam, float f) { SetNMMessageParam(msgMemPtr, NMStrings[msgParam], f); return; }
+inline void SetNMMessageParam(ULONG_PTR msgMemPtr, eNMStr msgParam, const char* str) { SetNMMessageParam(msgMemPtr, NMStrings[msgParam], str); return; }
+inline void SetNMMessageParam(ULONG_PTR msgMemPtr, eNMStr msgParam, float x, float y, float z) { SetNMMessageParam(msgMemPtr, NMStrings[msgParam], x, y, z); return; }
+/*
+void SetNMMessageInt(ULONG_PTR msgMemPtr, const char* msgParam, int i);
+void SetNMMessageBool(ULONG_PTR msgMemPtr, const char* msgParam, bool b);
+void SetNMMessageFloat(ULONG_PTR msgMemPtr, const char* msgParam, float f);
+void SetNMMessageString(ULONG_PTR msgMemPtr, const char* msgParam, const char* str);
+void SetNMMessageVec3(ULONG_PTR msgMemPtr, const char* msgParam, float x, float y, float z);
+inline void GivePedNMMessage(ULONG_PTR msgMemPtr, const Ped ped, eNMStr message) { GivePedNMMessage(msgMemPtr, ped, NMStrings[message]); return; }
+inline void SetNMMessageInt(ULONG_PTR msgMemPtr, eNMStr msgParam, int i) { SetNMMessageInt(msgMemPtr, NMStrings[msgParam], i); return; }
+inline void SetNMMessageBool(ULONG_PTR msgMemPtr, eNMStr msgParam, bool b) { SetNMMessageBool(msgMemPtr, NMStrings[msgParam], b); return; }
+inline void SetNMMessageFloat(ULONG_PTR msgMemPtr, eNMStr msgParam, float f) { SetNMMessageFloat(msgMemPtr, NMStrings[msgParam], f); return; }
+inline void SetNMMessageString(ULONG_PTR msgMemPtr, eNMStr msgParam, const char* str) { SetNMMessageString(msgMemPtr, NMStrings[msgParam], str); return; }
+inline void SetNMMessageVec3(ULONG_PTR msgMemPtr, eNMStr msgParam, float x, float y, float z) { SetNMMessageVec3(msgMemPtr, NMStrings[msgParam], x, y, z); return; }
+*/
 }
 #pragma endregion
 
-void ApplyExePatches();
 void GetGameFunctionsAddresses();
+void ApplyExePatches();
 void UpdatePlayerVars();
