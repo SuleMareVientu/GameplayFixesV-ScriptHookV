@@ -1,11 +1,11 @@
 #pragma once
-#include <Windows.h>
-#include <natives.h>
-#include <string>
-#include <filesystem>
+#include <shv\natives.h>
+#include <globals.h>
 #include <script.h>
 #include "nm.h"
-#include <globals.h>
+#include <Windows.h>
+#include <filesystem>
+
 
 class Timer {
 	int gameTimer = 0;
@@ -159,9 +159,121 @@ bool HasEntityBeenDamagedByWeaponThisFrame(Ped ped, Hash weaponHash, int weaponT
 //bool HasEntityBeenDamagedByAnyPedThisFrame(Ped ped);
 bool CanDisarmPed(Ped ped, bool includeLeftHand);
 int GetWeaponBlipSprite(const Hash weaponHash);
-bool WillWeaponSpawnPickupWhenDropped(const Hash weaponHash, const bool checkWeaponType);
+bool ShouldWeaponSpawnPickupWhenDropped(const Hash weaponHash, const bool checkWeaponType);
 void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse);
 void RestorePlayerRetrievedWeapon();
+
+static const std::unordered_map<unsigned int, unsigned int> wpPickupMap = {
+	{Joaat("W_SG_BULLPUPSHOTGUN"), Joaat("PICKUP_WEAPON_BULLPUPSHOTGUN")},
+	{Joaat("W_SB_ASSAULTSMG"), Joaat("PICKUP_WEAPON_ASSAULTSMG")},
+	{Joaat("W_PI_PISTOL50"), Joaat("PICKUP_WEAPON_PISTOL50")},
+	{Joaat("W_AR_ASSAULTRIFLE"), Joaat("PICKUP_WEAPON_ASSAULTRIFLE")},
+	{Joaat("W_AR_CARBINERIFLE"), Joaat("PICKUP_WEAPON_CARBINERIFLE")},
+	{Joaat("W_AR_ADVANCEDRIFLE"), Joaat("PICKUP_WEAPON_ADVANCEDRIFLE")},
+	{Joaat("W_MG_MG"), Joaat("PICKUP_WEAPON_MG")},
+	{Joaat("W_MG_COMBATMG"), Joaat("PICKUP_WEAPON_COMBATMG")},
+	{Joaat("W_SR_SNIPERRIFLE"), Joaat("PICKUP_WEAPON_SNIPERRIFLE")},
+	{Joaat("W_SR_HEAVYSNIPER"), Joaat("PICKUP_WEAPON_HEAVYSNIPER")},
+	{Joaat("W_SB_MICROSMG"), Joaat("PICKUP_WEAPON_MICROSMG")},
+	{Joaat("W_SB_SMG"), Joaat("PICKUP_WEAPON_SMG")},
+	{Joaat("W_LR_RPG"), Joaat("PICKUP_WEAPON_RPG")},
+	{Joaat("W_MG_Minigun"), Joaat("PICKUP_WEAPON_MINIGUN")},
+	{Joaat("W_SG_PUMPSHOTGUN"), Joaat("PICKUP_WEAPON_PUMPSHOTGUN")},
+	{Joaat("W_SG_SawnOff"), Joaat("PICKUP_WEAPON_SAWNOFFSHOTGUN")},
+	{Joaat("W_SG_ASSAULTSHOTGUN"), Joaat("PICKUP_WEAPON_ASSAULTSHOTGUN")},
+	{Joaat("W_EX_GRENADEFRAG"), Joaat("PICKUP_WEAPON_GRENADE")},
+	{Joaat("W_EX_MOLOTOV"), Joaat("PICKUP_WEAPON_MOLOTOV")},
+	{Joaat("W_EX_GRENADESMOKE"), Joaat("PICKUP_WEAPON_SMOKEGRENADE")},
+	{Joaat("W_EX_PE"), Joaat("PICKUP_WEAPON_STICKYBOMB")},
+	{Joaat("W_PI_PISTOL"), Joaat("PICKUP_WEAPON_PISTOL")},
+	{Joaat("W_PI_COMBATPISTOL"), Joaat("PICKUP_WEAPON_COMBATPISTOL")},
+	{Joaat("W_PI_APPISTOL"), Joaat("PICKUP_WEAPON_APPISTOL")},
+	{Joaat("W_LR_GRENADELAUNCHER"), Joaat("PICKUP_WEAPON_GRENADELAUNCHER")},
+	{Joaat("W_PI_STUNGUN"), Joaat("PICKUP_WEAPON_STUNGUN")},
+	{Joaat("W_AM_Jerrycan"), Joaat("PICKUP_WEAPON_PETROLCAN")},
+	{Joaat("W_ME_knife_01"), Joaat("PICKUP_WEAPON_KNIFE")},
+	{Joaat("W_ME_Nightstick"), Joaat("PICKUP_WEAPON_NIGHTSTICK")},
+	{Joaat("W_ME_Hammer"), Joaat("PICKUP_WEAPON_HAMMER")},
+	{Joaat("W_ME_Bat"), Joaat("PICKUP_WEAPON_BAT")},
+	{Joaat("W_ME_GClub"), Joaat("PICKUP_WEAPON_GolfClub")},
+	{Joaat("w_me_crowbar"), Joaat("PICKUP_WEAPON_CROWBAR")},
+	{Joaat("w_me_bottle"), Joaat("PICKUP_WEAPON_BOTTLE")},
+	{Joaat("w_pi_sns_pistol"), Joaat("PICKUP_WEAPON_SNSPISTOL")},
+	{Joaat("w_pi_heavypistol"), Joaat("PICKUP_WEAPON_HEAVYPISTOL")},
+	{Joaat("w_ar_specialcarbine"), Joaat("PICKUP_WEAPON_SPECIALCARBINE")},
+	{Joaat("w_ar_bullpuprifle"), Joaat("PICKUP_WEAPON_BULLPUPRIFLE")},
+	{Joaat("W_PI_RAYGUN"), Joaat("PICKUP_WEAPON_RAYPISTOL")},
+	{Joaat("W_AR_SRIFLE"), Joaat("PICKUP_WEAPON_RAYCARBINE")},
+	{Joaat("W_MG_SMINIGUN"), Joaat("PICKUP_WEAPON_RAYMINIGUN")},
+	{Joaat("W_AR_BullpupRifleMK2"), Joaat("PICKUP_WEAPON_BULLPUPRIFLE_MK2")},
+	{Joaat("W_PI_Wep1_Gun"), Joaat("PICKUP_WEAPON_DOUBLEACTION")},
+	{Joaat("w_sr_marksmanriflemk2"), Joaat("PICKUP_WEAPON_MARKSMANRIFLE_MK2")},
+	{Joaat("w_sg_pumpshotgunmk2"), Joaat("PICKUP_WEAPON_PUMPSHOTGUN_MK2")},
+	{Joaat("w_pi_revolvermk2"), Joaat("PICKUP_WEAPON_REVOLVER_MK2")},
+	{Joaat("W_PI_SNS_PistolMK2"), Joaat("PICKUP_WEAPON_SNSPISTOL_MK2")},
+	{Joaat("w_ar_specialcarbinemk2"), Joaat("PICKUP_WEAPON_SPECIALCARBINE_MK2")},
+	{Joaat("W_PI_Pistol_XM3"), Joaat("PICKUP_WEAPON_PISTOLXM3")},
+	{Joaat("W_ME_Candy_XM3"), Joaat("PICKUP_WEAPON_CANDYCANE")},
+	{Joaat("W_AR_RailGun_XM3"), Joaat("PICKUP_WEAPON_RAILGUNXM3")},
+	{Joaat("w_ex_apmine"), Joaat("PICKUP_WEAPON_PROXMINE")},
+	{Joaat("w_lr_homing"), Joaat("PICKUP_WEAPON_HOMINGLAUNCHER")},
+	{Joaat("w_ex_snowball"), Joaat("PICKUP_WEAPON_SNOWBALL")},
+	{Joaat("w_sb_gusenberg"), Joaat("PICKUP_WEAPON_GUSENBERG")},
+	{Joaat("w_me_dagger"), Joaat("PICKUP_WEAPON_DAGGER")},
+	{Joaat("w_pi_vintage_pistol"), Joaat("PICKUP_WEAPON_VINTAGEPISTOL")},
+	{Joaat("W_LR_FIREWORK"), Joaat("PICKUP_WEAPON_FIREWORK")},
+	{Joaat("w_ar_musket"), Joaat("PICKUP_WEAPON_MUSKET")},
+	{Joaat("w_me_hatchet"), Joaat("PICKUP_WEAPON_HATCHET")},
+	{Joaat("w_ar_railgun"), Joaat("PICKUP_WEAPON_RAILGUN")},
+	{Joaat("w_sg_heavyshotgun"), Joaat("PICKUP_WEAPON_HEAVYSHOTGUN")},
+	{Joaat("w_sr_marksmanrifle"), Joaat("PICKUP_WEAPON_MARKSMANRIFLE")},
+	{Joaat("w_sg_pumpshotgunh4"), Joaat("PICKUP_WEAPON_COMBATSHOTGUN")},
+	{Joaat("w_pi_singleshoth4"), Joaat("PICKUP_WEAPON_GADGETPISTOL")},
+	{Joaat("w_ar_bullpuprifleh4"), Joaat("PICKUP_WEAPON_MILITARYRIFLE")},
+	{Joaat("w_pi_ceramic_pistol"), Joaat("PICKUP_WEAPON_CERAMICPISTOL")},
+	{Joaat("w_ch_jerrycan"), Joaat("PICKUP_WEAPON_HAZARDCAN")},
+	{Joaat("w_pi_wep2_gun"), Joaat("PICKUP_WEAPON_NAVYREVOLVER")},
+	{Joaat("w_pi_flaregun"), Joaat("PICKUP_WEAPON_FLAREGUN")},
+	{Joaat("W_SB_PDW"), Joaat("PICKUP_WEAPON_COMBATPDW")},
+	{Joaat("W_ME_Knuckle"), Joaat("PICKUP_WEAPON_KNUCKLE")},
+	{Joaat("W_PI_SingleShot"), Joaat("PICKUP_WEAPON_MARKSMANPISTOL")},
+	{Joaat("w_ar_assaultrifle_smg"), Joaat("PICKUP_WEAPON_COMPACTRIFLE")},
+	{Joaat("w_sg_doublebarrel"), Joaat("PICKUP_WEAPON_DBSHOTGUN")},
+	{Joaat("w_me_machette_lr"), Joaat("PICKUP_WEAPON_MACHETE")},
+	{Joaat("W_SB_CompactSMG"), Joaat("PICKUP_WEAPON_MACHINEPISTOL")},
+	{Joaat("w_me_flashlight"), Joaat("PICKUP_WEAPON_FLASHLIGHT")},
+	{Joaat("w_pi_revolver"), Joaat("PICKUP_WEAPON_REVOLVER")},
+	{Joaat("w_me_switchblade"), Joaat("PICKUP_WEAPON_SWITCHBLADE")},
+	{Joaat("w_sg_sweeper"), Joaat("PICKUP_WEAPON_AUTOSHOTGUN")},
+	{Joaat("w_me_battleaxe"), Joaat("PICKUP_WEAPON_BATTLEAXE")},
+	{Joaat("w_lr_compactgl"), Joaat("PICKUP_WEAPON_COMPACTLAUNCHER")},
+	{Joaat("w_sb_minismg"), Joaat("PICKUP_WEAPON_MINISMG")},
+	{Joaat("w_ex_pipebomb"), Joaat("PICKUP_WEAPON_PIPEBOMB")},
+	{Joaat("w_me_poolcue"), Joaat("PICKUP_WEAPON_POOLCUE")},
+	{Joaat("w_me_wrench"), Joaat("PICKUP_WEAPON_WRENCH")},
+	{Joaat("W_AR_ASSAULTRIFLEMK2"), Joaat("PICKUP_WEAPON_ASSAULTRIFLE_MK2")},
+	{Joaat("W_AR_CARBINERIFLEMK2"), Joaat("PICKUP_WEAPON_CARBINERIFLE_MK2")},
+	{Joaat("W_MG_COMBATMGMK2"), Joaat("PICKUP_WEAPON_COMBATMG_MK2")},
+	{Joaat("W_SR_HEAVYSNIPERMK2"), Joaat("PICKUP_WEAPON_HEAVYSNIPER_MK2")},
+	{Joaat("W_PI_PISTOLMK2"), Joaat("PICKUP_WEAPON_PISTOL_MK2")},
+	{Joaat("W_SB_SMGMK2"), Joaat("PICKUP_WEAPON_SMG_MK2")},
+	{Joaat("w_me_Stonehatchet"), Joaat("PICKUP_WEAPON_STONE_HATCHET")},
+	{Joaat("W_AM_Digiscanner_REH"), Joaat("PICKUP_WEAPON_METALDETECTOR")},
+	{Joaat("W_AR_CarbineRifle_REH"), Joaat("PICKUP_WEAPON_TACTICALRIFLE")},
+	{Joaat("W_SR_PrecisionRifle_REH"), Joaat("PICKUP_WEAPON_PRECISIONRIFLE")},
+	{Joaat("W_LR_CompactML"), Joaat("PICKUP_WEAPON_EMPLAUNCHER")},
+	{Joaat("W_AR_HEAVYRIFLEH"), Joaat("PICKUP_WEAPON_HEAVYRIFLE")},
+	{Joaat("W_AM_Jerrycan"), Joaat("PICKUP_WEAPON_PETROLCAN_SMALL_RADIUS")},
+	{Joaat("W_AM_Jerrycan_SF"), Joaat("PICKUP_WEAPON_FERTILIZERCAN")},
+	{Joaat("W_PI_STUNGUN"), Joaat("PICKUP_WEAPON_STUNGUN_MP")},
+	{Joaat("W_PI_PistolSMG_M31"), Joaat("PICKUP_WEAPON_TECPISTOL")},
+	{Joaat("W_SL_BattleRifle_M32"), Joaat("PICKUP_WEAPON_BATTLERIFLE")},
+	{Joaat("W_LR_CompactSL_M32"), Joaat("PICKUP_WEAPON_SNOWLAUNCHER")},
+	{Joaat("W_AM_HackDevice_M32"), Joaat("PICKUP_WEAPON_HACKINGDEVICE")},
+	{Joaat("W_ME_Rod_M41"), Joaat("PICKUP_WEAPON_STUNROD")},
+	{Joaat("W_AR_BullpupRifleM42"), Joaat("PICKUP_WEAPON_STRICKLER")}
+};
+Hash GetPickupTypeFromWeaponModel(const Hash wpModel);
 #pragma endregion
 
 #pragma region Vehicle
@@ -190,23 +302,26 @@ inline int GetNumberOfScriptInstances(const char* name) { return (GET_NUMBER_OF_
 #pragma endregion
 
 #pragma region Game Functions
+typedef std::unique_ptr<unsigned char[]> NmMessage;
+typedef unsigned char* NmMessagePtr;
+
 namespace nGame
 {
 ULONG_PTR GetScriptEntity(Entity entity);
 int GetFragInstNmGtaOffset();
-ULONG_PTR CreateNmMessage();
-void GivePedNMMessage(ULONG_PTR msgMemPtr, const Ped ped, const char* message);
-void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, int i);
-void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, bool b);
-void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, float f);
-void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, const char* str);
-void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, float x, float y, float z);
-inline void GivePedNMMessage(ULONG_PTR msgMemPtr, const Ped ped, eNMStr message) { GivePedNMMessage(msgMemPtr, ped, NMStrings[message]); return; }
-inline void SetNMMessageParam(ULONG_PTR msgMemPtr, eNMStr msgParam, int i) { SetNMMessageParam(msgMemPtr, NMStrings[msgParam], i); return; }
-inline void SetNMMessageParam(ULONG_PTR msgMemPtr, eNMStr msgParam, bool b) { SetNMMessageParam(msgMemPtr, NMStrings[msgParam], b); return; }
-inline void SetNMMessageParam(ULONG_PTR msgMemPtr, eNMStr msgParam, float f) { SetNMMessageParam(msgMemPtr, NMStrings[msgParam], f); return; }
-inline void SetNMMessageParam(ULONG_PTR msgMemPtr, eNMStr msgParam, const char* str) { SetNMMessageParam(msgMemPtr, NMStrings[msgParam], str); return; }
-inline void SetNMMessageParam(ULONG_PTR msgMemPtr, eNMStr msgParam, float x, float y, float z) { SetNMMessageParam(msgMemPtr, NMStrings[msgParam], x, y, z); return; }
+NmMessage CreateNmMessage();
+void GivePedNMMessage(NmMessage msgPtr, const Ped ped, const char* message);
+void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, int i);
+void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, bool b);
+void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, float f);
+void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, const char* str);
+void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, float x, float y, float z);
+inline void GivePedNMMessage(NmMessage msgPtr, const Ped ped, eNMStr message) { GivePedNMMessage(std::move(msgPtr), ped, NMStrings[message]); return; }
+inline void SetNMMessageParam(NmMessagePtr msgPtr, eNMStr msgParam, int i) { SetNMMessageParam(msgPtr, NMStrings[msgParam], i); return; }
+inline void SetNMMessageParam(NmMessagePtr msgPtr, eNMStr msgParam, bool b) { SetNMMessageParam(msgPtr, NMStrings[msgParam], b); return; }
+inline void SetNMMessageParam(NmMessagePtr msgPtr, eNMStr msgParam, float f) { SetNMMessageParam(msgPtr, NMStrings[msgParam], f); return; }
+inline void SetNMMessageParam(NmMessagePtr msgPtr, eNMStr msgParam, const char* str) { SetNMMessageParam(msgPtr, NMStrings[msgParam], str); return; }
+inline void SetNMMessageParam(NmMessagePtr msgPtr, eNMStr msgParam, float x, float y, float z) { SetNMMessageParam(msgPtr, NMStrings[msgParam], x, y, z); return; }
 /*
 void SetNMMessageInt(ULONG_PTR msgMemPtr, const char* msgParam, int i);
 void SetNMMessageBool(ULONG_PTR msgMemPtr, const char* msgParam, bool b);

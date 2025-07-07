@@ -1,6 +1,6 @@
 //ScriptHook
-#include <natives.h>
-// #include <types.h> //Already included in globals.h
+#include <shv\natives.h>
+#include <shv\types.h>
 
 //std
 #include <sstream>
@@ -17,11 +17,11 @@
 #include <Psapi.h>
 
 //Custom
-#include "options.h"
-#include "functions.h"
-#include "keyboard.h"
-#include "ini.h"
-#include "peds.h"
+#include "utils\player.h"
+#include "utils\functions.h"
+#include "utils\keyboard.h"
+#include "utils\ini.h"
+#include "utils\peds.h"
 
 /////////////////////////////////////////////Player//////////////////////////////////////////////
 namespace nGeneral
@@ -217,7 +217,7 @@ void DisarmPlayerWhenShot()
 	if (CanDisarmPed(GetPlayerPed(), true) || HasEntityBeenDamagedByWeaponThisFrame(GetPlayerPed(), WEAPON_STUNGUN, GENERALWEAPON_TYPE_INVALID))
 	{
 		Hash wp = NULL; GET_CURRENT_PED_WEAPON(GetPlayerPed(), &wp, false);
-		if (WillWeaponSpawnPickupWhenDropped(wp, true))
+		if (ShouldWeaponSpawnPickupWhenDropped(wp, true))
 			DropPlayerWeapon(wp, true);
 	}
 	return;
@@ -233,7 +233,7 @@ void DropPlayerWeaponWhenRagdolling()
 
 	if (tmp == lastRagdollWp)
 	{
-		if (IS_PED_RAGDOLL(GetPlayerPed()) && WillWeaponSpawnPickupWhenDropped(lastRagdollWp, true))
+		if (IS_PED_RAGDOLL(GetPlayerPed()) && ShouldWeaponSpawnPickupWhenDropped(lastRagdollWp, true))
 			DropPlayerWeapon(lastRagdollWp, false);
 	}
 
@@ -535,31 +535,36 @@ void DisableFirstPersonView()
 
 	if (IS_FOLLOW_VEHICLE_CAM_ACTIVE())
 	{
-		const bool isUsingHoodCam = GET_IS_USING_HOOD_CAMERA();	//Requires b372
-		const int vehModel = GET_ENTITY_MODEL(GetVehiclePedIsUsing(GetPlayerPed()));
-		if (IS_THIS_MODEL_A_CAR(vehModel) || (IS_THIS_MODEL_A_BOAT(vehModel) && !IS_THIS_MODEL_A_JETSKI(vehModel)) ||
-			IS_THIS_MODEL_A_PLANE(vehModel) || IS_THIS_MODEL_A_HELI(vehModel))
+		if (GetGameVersion() >= VER_1_0_372_2_STEAM)
 		{
-			if (wasUsingHoodCam && isUsingHoodCam)
-				SET_FOLLOW_VEHICLE_CAM_VIEW_MODE(CAM_VIEW_MODE_FIRST_PERSON);
-
-			if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_NEXT_CAMERA))
+			const bool isUsingHoodCam = GET_IS_USING_HOOD_CAMERA();	//Requires b372
+			const int vehModel = GET_ENTITY_MODEL(GetVehiclePedIsUsing(GetPlayerPed()));
+			if (IS_THIS_MODEL_A_CAR(vehModel) || (IS_THIS_MODEL_A_BOAT(vehModel) && !IS_THIS_MODEL_A_JETSKI(vehModel)) ||
+				IS_THIS_MODEL_A_PLANE(vehModel) || IS_THIS_MODEL_A_HELI(vehModel))
 			{
-				if (GET_FOLLOW_VEHICLE_CAM_VIEW_MODE() == CAM_VIEW_MODE_THIRD_PERSON_FAR)
-					wasUsingHoodCam = true;
-				else
-					wasUsingHoodCam = false;
+				if (wasUsingHoodCam && isUsingHoodCam)
+					SET_FOLLOW_VEHICLE_CAM_VIEW_MODE(CAM_VIEW_MODE_FIRST_PERSON);
+
+				if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_NEXT_CAMERA))
+				{
+					if (GET_FOLLOW_VEHICLE_CAM_VIEW_MODE() == CAM_VIEW_MODE_THIRD_PERSON_FAR)
+						wasUsingHoodCam = true;
+					else
+						wasUsingHoodCam = false;
+				}
+
+				if (isUsingHoodCam && !GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
+					return;
 			}
 
-			if (isUsingHoodCam && !GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
-				return;
+			if (GET_FOLLOW_VEHICLE_CAM_VIEW_MODE() == CAM_VIEW_MODE_FIRST_PERSON && !GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
+			{
+				wasUsingHoodCam = false;
+				SET_FOLLOW_VEHICLE_CAM_VIEW_MODE(CAM_VIEW_MODE_THIRD_PERSON_NEAR);
+			}
 		}
-
-		if (GET_FOLLOW_VEHICLE_CAM_VIEW_MODE() == CAM_VIEW_MODE_FIRST_PERSON && !GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
-		{
-			wasUsingHoodCam = false;
+		else
 			SET_FOLLOW_VEHICLE_CAM_VIEW_MODE(CAM_VIEW_MODE_THIRD_PERSON_NEAR);
-		}
 	}
 
 	DISABLE_ON_FOOT_FIRST_PERSON_VIEW_THIS_UPDATE(); //Also works in vehicles
@@ -911,27 +916,20 @@ void KeepCarHydraulicsPosition()
 	return;
 }
 
-std::set<Vehicle> VehBrakeLights;
-void EnableBrakeLightsOnStoppedVehicles()
+void EnableBrakeLightsOnStoppedVehicle()
 {
 	const Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
-	if (DOES_ENTITY_EXIST(veh))
-	{
-		Hash model = GET_ENTITY_MODEL(veh);
-		if (IS_THIS_MODEL_A_CAR(model) || (IS_THIS_MODEL_A_BIKE(model) && !IS_THIS_MODEL_A_BICYCLE(model))
-			|| IS_THIS_MODEL_A_QUADBIKE(model))
-		{
-			VehBrakeLights.insert(veh);
-		}
-	}
+	if (!DOES_ENTITY_EXIST(veh))
+		return;
 
-	for (Vehicle itr : VehBrakeLights)
-	{
-		if (!DOES_ENTITY_EXIST(itr))
-			VehBrakeLights.erase(itr);
-		else if (GET_IS_VEHICLE_ENGINE_RUNNING(itr) && IS_VEHICLE_STOPPED(itr))
-			SET_VEHICLE_BRAKE_LIGHTS(itr, true);
-	}
+	const Hash model = GET_ENTITY_MODEL(veh);
+	if (!IS_THIS_MODEL_A_CAR(model) && !(IS_THIS_MODEL_A_BIKE(model) && !IS_THIS_MODEL_A_BICYCLE(model))
+		&& !IS_THIS_MODEL_A_QUADBIKE(model))
+		return;
+
+	if (GET_IS_VEHICLE_ENGINE_RUNNING(veh) && IS_VEHICLE_STOPPED(veh))
+		SET_VEHICLE_BRAKE_LIGHTS(veh, true);
+
 	return;
 }
 
@@ -1214,7 +1212,16 @@ void AlwaysHideAbilityBar()
 
 void HideAbilityBarForNonMainCharacters()
 {
-	if (IS_SPECIAL_ABILITY_ENABLED(GetPlayer(), 0) || DoesVehicleHaveAbility(GetVehiclePedIsIn(GetPlayerPed())))
+	bool res = false;
+	if (IS_SPECIAL_ABILITY_ENABLED(GetPlayer(), 0))
+		res = true;
+	else if (GetGameVersion() >= VER_1_0_944_2_STEAM)
+	{
+		if (DoesVehicleHaveAbility(GetVehiclePedIsIn(GetPlayerPed())))
+			res = true;
+	}
+
+	if (res)
 	{
 		if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "MULTIPLAYER_IS_ACTIVE"))
 		{
@@ -1222,8 +1229,10 @@ void HideAbilityBarForNonMainCharacters()
 			SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
 			END_SCALEFORM_MOVIE_METHOD();
 		}
+		return;
 	}
-	else if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER"))
+
+	if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER"))
 	{
 		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
 		END_SCALEFORM_MOVIE_METHOD();
@@ -1276,7 +1285,7 @@ void HideHudComponents()
 {
 	if (!InitializedHideHudComponents)
 	{
-		SplitString(Ini::HudComponents, hudComponentsStrArr, MAX_HUD_COMPONENTS, true);
+		SplitString(Ini::HudComponents.c_str(), hudComponentsStrArr, MAX_HUD_COMPONENTS, true);
 		LOOP(i, MAX_HUD_COMPONENTS)
 		{
 			if (!hudComponentsStrArr[i].empty())
@@ -1355,7 +1364,7 @@ void MuteSounds()
 {
 	if (!InitializedMuteSounds)
 	{
-		SplitString(Ini::Sounds, mutedSoundsArr, maxMutedSounds, true);
+		SplitString(Ini::Sounds.c_str(), mutedSoundsArr, maxMutedSounds, true);
 		LOOP(i, maxMutedSounds)
 		{
 			if (mutedSoundsArr[i].empty())
@@ -1450,92 +1459,91 @@ void DisableWorldPopulation()
 }
 }
 
-#define REGISTER_OPTION(mngr, opt, nspace) mngr.RegisterOption(std::make_unique<PlayerOption>(iniValue(Ini::opt), []() { nspace::opt(); }, #opt))
-#define REGISTER_OPTION_INI(mngr, opt, nspace, nm) mngr.RegisterOption(std::make_unique<PlayerOption>(iniValue(Ini::nm), []() { nspace::opt(); }, #opt))
+#define REGISTER_OPTION(mngr, opt, nspace, minVer, en) mngr.RegisterOption(std::make_unique<PlayerOption>(iniValue(Ini::opt), minVer, en, []() { nspace::opt(); }, #opt))
+#define REGISTER_OPTION_INI(mngr, opt, nspace, nm, minVer, en) mngr.RegisterOption(std::make_unique<PlayerOption>(iniValue(Ini::nm), minVer, en, []() { nspace::opt(); }, #opt))
 
 OptionManager playerOptionsManager;
 void RegisterPlayerOptions()
 {
 	playerOptionsManager.UnregisterAllOptions();
 
-	REGISTER_OPTION(playerOptionsManager, EnableCrouching, nGeneral);
-	REGISTER_OPTION(playerOptionsManager, FriendlyFire, nGeneral);
-	REGISTER_OPTION(playerOptionsManager, EnableStealthForAllPeds, nGeneral);
-	REGISTER_OPTION(playerOptionsManager, DisableActionMode, nGeneral);
-	REGISTER_OPTION(playerOptionsManager, DisarmPlayerWhenShot, nGeneral);
-	REGISTER_OPTION(playerOptionsManager, DropPlayerWeaponWhenRagdolling, nGeneral);
-	REGISTER_OPTION(playerOptionsManager, DynamicallyCleanWoundsAndDirt, nGeneral);
-	REGISTER_OPTION_INI(playerOptionsManager, EnableSprintInsideInteriors, nGeneral, SprintInsideInteriors);
-	REGISTER_OPTION(playerOptionsManager, AllowWeaponsInsideSafeHouse, nGeneral);
-	REGISTER_OPTION(playerOptionsManager, SilentWanted, nGeneral);
+	REGISTER_OPTION(playerOptionsManager, EnableCrouching, nGeneral, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, FriendlyFire, nGeneral, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, EnableStealthForAllPeds, nGeneral, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableActionMode, nGeneral, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisarmPlayerWhenShot, nGeneral, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DropPlayerWeaponWhenRagdolling, nGeneral, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DynamicallyCleanWoundsAndDirt, nGeneral, VER_UNK, true);
+	REGISTER_OPTION_INI(playerOptionsManager, EnableSprintInsideInteriors, nGeneral, SprintInsideInteriors, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, AllowWeaponsInsideSafeHouse, nGeneral, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, SilentWanted, nGeneral, VER_UNK, true);
 
 	//////////////////////////////////////Player Controls//////////////////////////////////
-	REGISTER_OPTION(playerOptionsManager, DisableAssistedMovement, nControls);
-	REGISTER_OPTION(playerOptionsManager, ToggleFPSWalking, nControls);
-	REGISTER_OPTION(playerOptionsManager, DisableCameraAutoCenter, nControls);
-	REGISTER_OPTION(playerOptionsManager, CamFollowVehicleDuringHandbrake, nControls);
-	REGISTER_OPTION(playerOptionsManager, DisableFirstPersonView, nControls);
-	REGISTER_OPTION(playerOptionsManager, DisableIdleCamera, nControls);
-	REGISTER_OPTION(playerOptionsManager, DisableRecording, nControls);
-	REGISTER_OPTION(playerOptionsManager, DisableMobilePhone, nControls);
+	REGISTER_OPTION(playerOptionsManager, DisableAssistedMovement, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, ToggleFPSWalking, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableCameraAutoCenter, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, CamFollowVehicleDuringHandbrake, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableFirstPersonView, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableIdleCamera, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableRecording, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableMobilePhone, nControls, VER_UNK, true);
 
 	//////////////////////////////////////Player Vehicle///////////////////////////////////
-	REGISTER_OPTION(playerOptionsManager, DisableCarMidAirAndRollControl, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableForcedCarExplosionOnImpact, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableEngineSmoke, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableEngineFire, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, LeaveEngineOnWhenExitingVehicles, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableWheelsAutoCenterOnCarExit, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, KeepCarHydraulicsPosition, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, EnableBrakeLightsOnStoppedVehicles, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, EnableHeliWaterPhysics, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableRagdollOnVehicleRoof, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableDragOutCar, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableFlyThroughWindscreen, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableBikeKnockOff, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableShallowWaterBikeJumpOut, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableVehicleJitter, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableAirVehicleTurbulence, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableAutoEquipHelmets, nVehicle);
-	REGISTER_OPTION(playerOptionsManager, DisableStuntJumps, nVehicle);
+	REGISTER_OPTION(playerOptionsManager, DisableCarMidAirAndRollControl, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableForcedCarExplosionOnImpact, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableEngineSmoke, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableEngineFire, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, LeaveEngineOnWhenExitingVehicles, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableWheelsAutoCenterOnCarExit, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, KeepCarHydraulicsPosition, nVehicle, VER_1_0_2372_0_STEAM, true);
+	REGISTER_OPTION(playerOptionsManager, EnableBrakeLightsOnStoppedVehicle, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, EnableHeliWaterPhysics, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableRagdollOnVehicleRoof, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableDragOutCar, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableFlyThroughWindscreen, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableBikeKnockOff, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableShallowWaterBikeJumpOut, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableVehicleJitter, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableAirVehicleTurbulence, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableAutoEquipHelmets, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableStuntJumps, nVehicle, VER_UNK, true);
 
 	///////////////////////////////////////////HUD/////////////////////////////////////////
-	REGISTER_OPTION(playerOptionsManager, AllowGameExecutionOnPauseMenu, nHUD);
-	REGISTER_OPTION(playerOptionsManager, DisableHUDPostFX, nHUD);
-	REGISTER_OPTION(playerOptionsManager, DisablePauseMenuPostFX, nHUD);
-	REGISTER_OPTION(playerOptionsManager, DisableSpecialAbilityPostFX, nHUD);
-	REGISTER_OPTION(playerOptionsManager, EnableBigMapToggle, nHUD);
-	REGISTER_OPTION(playerOptionsManager, MinimapSpeedometer, nHUD);
-	REGISTER_OPTION(playerOptionsManager, SetRadarZoom, nHUD);
-	REGISTER_OPTION(playerOptionsManager, DisableMinimapTilt, nHUD);
-	REGISTER_OPTION(playerOptionsManager, HideMinimapFog, nHUD);
-	REGISTER_OPTION_INI(playerOptionsManager, HideSatNav, nHUD, HideMinimapSatNav);
-	REGISTER_OPTION(playerOptionsManager, HideMinimapDepth, nHUD);
-	if (REGISTER_OPTION(playerOptionsManager, HideMinimapBars, nHUD))
+	REGISTER_OPTION(playerOptionsManager, AllowGameExecutionOnPauseMenu, nHUD, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableHUDPostFX, nHUD, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisablePauseMenuPostFX, nHUD, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableSpecialAbilityPostFX, nHUD, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, EnableBigMapToggle, nHUD, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, MinimapSpeedometer, nHUD, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, SetRadarZoom, nHUD, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableMinimapTilt, nHUD, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, HideMinimapFog, nHUD, VER_UNK, true);
+	REGISTER_OPTION_INI(playerOptionsManager, HideSatNav, nHUD, HideMinimapSatNav, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, HideMinimapDepth, nHUD, VER_UNK, true);
+	if (REGISTER_OPTION(playerOptionsManager, HideMinimapBars, nHUD, VER_UNK, true))
 	{
-		if (!REGISTER_OPTION(playerOptionsManager, AlwaysHideAbilityBar, nHUD))
+		if (!REGISTER_OPTION(playerOptionsManager, AlwaysHideAbilityBar, nHUD, VER_UNK, true))
 		{
-			REGISTER_OPTION(playerOptionsManager, HideAbilityBarForNonMainCharacters, nHUD);
+			REGISTER_OPTION(playerOptionsManager, HideAbilityBarForNonMainCharacters, nHUD, VER_UNK, true);
 		}
-		REGISTER_OPTION(playerOptionsManager, ReplaceArmourBarWithStamina, nHUD);
+		REGISTER_OPTION(playerOptionsManager, ReplaceArmourBarWithStamina, nHUD, VER_UNK, true);
 	}
-	REGISTER_OPTION(playerOptionsManager, HideHudComponents, nHUD);
-	REGISTER_OPTION(playerOptionsManager, HideWeaponReticle, nHUD);
-	REGISTER_OPTION(playerOptionsManager, HideEnemiesBlips, nHUD);
+	REGISTER_OPTION(playerOptionsManager, HideHudComponents, nHUD, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, HideWeaponReticle, nHUD, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, HideEnemiesBlips, nHUD, VER_UNK, true);
 
 	//////////////////////////////////////////Audio////////////////////////////////////////
-
-	REGISTER_OPTION(playerOptionsManager, DisableWantedMusic, nAudio);
-	REGISTER_OPTION(playerOptionsManager, DisablePoliceScanner, nAudio);
-	REGISTER_OPTION_INI(playerOptionsManager, DisableFlightMusic, nAudio, DisableFlyingMusic);
-	REGISTER_OPTION_INI(playerOptionsManager, SetRadiosMusicOnly, nAudio, DisableRadioInterruptions);
-	REGISTER_OPTION(playerOptionsManager, MuteSounds, nAudio);
-	REGISTER_OPTION(playerOptionsManager, MuteArtificialAmbientSounds, nAudio);
-	REGISTER_OPTION(playerOptionsManager, DisablePlayerPainAudio, nAudio);
+	REGISTER_OPTION(playerOptionsManager, DisableWantedMusic, nAudio, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisablePoliceScanner, nAudio, VER_UNK, true);
+	REGISTER_OPTION_INI(playerOptionsManager, DisableFlightMusic, nAudio, DisableFlyingMusic, VER_UNK, true);
+	REGISTER_OPTION_INI(playerOptionsManager, SetRadiosMusicOnly, nAudio, DisableRadioInterruptions, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, MuteSounds, nAudio, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, MuteArtificialAmbientSounds, nAudio, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisablePlayerPainAudio, nAudio, VER_UNK, true);
 
 	//////////////////////////////////////////Peds/////////////////////////////////////////
-	REGISTER_OPTION(playerOptionsManager, DisableScenarios, nPeds);
-	REGISTER_OPTION(playerOptionsManager, DisableWorldPopulation, nPeds);
+	REGISTER_OPTION(playerOptionsManager, DisableScenarios, nPeds, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableWorldPopulation, nPeds, VER_UNK, true);
 	return;
 }
 

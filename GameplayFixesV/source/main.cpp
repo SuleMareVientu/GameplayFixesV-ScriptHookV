@@ -1,6 +1,6 @@
 #include <main.h>
 #include <script.h>
-#include "keyboard.h"
+#include "utils\keyboard.h"
 #include "globals.h"
 
 HINSTANCE dllInstance = nullptr;

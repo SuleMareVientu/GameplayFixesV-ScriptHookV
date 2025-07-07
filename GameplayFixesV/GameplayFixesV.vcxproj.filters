@@ -15,7 +15,7 @@
     <ClCompile Include="source\utils\keyboard.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="source\utils\options.cpp">
+    <ClCompile Include="source\utils\player.cpp">
       <Filter>utils</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,48 +29,69 @@
     <ClInclude Include="inc\globals.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="inc\functions.h">
-      <Filter>inc\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\ini.h">
-      <Filter>inc\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\enums.h">
-      <Filter>inc\shv</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\natives.h">
-      <Filter>inc\shv</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\nativeCaller.h">
-      <Filter>inc\shv</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\types.h">
-      <Filter>inc\shv</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\json.hpp">
-      <Filter>inc\libs</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\json_fwd.hpp">
-      <Filter>inc\libs</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\SimpleIni.h">
-      <Filter>inc\libs</Filter>
-    </ClInclude>
     <ClInclude Include="inc\script.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="inc\peds.h">
-      <Filter>inc\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\keyboard.h">
-      <Filter>inc\utils</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h" />
-    <ClInclude Include="inc\options.h">
-      <Filter>inc\utils</Filter>
-    </ClInclude>
     <ClInclude Include="inc\nm.h">
       <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\libs\json.hpp">
+      <Filter>inc\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\libs\json_fwd.hpp">
+      <Filter>inc\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\libs\SimpleIni.h">
+      <Filter>inc\libs</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\libs\pattern16\Pattern16.h">
+      <Filter>inc\libs\pattern16</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\libs\pattern16\pfreq.h">
+      <Filter>inc\libs\pattern16</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\libs\pattern16\util.h">
+      <Filter>inc\libs\pattern16</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\libs\pattern16\scanners\base.h">
+      <Filter>inc\libs\pattern16\scanners</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\libs\pattern16\scanners\x64\AVX.h">
+      <Filter>inc\libs\pattern16\scanners\x64</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\libs\pattern16\scanners\x64\SSE.h">
+      <Filter>inc\libs\pattern16\scanners\x64</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\libs\pattern16\scanners\x64\x64.h">
+      <Filter>inc\libs\pattern16\scanners\x64</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\shv\enums.h">
+      <Filter>inc\shv</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\shv\nativeCaller.h">
+      <Filter>inc\shv</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\shv\natives.h">
+      <Filter>inc\shv</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\shv\types.h">
+      <Filter>inc\shv</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\utils\functions.h">
+      <Filter>inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\utils\ini.h">
+      <Filter>inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\utils\keyboard.h">
+      <Filter>inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\utils\player.h">
+      <Filter>inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\utils\peds.h">
+      <Filter>inc\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -92,10 +113,22 @@
     <Filter Include="inc\shv">
       <UniqueIdentifier>{cf956610-ffac-4f90-96af-7f88015ba871}</UniqueIdentifier>
     </Filter>
+    <Filter Include="inc\libs\pattern16">
+      <UniqueIdentifier>{9964a284-fccb-4381-900d-0225b8557744}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\libs\pattern16\scanners">
+      <UniqueIdentifier>{d26e34d8-e9c8-4358-932e-b4d38e31bb7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\libs\pattern16\scanners\x64">
+      <UniqueIdentifier>{b4e1d22a-3a9d-4fb2-850e-bea2a0a766a2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\weapons.json">
       <Filter>res</Filter>
+    </None>
+    <None Include="inc\libs\pattern16\pfreq.inl">
+      <Filter>inc\libs\pattern16</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

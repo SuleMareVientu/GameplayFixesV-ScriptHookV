@@ -47,15 +47,20 @@ public:
 class PlayerOption : public IOption {
 private:
 	iniValue m_iniFlag;
+	int m_minGameVer;
+	bool m_supportsEnhanced;
 	std::function<void()> m_option;
 	std::string m_name;
 
 public:
-	PlayerOption(iniValue iniFlag, std::function<void()> action, const std::string& name)
-		: m_iniFlag(iniFlag), m_option(action), m_name(name) {
+	PlayerOption(iniValue iniFlag, int minGameVer, bool supportsEnhanced, std::function<void()> action, const std::string& name)
+		: m_iniFlag(iniFlag), m_minGameVer(minGameVer), m_supportsEnhanced(supportsEnhanced), m_option(action), m_name(name) {
 	}
 
 	bool IsEnabled() const override {
+		if (GetGameVersion() < m_minGameVer || (!m_supportsEnhanced && GetIsEnhancedVersion()))
+			return false;
+
 		switch (m_iniFlag.type) {
 		case IVT_INT:
 			return (m_iniFlag.value.Int > 0);

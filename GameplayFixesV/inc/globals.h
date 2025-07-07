@@ -1,16 +1,24 @@
 #pragma once
-#include <types.h>
-#include <string.h>
+#include <shv\types.h>
+#include <string>
+#include <memory>
+#include <vector>
 
 //Json
 #include <windows.h>
 #include "..\res\resource.h"
-#include <json.hpp>
+#include <libs\json.hpp>
 using json = nlohmann::json;
+
+#pragma region MACROS
 
 #define VER_MAX 2
 #define VER_MIN 1
+#define LOOP(i, n) for(int i = 0; i < n; ++i)
 
+#pragma endregion
+
+#pragma region Global Functions
 HINSTANCE GetDllInstance();
 const char* GetDllInstanceName();
 const char* GetDllInstanceNameNoExt();
@@ -18,8 +26,6 @@ const char* GetDllInstanceIniName();
 const char* GetDllInstanceLogName();
 const int GetGameVersion();
 const bool GetIsEnhancedVersion();
-
-#define LOOP(i, n) for(int i = 0; i < n; ++i)
 
 constexpr unsigned int Joaat(const char* str)
 {
@@ -46,7 +52,9 @@ constexpr unsigned int Joaat(const char* str)
 	hash += hash << 15;
 	return hash;
 };
+#pragma endregion
 
+#pragma region Custom Types and Structures
 typedef struct { int R, G, B, A; } RGBA;
 
 union scrValue
@@ -105,8 +113,9 @@ struct WeaponPickup {
 };
 
 extern std::vector<WeaponPickup> droppedWeapons;
+#pragma endregion
 
-//Constants
+#pragma region Constants
 constexpr Vector3 nullVec{ NULL, NULL, NULL, NULL, NULL, NULL };
 
 //Hashes
@@ -136,18 +145,9 @@ constexpr float ENGINE_DAMAGE_FX_FADE = -3200.0f;
 constexpr float ENGINE_DAMAGE_FIRE_FINISH = -3600.0f;
 constexpr float ENGINE_DAMAGE_FINSHED = -4000.0f;
 constexpr float ENGINE_DAMAGE_CAP_BY_MELEE = 100.0f;
+#pragma endregion
 
-//Enums
-enum eCamViewMode {
-	CAM_VIEW_MODE_THIRD_PERSON_NEAR = 0,
-	CAM_VIEW_MODE_THIRD_PERSON_MEDIUM,
-	CAM_VIEW_MODE_THIRD_PERSON_FAR,
-	CAM_VIEW_MODE_CINEMATIC,
-	CAM_VIEW_MODE_FIRST_PERSON,
-	NUM_CAM_VIEW_MODES,
-	CAM_VIEW_MODE_THIRD_PERSON = CAM_VIEW_MODE_THIRD_PERSON_MEDIUM
-};
-
+#pragma region Ped Enums
 enum ePedFlag {
 	//Ped Config Flags
 	PCF_NoCriticalHits = 2,							// ped cannot be killed by a single bullet
@@ -211,6 +211,71 @@ enum ePedFlag {
 	PRF_DisableShallowWaterBikeJumpOutThisFrame = 445
 };
 
+enum ePedMotionState {
+	MS_NONE = 0xEE717723,
+	MS_ON_FOOT_IDLE = 0x9072A713,			// The standing idle pose for on foot movement
+	MS_ON_FOOT_WALK = 0xD827C3DB,			// Walking straight forward in on foot movement
+	MS_ON_FOOT_RUN = 0xFFF7E7A4,			// Running straight forward in on foot movement
+	MS_ON_FOOT_SPRINT = 0xBD8817DB,			// Sprinting straight forward in on foot movement
+	MS_CROUCH_IDLE = 0x43FB099E,			// The standing idle for crouching movement
+	MS_CROUCH_WALK = 0x08C31A98,			// walking straight forward whilst crouching
+	MS_CROUCH_RUN = 0x3593CF09,				// running straight forward whilst crouching
+	MS_DO_NOTHING = 0x0EC17E58,
+	MS_ANIMATEDVELOCITY = 0x551AAC43,
+	MS_INVEHICLE = 0x94D9D58D,
+	MS_AIMING = 0x3F67C6AF,					// aiming
+	MS_DIVING_IDLE = 0x4848CDED,			// Idling whilst swimming underwater
+	MS_DIVING_SWIM = 0x916E828C,			// swimming forwards whilst swimming underwater
+	MS_SWIMMING_TREADWATER = 0xD1BF11C7,
+	MS_DEAD = 0x0DBB071C,
+	MS_STEALTHMODE_IDLE = 0x422D7A25,
+	MS_STEALTHMODE_WALK = 0x042AB6A2,
+	MS_STEALTHMODE_RUN = 0xFB0B79E1,
+	MS_PARACHUTING = 0xBAC0F10B,			// parachuting
+	MS_ACTIONMODE_IDLE = 0xDA40A0DC,
+	MS_ACTIONMODE_WALK = 0xD2905EA7,
+	MS_ACTIONMODE_RUN = 0x31BADE14,
+	MS_JETPACK = 0x535E6A5E
+};
+
+enum eRagdollBlockingFlags
+{
+	RBF_NONE = 0,
+	RBF_BULLET_IMPACT = 1,
+	RBF_VEHICLE_IMPACT = 2,
+	RBF_FIRE = 4,
+	RBF_ELECTROCUTION = 8,
+	RBF_PLAYER_IMPACT = 16,
+	RBF_EXPLOSION = 32,
+	RBF_IMPACT_OBJECT = 64,
+	RBF_MELEE = 128,
+	RBF_RUBBER_BULLET = 256,
+	RBF_FALLING = 512,
+	RBF_WATER_JET = 1024,
+	RBF_DROWNING = 2048,
+	RBF_ALLOW_BLOCK_DEAD_PED = 4096,
+	RBF_PLAYER_BUMP = 8192,
+	RBF_PLAYER_RAGDOLL_BUMP = 16384,
+	RBF_PED_RAGDOLL_BUMP = 32768,
+	RBF_VEHICLE_GRAB = 65536
+};
+constexpr int RAGDOLL_BLOCKING_FLAGS_ALL = (RBF_BULLET_IMPACT | RBF_VEHICLE_IMPACT | RBF_FIRE |
+	RBF_ELECTROCUTION | RBF_PLAYER_IMPACT | RBF_EXPLOSION | RBF_IMPACT_OBJECT | RBF_MELEE |
+	RBF_RUBBER_BULLET | RBF_FALLING | RBF_WATER_JET | RBF_DROWNING | RBF_ALLOW_BLOCK_DEAD_PED |
+	RBF_PLAYER_BUMP | RBF_PLAYER_RAGDOLL_BUMP | RBF_PED_RAGDOLL_BUMP | RBF_VEHICLE_GRAB);
+
+enum eRelationshipType
+{
+	ACQUAINTANCE_TYPE_PED_NONE = 255,
+	ACQUAINTANCE_TYPE_PED_RESPECT = 0,
+	ACQUAINTANCE_TYPE_PED_LIKE,
+	ACQUAINTANCE_TYPE_PED_IGNORE,
+	ACQUAINTANCE_TYPE_PED_DISLIKE,
+	ACQUAINTANCE_TYPE_PED_WANTED,
+	ACQUAINTANCE_TYPE_PED_HATE,
+	ACQUAINTANCE_TYPE_PED_DEAD
+};
+
 enum ePedDecorationZone {
 	PDZ_TORSO = 0,
 	PDZ_HEAD,
@@ -220,6 +285,231 @@ enum ePedDecorationZone {
 	PDZ_RIGHT_LEG,
 	PDZ_MEDALS,
 	PDZ_INVALID
+};
+
+enum ePedBoneTag {
+	BONETAG_NULL = -1,
+
+	BONETAG_ROOT = 0,
+	BONETAG_PELVIS = 0x2E28,
+	BONETAG_SPINE = 0x5C01,
+	BONETAG_SPINE1 = 0x60F0,
+	BONETAG_SPINE2 = 0x60F1,
+	BONETAG_SPINE3 = 0x60F2,
+	BONETAG_NECK = 0x9995,
+	BONETAG_HEAD = 0x796E,
+	BONETAG_R_CLAVICLE = 0x29D2,
+	BONETAG_R_UPPERARM = 0x9D4D,
+	BONETAG_R_FOREARM = 0x6E5C,
+	BONETAG_R_HAND = 0xDEAD,
+	BONETAG_R_FINGER0 = 0xE5F2,
+	BONETAG_R_FINGER01 = 0xFA10,
+	BONETAG_R_FINGER02 = 0xFA11,
+	BONETAG_R_FINGER1 = 0xE5F3,
+	BONETAG_R_FINGER11 = 0xFA60,
+	BONETAG_R_FINGER12 = 0xFA61,
+	BONETAG_R_FINGER2 = 0xE5F4,
+	BONETAG_R_FINGER21 = 0xFA70,
+	BONETAG_R_FINGER22 = 0xFA71,
+	BONETAG_R_FINGER3 = 0xE5F5,
+	BONETAG_R_FINGER31 = 0xFA40,
+	BONETAG_R_FINGER32 = 0xFA41,
+	BONETAG_R_FINGER4 = 0xE5F6,
+	BONETAG_R_FINGER41 = 0xFA50,
+	BONETAG_R_FINGER42 = 0xFA51,
+
+	BONETAG_L_CLAVICLE = 0xFCD9,
+	BONETAG_L_UPPERARM = 0xB1C5,
+	BONETAG_L_FOREARM = 0xEEEB,
+	BONETAG_L_HAND = 0x49D9,
+	BONETAG_L_FINGER0 = 0x67F2,
+	BONETAG_L_FINGER01 = 0xFF9,
+	BONETAG_L_FINGER02 = 0xFFA,
+	BONETAG_L_FINGER1 = 0x67F3,
+	BONETAG_L_FINGER11 = 0x1049,
+	BONETAG_L_FINGER12 = 0x104A,
+	BONETAG_L_FINGER2 = 0x67F4,
+	BONETAG_L_FINGER21 = 0x1059,
+	BONETAG_L_FINGER22 = 0x105A,
+	BONETAG_L_FINGER3 = 0x67F5,
+	BONETAG_L_FINGER31 = 0x1029,
+	BONETAG_L_FINGER32 = 0x102A,
+	BONETAG_L_FINGER4 = 0x67F6,
+	BONETAG_L_FINGER41 = 0x1039,
+	BONETAG_L_FINGER42 = 0x103A,
+
+	BONETAG_L_THIGH = 0xE39F,
+	BONETAG_L_CALF = 0xF9BB,
+	BONETAG_L_FOOT = 0x3779,
+	BONETAG_L_TOE = 0x83C,
+	BONETAG_R_THIGH = 0xCA72,
+	BONETAG_R_CALF = 0x9000,
+	BONETAG_R_FOOT = 0xCC4D,
+	BONETAG_R_TOE = 0x512D,
+
+	BONETAG_PH_L_HAND = 0xEB95,
+	BONETAG_PH_R_HAND = 0x6F06
+};
+#pragma endregion
+
+#pragma region Vehicle Enums
+enum eVehicleSearchFlag {
+	VEHICLE_SEARCH_FLAG_RETURN_LAW_ENFORCER_VEHICLES = 1,						//  Don't mind if the returned vehicle is a law enforcer
+	VEHICLE_SEARCH_FLAG_RETURN_MISSION_VEHICLES = 2,							//  Don't mind if the returned vehicle has been created by a script
+	VEHICLE_SEARCH_FLAG_RETURN_RANDOM_VEHICLES = 4,								//  Don't mind if the returned vehicle hasn't been created by a script (You will usually want to set this)
+	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_GROUP_MEMBERS = 8,			//  Don't mind if the returned vehicle contains group members
+	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_A_PLAYER = 16,				//  Don't mind if the returned vehicle contains a player ped
+	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_A_DEAD_OR_DYING_PED = 32,	//  Don't mind if the returned vehicle contains a dead or dying ped
+	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_WITH_PEDS_ENTERING_OR_EXITING = 64,		//  Don't mind if peds are in the process of entering or exiting the returned vehicle
+	VEHICLE_SEARCH_FLAG_DO_NETWORK_CHECKS = 128,								//  Don't return a network clone or a deletable network object(?)
+	VEHICLE_SEARCH_FLAG_CHECK_VEHICLE_OCCUPANTS_STATES = 256,					// Only return the vehicle if all its occupants have a PedState of PED_DRIVING or PED_DEAD (not sure if it matters if this is set or not)
+	VEHICLE_SEARCH_FLAG_RETURN_LAW_ENFORCER_VEHICLES_ONLY = 1024,				//  Only return law enforcement vehicles
+	VEHICLE_SEARCH_FLAG_ALLOW_VEHICLE_OCCUPANTS_TO_BE_PERFORMING_A_SCRIPTED_TASK = 2048, // Usually cars are only returned if all the occupants are performing their default task  (see also PERFORMING_A_NON_DEFAULT_TASK below. It's less strict)
+	VEHICLE_SEARCH_FLAG_RETURN_HELICOPTORS_ONLY = 4096,							// Only return helicoptor (can be combimed with the boats_only and planes_only flags)
+	VEHICLE_SEARCH_FLAG_RETURN_BOATS_ONLY = 8192,								// Only return boats (can be combimed with the helicoptor_only and planes_only flags)
+	VEHICLE_SEARCH_FLAG_RETURN_PLANES_ONLY = 16384,								// Only return planes (can be combimed with the helicoptor_only and boats_only flags)
+	VEHICLE_SEARCH_FLAG_ALLOW_LAW_ENFORCER_VEHICLES_WITH_WANTED_LEVEL = 32768,	// Allow return law enforcement vehs if player has a wanted level
+	VEHICLE_SEARCH_FLAG_ALLOW_VEHICLE_OCCUPANTS_TO_BE_PERFORMING_A_NON_DEFAULT_TASK = 65536,	// Usually cars are only returned if all the occupants are performing their default task (see also PERFORMING_A_SCRIPTED_TASK above. It's stricter)
+	VEHICLE_SEARCH_FLAG_ALLOW_TRAILERS = 131076,	// allow trailers to be included
+	VEHICLE_SEARCH_FLAG_ALLOW_BLIMPS = 262144,		// allow blimps to be included
+	VEHICLE_SEARCH_FLAG_ALLOW_SUBMARINES = 524288	// allow submarines to be included
+};
+
+constexpr int defaultVSF = (
+	VEHICLE_SEARCH_FLAG_RETURN_LAW_ENFORCER_VEHICLES | VEHICLE_SEARCH_FLAG_RETURN_MISSION_VEHICLES |
+	VEHICLE_SEARCH_FLAG_RETURN_RANDOM_VEHICLES | VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_GROUP_MEMBERS |
+	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_A_PLAYER | VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_A_DEAD_OR_DYING_PED |
+	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_WITH_PEDS_ENTERING_OR_EXITING |
+	VEHICLE_SEARCH_FLAG_ALLOW_VEHICLE_OCCUPANTS_TO_BE_PERFORMING_A_SCRIPTED_TASK |
+	VEHICLE_SEARCH_FLAG_ALLOW_VEHICLE_OCCUPANTS_TO_BE_PERFORMING_A_NON_DEFAULT_TASK | VEHICLE_SEARCH_FLAG_ALLOW_BLIMPS |
+	VEHICLE_SEARCH_FLAG_ALLOW_SUBMARINES);
+
+enum eVehStuckTypes {
+	VEH_STUCK_ON_ROOF = 0,
+	VEH_STUCK_ON_SIDE,
+	VEH_STUCK_HUNG_UP,
+	VEH_STUCK_JAMMED,
+	VEH_STUCK_RESET_ALL
+};
+
+enum eVehModtype {
+	MOD_SPOILER = 0,
+	MOD_BUMPER_F,
+	MOD_BUMPER_R,
+	MOD_SKIRT,
+	MOD_EXHAUST,
+	MOD_CHASSIS,
+	MOD_GRILL,
+	MOD_BONNET,
+	MOD_WING_L,
+	MOD_WING_R,
+	MOD_ROOF,
+
+	MOD_ENGINE,
+	MOD_BRAKES,
+	MOD_GEARBOX,
+	MOD_HORN,
+	MOD_SUSPENSION,
+	MOD_ARMOUR,
+
+	MOD_TOGGLE_NITROUS,
+	MOD_TOGGLE_TURBO,
+	MOD_TOGGLE_SUBWOOFER,
+	MOD_TOGGLE_TYRE_SMOKE,
+	MOD_TOGGLE_HYDRAULICS,
+	MOD_TOGGLE_XENON_LIGHTS,
+
+	MOD_WHEELS,
+	MOD_REAR_WHEELS,
+
+	// Lowrider
+	MOD_PLTHOLDER,
+	MOD_PLTVANITY,
+
+	MOD_INTERIOR1,
+	MOD_INTERIOR2,
+	MOD_INTERIOR3,
+	MOD_INTERIOR4,
+	MOD_INTERIOR5,
+	MOD_SEATS,
+	MOD_STEERING,
+	MOD_KNOB,
+	MOD_PLAQUE,
+	MOD_ICE,
+
+	MOD_TRUNK,
+	MOD_HYDRO,
+
+	MOD_ENGINEBAY1,
+	MOD_ENGINEBAY2,
+	MOD_ENGINEBAY3,
+
+	MOD_CHASSIS2,
+	MOD_CHASSIS3,
+	MOD_CHASSIS4,
+	MOD_CHASSIS5,
+
+	MOD_DOOR_L,
+	MOD_DOOR_R,
+
+	MOD_LIVERY
+};
+
+enum eKnockOffVehicle {
+	KNOCKOFFVEHICLE_DEFAULT,
+	KNOCKOFFVEHICLE_NEVER,
+	KNOCKOFFVEHICLE_EASY,
+	KNOCKOFFVEHICLE_HARD
+};
+
+enum eWheelList {
+	WHEEL_CAR_FRONT_LEFT = 0,
+	WHEEL_CAR_FRONT_RIGHT,
+	WHEEL_CAR_MID_LEFT,
+	WHEEL_CAR_MID_RIGHT,
+	WHEEL_CAR_REAR_LEFT,
+	WHEEL_CAR_REAR_RIGHT,
+	WHEEL_BIKE_FRONT,
+	WHEEL_BIKE_REAR,
+	MAX_WHEELS
+};
+#pragma endregion
+
+#pragma region Weapon Enums
+enum eGeneralWeaponType
+{
+	GENERALWEAPON_TYPE_INVALID = 0,
+	GENERALWEAPON_TYPE_ANYMELEE,
+	GENERALWEAPON_TYPE_ANYWEAPON
+};
+
+enum eWeaponGroup {
+	WEAPONGROUP_INVALID = 0,
+	WEAPONGROUP_MELEE = 0xD49321D4,				//GROUP_MELEE
+	WEAPONGROUP_PISTOL = 0x18D5FA97,			//GROUP_PISTOL
+	WEAPONGROUP_SMG = 0xC6E9A5C5,				//GROUP_SMG
+	WEAPONGROUP_RIFLE = 0x39D5C192,				//GROUP_RIFLE
+	WEAPONGROUP_MG = 0x451B04BC,				//GROUP_MG
+	WEAPONGROUP_SHOTGUN = 0x33431399,			//GROUP_SHOTGUN
+	WEAPONGROUP_SNIPER = 0xB7BBD827,			//GROUP_SNIPER
+	WEAPONGROUP_HEAVY = 0xA27A4F9F,				//GROUP_HEAVY
+	WEAPONGROUP_THROWN = 0x5C4C5883,			//GROUP_THROWN
+	WEAPONGROUP_RUBBERGUN = 0x054C7FFC,			//GROUP_RUBBERGUN
+	WEAPONGROUP_STUNGUN = 0x29268262,			//GROUP_STUNGUN
+	WEAPONGROUP_FIREEXTINGUISHER = 0xFDBF656C,	//GROUP_FIREEXTINGUISHER
+	WEAPONGROUP_PETROLCAN = 0x5F1BE07C,			//GROUP_PETROLCAN
+	WEAPONGROUP_LOUDHAILER = 0x1E3DEED0,		//GROUP_LOUDHAILER
+	WEAPONGROUP_DIGISCANNER = 0xD2F7B56B,		//GROUP_DIGISCANNER
+	WEAPONGROUP_NIGHTVISION = 0xD035CE98,		//GROUP_NIGHTVISION
+	WEAPONGROUP_PARACHUTE = 0x19B9968F,			//GROUP_PARACHUTE
+	WEAPONGROUP_JETPACK = 0x8B16BE36,			//GROUP_JETPACK
+	WEAPONGROUP_METALDETECTOR = 0xE0154937		//GROUP_METALDETECTOR
+};
+
+enum eWeaponCheckFlags {
+	WF_INCLUDE_MELEE = 1,
+	WF_INCLUDE_PROJECTILE = 2,
+	WF_INCLUDE_GUN = 4
 };
 
 enum eCombatAttribute {
@@ -307,318 +597,9 @@ enum eCombatAttribute {
 	CA_FORCE_CHECK_ATTACK_ANGLE_FOR_MOUNTED_GUNS = 89,
 	CA_BLOCK_FIRE_FOR_VEHICLE_PASSENGER_MOUNTED_GUNS = 90
 };
+#pragma endregion
 
-enum eKnockOffVehicle {
-	KNOCKOFFVEHICLE_DEFAULT,
-	KNOCKOFFVEHICLE_NEVER,
-	KNOCKOFFVEHICLE_EASY,
-	KNOCKOFFVEHICLE_HARD
-};
-
-enum eWheelList {
-	WHEEL_CAR_FRONT_LEFT = 0,
-	WHEEL_CAR_FRONT_RIGHT,
-	WHEEL_CAR_MID_LEFT,
-	WHEEL_CAR_MID_RIGHT,
-	WHEEL_CAR_REAR_LEFT,
-	WHEEL_CAR_REAR_RIGHT,
-	WHEEL_BIKE_FRONT,
-	WHEEL_BIKE_REAR,
-	MAX_WHEELS
-};
-
-enum eVehModtype {
-	MOD_SPOILER = 0,
-	MOD_BUMPER_F,
-	MOD_BUMPER_R,
-	MOD_SKIRT,
-	MOD_EXHAUST,
-	MOD_CHASSIS,
-	MOD_GRILL,
-	MOD_BONNET,
-	MOD_WING_L,
-	MOD_WING_R,
-	MOD_ROOF,
-
-	MOD_ENGINE,
-	MOD_BRAKES,
-	MOD_GEARBOX,
-	MOD_HORN,
-	MOD_SUSPENSION,
-	MOD_ARMOUR,
-
-	MOD_TOGGLE_NITROUS,
-	MOD_TOGGLE_TURBO,
-	MOD_TOGGLE_SUBWOOFER,
-	MOD_TOGGLE_TYRE_SMOKE,
-	MOD_TOGGLE_HYDRAULICS,
-	MOD_TOGGLE_XENON_LIGHTS,
-
-	MOD_WHEELS,
-	MOD_REAR_WHEELS,
-
-	// Lowrider
-	MOD_PLTHOLDER,
-	MOD_PLTVANITY,
-
-	MOD_INTERIOR1,
-	MOD_INTERIOR2,
-	MOD_INTERIOR3,
-	MOD_INTERIOR4,
-	MOD_INTERIOR5,
-	MOD_SEATS,
-	MOD_STEERING,
-	MOD_KNOB,
-	MOD_PLAQUE,
-	MOD_ICE,
-
-	MOD_TRUNK,
-	MOD_HYDRO,
-
-	MOD_ENGINEBAY1,
-	MOD_ENGINEBAY2,
-	MOD_ENGINEBAY3,
-
-	MOD_CHASSIS2,
-	MOD_CHASSIS3,
-	MOD_CHASSIS4,
-	MOD_CHASSIS5,
-
-	MOD_DOOR_L,
-	MOD_DOOR_R,
-
-	MOD_LIVERY
-};
-
-enum eDispatchType {
-	DT_INVALID,
-	DT_POLICE_AUTOMOBILE,
-	DT_POLICE_HELICOPTER,
-	DT_FIRE_DEPARTMENT,
-	DT_SWAT_AUTOMOBILE,
-	DT_AMBULANCE_DEPARTMENT,
-	DT_POLICE_RIDERS,
-	DT_POLICE_VEHICLE_REQUEST,
-	DT_POLICE_ROAD_BLOCK,
-	DT_POLICE_AUTOMOBILE_WAIT_PULLED_OVER,
-	DT_POLICE_AUTOMOBILE_WAIT_CRUISING,
-	DT_GANGS,
-	DT_SWAT_HELICOPTER,
-	DT_POLICE_BOAT,
-	DT_ARMY_VEHICLE,
-	DT_BIKER_BACKUP,
-	DT_ASSASSINS
-};
-
-enum eTaskVehicleChaseBehaviorFlags {
-	VEHICLE_CHASE_CANT_BLOCK = 1,
-	VEHICLE_CHASE_CANT_BLOCK_FROM_PURSUE = 2,
-	VEHICLE_CHASE_CANT_PURSUE = 4,
-	VEHICLE_CHASE_CANT_RAM = 8,
-	VEHICLE_CHASE_CANT_SPIN_OUT = 16,
-	VEHICLE_CHASE_CANT_MAKE_AGGRESSIVE_MOVE = 32,
-	VEHICLE_CHASE_CANT_CRUISE_IN_FRONT_DURING_BLOCK = 64,
-	VEHICLE_CHASE_USE_CONTINUOUS_RAM = 128,
-	VEHICLE_CHASE_CANT_PULL_ALONGSIDE = 256,
-	VEHICLE_CHASE_CANT_PULL_ALONGSIDE_INFRONT = 512
-};
-
-enum eVehStuckTypes {
-	VEH_STUCK_ON_ROOF = 0,
-	VEH_STUCK_ON_SIDE,
-	VEH_STUCK_HUNG_UP,
-	VEH_STUCK_JAMMED,
-	VEH_STUCK_RESET_ALL
-};
-
-enum eVehicleSearchFlag {
-	VEHICLE_SEARCH_FLAG_RETURN_LAW_ENFORCER_VEHICLES = 1,						//  Don't mind if the returned vehicle is a law enforcer
-	VEHICLE_SEARCH_FLAG_RETURN_MISSION_VEHICLES = 2,							//  Don't mind if the returned vehicle has been created by a script
-	VEHICLE_SEARCH_FLAG_RETURN_RANDOM_VEHICLES = 4,								//  Don't mind if the returned vehicle hasn't been created by a script (You will usually want to set this)
-	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_GROUP_MEMBERS = 8,			//  Don't mind if the returned vehicle contains group members
-	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_A_PLAYER = 16,				//  Don't mind if the returned vehicle contains a player ped
-	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_A_DEAD_OR_DYING_PED = 32,	//  Don't mind if the returned vehicle contains a dead or dying ped
-	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_WITH_PEDS_ENTERING_OR_EXITING = 64,		//  Don't mind if peds are in the process of entering or exiting the returned vehicle
-	VEHICLE_SEARCH_FLAG_DO_NETWORK_CHECKS = 128,								//  Don't return a network clone or a deletable network object(?)
-	VEHICLE_SEARCH_FLAG_CHECK_VEHICLE_OCCUPANTS_STATES = 256,					// Only return the vehicle if all its occupants have a PedState of PED_DRIVING or PED_DEAD (not sure if it matters if this is set or not)
-	VEHICLE_SEARCH_FLAG_RETURN_LAW_ENFORCER_VEHICLES_ONLY = 1024,				//  Only return law enforcement vehicles
-	VEHICLE_SEARCH_FLAG_ALLOW_VEHICLE_OCCUPANTS_TO_BE_PERFORMING_A_SCRIPTED_TASK = 2048, // Usually cars are only returned if all the occupants are performing their default task  (see also PERFORMING_A_NON_DEFAULT_TASK below. It's less strict)
-	VEHICLE_SEARCH_FLAG_RETURN_HELICOPTORS_ONLY = 4096,							// Only return helicoptor (can be combimed with the boats_only and planes_only flags)
-	VEHICLE_SEARCH_FLAG_RETURN_BOATS_ONLY = 8192,								// Only return boats (can be combimed with the helicoptor_only and planes_only flags)
-	VEHICLE_SEARCH_FLAG_RETURN_PLANES_ONLY = 16384,								// Only return planes (can be combimed with the helicoptor_only and boats_only flags)
-	VEHICLE_SEARCH_FLAG_ALLOW_LAW_ENFORCER_VEHICLES_WITH_WANTED_LEVEL = 32768,	// Allow return law enforcement vehs if player has a wanted level
-	VEHICLE_SEARCH_FLAG_ALLOW_VEHICLE_OCCUPANTS_TO_BE_PERFORMING_A_NON_DEFAULT_TASK = 65536,	// Usually cars are only returned if all the occupants are performing their default task (see also PERFORMING_A_SCRIPTED_TASK above. It's stricter)
-	VEHICLE_SEARCH_FLAG_ALLOW_TRAILERS = 131076,	// allow trailers to be included
-	VEHICLE_SEARCH_FLAG_ALLOW_BLIMPS = 262144,		// allow blimps to be included
-	VEHICLE_SEARCH_FLAG_ALLOW_SUBMARINES = 524288	// allow submarines to be included
-};
-
-constexpr int defaultVSF = (
-	VEHICLE_SEARCH_FLAG_RETURN_LAW_ENFORCER_VEHICLES | VEHICLE_SEARCH_FLAG_RETURN_MISSION_VEHICLES |
-	VEHICLE_SEARCH_FLAG_RETURN_RANDOM_VEHICLES | VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_GROUP_MEMBERS |
-	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_A_PLAYER | VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_CONTAINING_A_DEAD_OR_DYING_PED |
-	VEHICLE_SEARCH_FLAG_RETURN_VEHICLES_WITH_PEDS_ENTERING_OR_EXITING |
-	VEHICLE_SEARCH_FLAG_ALLOW_VEHICLE_OCCUPANTS_TO_BE_PERFORMING_A_SCRIPTED_TASK |
-	VEHICLE_SEARCH_FLAG_ALLOW_VEHICLE_OCCUPANTS_TO_BE_PERFORMING_A_NON_DEFAULT_TASK | VEHICLE_SEARCH_FLAG_ALLOW_BLIMPS | 
-	VEHICLE_SEARCH_FLAG_ALLOW_SUBMARINES);
-
-enum eRagdollBlockingFlags
-{
-	RBF_NONE = 0,
-	RBF_BULLET_IMPACT = 1,
-	RBF_VEHICLE_IMPACT = 2,
-	RBF_FIRE = 4,
-	RBF_ELECTROCUTION = 8,
-	RBF_PLAYER_IMPACT = 16,
-	RBF_EXPLOSION = 32,
-	RBF_IMPACT_OBJECT = 64,
-	RBF_MELEE = 128,
-	RBF_RUBBER_BULLET = 256,
-	RBF_FALLING = 512,
-	RBF_WATER_JET = 1024,
-	RBF_DROWNING = 2048,
-	RBF_ALLOW_BLOCK_DEAD_PED = 4096,
-	RBF_PLAYER_BUMP = 8192, 
-	RBF_PLAYER_RAGDOLL_BUMP = 16384,
-	RBF_PED_RAGDOLL_BUMP = 32768,
-	RBF_VEHICLE_GRAB = 65536
-};
-constexpr int RAGDOLL_BLOCKING_FLAGS_ALL = (RBF_BULLET_IMPACT | RBF_VEHICLE_IMPACT | RBF_FIRE | RBF_ELECTROCUTION | RBF_PLAYER_IMPACT | RBF_EXPLOSION | RBF_IMPACT_OBJECT | RBF_MELEE | RBF_RUBBER_BULLET | RBF_FALLING | RBF_WATER_JET | RBF_DROWNING | RBF_ALLOW_BLOCK_DEAD_PED | RBF_PLAYER_BUMP | RBF_PLAYER_RAGDOLL_BUMP | RBF_PED_RAGDOLL_BUMP | RBF_VEHICLE_GRAB);
-
-enum eRelationshipType
-{
-	ACQUAINTANCE_TYPE_PED_NONE = 255,
-	ACQUAINTANCE_TYPE_PED_RESPECT = 0,
-	ACQUAINTANCE_TYPE_PED_LIKE,
-	ACQUAINTANCE_TYPE_PED_IGNORE,
-	ACQUAINTANCE_TYPE_PED_DISLIKE,
-	ACQUAINTANCE_TYPE_PED_WANTED,
-	ACQUAINTANCE_TYPE_PED_HATE,
-	ACQUAINTANCE_TYPE_PED_DEAD
-};
-
-enum ePickupPlacementFlag {
-	PLACEMENT_FLAG_MAP = 0,								 // only used in MP. This is used for pickups that are created locally on each machine and only networked when collected.
-	PLACEMENT_FLAG_FIXED = 1,							 // sets the pickup as fixed so it cannot move
-	PLACEMENT_FLAG_REGENERATES = 2,						 // sets the pickup as regenerating
-	PLACEMENT_FLAG_SNAP_TO_GROUND = 3,					 // places the pickup on the ground 
-	PLACEMENT_FLAG_ORIENT_TO_GROUND = 4,				 // orientates the pickup correctly on the ground
-	PLACEMENT_FLAG_LOCAL_ONLY = 5,						 // creates the pickup non-networked
-	PLACEMENT_FLAG_BLIPPED_SIMPLE = 6,					 // gives the pickup a simple blip
-	PLACEMENT_FLAG_BLIPPED_COMPLEX = 7,					 // gives the pickup a complex blip
-	PLACEMENT_FLAG_UPRIGHT = 8,							 // Some pickups need to be orientated differently to lie on the ground properly. Use this flag if your pickup is not lying correctly.
-	PLACEMENT_FLAG_ROTATE = 9,							 // Pickup will rotate 
-	PLACEMENT_FLAG_FACEPLAYER = 10,						 // Pickup will always face the player
-	PLACEMENT_FLAG_HIDE_IN_PHOTOS = 11,					 // Pickup will be hidden when the player is using the phone camera
-	PLACEMENT_FLAG_PLAYER_GIFT = 12,					 // The pickup is being dropped as a gift to another player
-	PLACEMENT_FLAG_ON_OBJECT = 13,						 // The pickup is lying on an object and probes for that when snapping or orientating to ground
-	PLACEMENT_FLAG_GLOW_IN_TEAM = 14,					 // Set pickups to glow even if pickup can't be picked up because of team checks
-	PLACEMENT_CREATION_FLAG_AUTO_EQUIP = 15,			 // if set on a weapon pickup, it will auto equip the picked up weapon. It will ignore autoswap logic
-	PLACEMENT_CREATION_FLAG_COLLECTABLE_IN_VEHICLE = 16, // if set the pickup can be collected by a ped in a vehicle
-	PLACEMENT_CREATION_FLAG_DISABLE_WEAPON_HD_MODEL = 17,// if set the weapon pickup will render SD model only (HD<->SD model switch will be disabled)
-	PLACEMENT_CREATION_FLAG_FORCE_DEFERRED_MODEL = 18    // if set the pickup will render as deferred model (no transparency/alpha blending in this render mode)
-};
-
-enum ePedBoneTag {
-	BONETAG_NULL = -1,
-
-	BONETAG_ROOT = 0,
-	BONETAG_PELVIS = 0x2E28,
-	BONETAG_SPINE = 0x5C01,
-	BONETAG_SPINE1 = 0x60F0,
-	BONETAG_SPINE2 = 0x60F1,
-	BONETAG_SPINE3 = 0x60F2,
-	BONETAG_NECK = 0x9995,
-	BONETAG_HEAD = 0x796E,
-	BONETAG_R_CLAVICLE = 0x29D2,
-	BONETAG_R_UPPERARM = 0x9D4D,
-	BONETAG_R_FOREARM = 0x6E5C,
-	BONETAG_R_HAND = 0xDEAD,
-	BONETAG_R_FINGER0 = 0xE5F2,
-	BONETAG_R_FINGER01 = 0xFA10,
-	BONETAG_R_FINGER02 = 0xFA11,
-	BONETAG_R_FINGER1 = 0xE5F3,
-	BONETAG_R_FINGER11 = 0xFA60,
-	BONETAG_R_FINGER12 = 0xFA61,
-	BONETAG_R_FINGER2 = 0xE5F4,
-	BONETAG_R_FINGER21 = 0xFA70,
-	BONETAG_R_FINGER22 = 0xFA71,
-	BONETAG_R_FINGER3 = 0xE5F5,
-	BONETAG_R_FINGER31 = 0xFA40,
-	BONETAG_R_FINGER32 = 0xFA41,
-	BONETAG_R_FINGER4 = 0xE5F6,
-	BONETAG_R_FINGER41 = 0xFA50,
-	BONETAG_R_FINGER42 = 0xFA51,
-
-	BONETAG_L_CLAVICLE = 0xFCD9,
-	BONETAG_L_UPPERARM = 0xB1C5,
-	BONETAG_L_FOREARM = 0xEEEB,
-	BONETAG_L_HAND = 0x49D9,
-	BONETAG_L_FINGER0 = 0x67F2,
-	BONETAG_L_FINGER01 = 0xFF9,
-	BONETAG_L_FINGER02 = 0xFFA,
-	BONETAG_L_FINGER1 = 0x67F3,
-	BONETAG_L_FINGER11 = 0x1049,
-	BONETAG_L_FINGER12 = 0x104A,
-	BONETAG_L_FINGER2 = 0x67F4,
-	BONETAG_L_FINGER21 = 0x1059,
-	BONETAG_L_FINGER22 = 0x105A,
-	BONETAG_L_FINGER3 = 0x67F5,
-	BONETAG_L_FINGER31 = 0x1029,
-	BONETAG_L_FINGER32 = 0x102A,
-	BONETAG_L_FINGER4 = 0x67F6,
-	BONETAG_L_FINGER41 = 0x1039,
-	BONETAG_L_FINGER42 = 0x103A,
-
-	BONETAG_L_THIGH = 0xE39F,
-	BONETAG_L_CALF = 0xF9BB,
-	BONETAG_L_FOOT = 0x3779,
-	BONETAG_L_TOE = 0x83C,
-	BONETAG_R_THIGH = 0xCA72,
-	BONETAG_R_CALF = 0x9000,
-	BONETAG_R_FOOT = 0xCC4D,
-	BONETAG_R_TOE = 0x512D,
-
-	BONETAG_PH_L_HAND = 0xEB95,
-	BONETAG_PH_R_HAND = 0x6F06
-};
-
-enum eGeneralWeaponType
-{
-	GENERALWEAPON_TYPE_INVALID = 0,
-	GENERALWEAPON_TYPE_ANYMELEE,
-	GENERALWEAPON_TYPE_ANYWEAPON
-};
-
-enum eWeaponGroup {
-	WEAPONGROUP_INVALID = 0,
-	WEAPONGROUP_MELEE = 0xD49321D4,				//GROUP_MELEE
-	WEAPONGROUP_PISTOL = 0x18D5FA97,			//GROUP_PISTOL
-	WEAPONGROUP_SMG = 0xC6E9A5C5,				//GROUP_SMG
-	WEAPONGROUP_RIFLE = 0x39D5C192,				//GROUP_RIFLE
-	WEAPONGROUP_MG = 0x451B04BC,				//GROUP_MG
-	WEAPONGROUP_SHOTGUN = 0x33431399,			//GROUP_SHOTGUN
-	WEAPONGROUP_SNIPER = 0xB7BBD827,			//GROUP_SNIPER
-	WEAPONGROUP_HEAVY = 0xA27A4F9F,				//GROUP_HEAVY
-	WEAPONGROUP_THROWN = 0x5C4C5883,			//GROUP_THROWN
-	WEAPONGROUP_RUBBERGUN = 0x054C7FFC,			//GROUP_RUBBERGUN
-	WEAPONGROUP_STUNGUN = 0x29268262,			//GROUP_STUNGUN
-	WEAPONGROUP_FIREEXTINGUISHER = 0xFDBF656C,	//GROUP_FIREEXTINGUISHER
-	WEAPONGROUP_PETROLCAN = 0x5F1BE07C,			//GROUP_PETROLCAN
-	WEAPONGROUP_LOUDHAILER = 0x1E3DEED0,		//GROUP_LOUDHAILER
-	WEAPONGROUP_DIGISCANNER = 0xD2F7B56B,		//GROUP_DIGISCANNER
-	WEAPONGROUP_NIGHTVISION = 0xD035CE98,		//GROUP_NIGHTVISION
-	WEAPONGROUP_PARACHUTE = 0x19B9968F,			//GROUP_PARACHUTE
-	WEAPONGROUP_JETPACK = 0x8B16BE36,			//GROUP_JETPACK
-	WEAPONGROUP_METALDETECTOR = 0xE0154937		//GROUP_METALDETECTOR
-};
-
-enum eWeaponCheckFlags {
-	WF_INCLUDE_MELEE = 1,
-	WF_INCLUDE_PROJECTILE = 2,
-	WF_INCLUDE_GUN = 4
-};
-
+#pragma region HUD Enums
 enum eHudComponents
 {
 	//HUD = 0,
@@ -696,32 +677,63 @@ typedef struct {
 	float WrapStartX, WrapEndX;
 } TextStyle;
 constexpr TextStyle defaultTextStyle = { FONT_STANDARD, 0.35f, 0.35f, RGBA{255, 255, 255, 255}, DROPSTYLE_NONE, false, 0.0f, 1.0f };
+#pragma endregion
 
-/*
-constexpr int AllHandsBonetagsSize = 34;
-constexpr int AllHandsBonetags[AllHandsBonetagsSize] = 
-						{ BONETAG_PH_R_HAND, BONETAG_R_HAND, BONETAG_R_FINGER0, BONETAG_R_FINGER01,
-						  BONETAG_R_FINGER02, BONETAG_R_FINGER1, BONETAG_R_FINGER11, BONETAG_R_FINGER12,
-						  BONETAG_R_FINGER2, BONETAG_R_FINGER21, BONETAG_R_FINGER22, BONETAG_R_FINGER3,
-						  BONETAG_R_FINGER31, BONETAG_R_FINGER32, BONETAG_R_FINGER4, BONETAG_R_FINGER41,
-						  BONETAG_R_FINGER42,
-						  BONETAG_PH_L_HAND, BONETAG_L_HAND, BONETAG_L_FINGER0, BONETAG_L_FINGER01,
-						  BONETAG_L_FINGER02, BONETAG_L_FINGER1, BONETAG_L_FINGER11, BONETAG_L_FINGER12,
-						  BONETAG_L_FINGER2, BONETAG_L_FINGER21, BONETAG_L_FINGER22, BONETAG_L_FINGER3,
-						  BONETAG_L_FINGER31, BONETAG_L_FINGER32, BONETAG_L_FINGER4, BONETAG_L_FINGER41,
-						  BONETAG_L_FINGER42
-						};
+#pragma region Misc Enums
+enum eCamViewMode {
+	CAM_VIEW_MODE_THIRD_PERSON_NEAR = 0,
+	CAM_VIEW_MODE_THIRD_PERSON_MEDIUM,
+	CAM_VIEW_MODE_THIRD_PERSON_FAR,
+	CAM_VIEW_MODE_CINEMATIC,
+	CAM_VIEW_MODE_FIRST_PERSON,
+	NUM_CAM_VIEW_MODES,
+	CAM_VIEW_MODE_THIRD_PERSON = CAM_VIEW_MODE_THIRD_PERSON_MEDIUM
+};
 
-constexpr int RightHandBonetagsSize = 17;
-constexpr int RightHandBonetags[RightHandBonetagsSize] = 
-						{ BONETAG_PH_R_HAND, BONETAG_R_HAND, BONETAG_R_FINGER0, BONETAG_R_FINGER01,
-						  BONETAG_R_FINGER02, BONETAG_R_FINGER1, BONETAG_R_FINGER11, BONETAG_R_FINGER12,
-						  BONETAG_R_FINGER2, BONETAG_R_FINGER21, BONETAG_R_FINGER22, BONETAG_R_FINGER3,
-						  BONETAG_R_FINGER31, BONETAG_R_FINGER32, BONETAG_R_FINGER4, BONETAG_R_FINGER41,
-						  BONETAG_R_FINGER42
-						};
-*/
+enum ePickupPlacementFlag {
+	PLACEMENT_FLAG_MAP = 0,								 // only used in MP. This is used for pickups that are created locally on each machine and only networked when collected.
+	PLACEMENT_FLAG_FIXED = 1,							 // sets the pickup as fixed so it cannot move
+	PLACEMENT_FLAG_REGENERATES = 2,						 // sets the pickup as regenerating
+	PLACEMENT_FLAG_SNAP_TO_GROUND = 3,					 // places the pickup on the ground 
+	PLACEMENT_FLAG_ORIENT_TO_GROUND = 4,				 // orientates the pickup correctly on the ground
+	PLACEMENT_FLAG_LOCAL_ONLY = 5,						 // creates the pickup non-networked
+	PLACEMENT_FLAG_BLIPPED_SIMPLE = 6,					 // gives the pickup a simple blip
+	PLACEMENT_FLAG_BLIPPED_COMPLEX = 7,					 // gives the pickup a complex blip
+	PLACEMENT_FLAG_UPRIGHT = 8,							 // Some pickups need to be orientated differently to lie on the ground properly. Use this flag if your pickup is not lying correctly.
+	PLACEMENT_FLAG_ROTATE = 9,							 // Pickup will rotate 
+	PLACEMENT_FLAG_FACEPLAYER = 10,						 // Pickup will always face the player
+	PLACEMENT_FLAG_HIDE_IN_PHOTOS = 11,					 // Pickup will be hidden when the player is using the phone camera
+	PLACEMENT_FLAG_PLAYER_GIFT = 12,					 // The pickup is being dropped as a gift to another player
+	PLACEMENT_FLAG_ON_OBJECT = 13,						 // The pickup is lying on an object and probes for that when snapping or orientating to ground
+	PLACEMENT_FLAG_GLOW_IN_TEAM = 14,					 // Set pickups to glow even if pickup can't be picked up because of team checks
+	PLACEMENT_CREATION_FLAG_AUTO_EQUIP = 15,			 // if set on a weapon pickup, it will auto equip the picked up weapon. It will ignore autoswap logic
+	PLACEMENT_CREATION_FLAG_COLLECTABLE_IN_VEHICLE = 16, // if set the pickup can be collected by a ped in a vehicle
+	PLACEMENT_CREATION_FLAG_DISABLE_WEAPON_HD_MODEL = 17,// if set the weapon pickup will render SD model only (HD<->SD model switch will be disabled)
+	PLACEMENT_CREATION_FLAG_FORCE_DEFERRED_MODEL = 18    // if set the pickup will render as deferred model (no transparency/alpha blending in this render mode)
+};
 
+enum eDispatchType {
+	DT_INVALID,
+	DT_POLICE_AUTOMOBILE,
+	DT_POLICE_HELICOPTER,
+	DT_FIRE_DEPARTMENT,
+	DT_SWAT_AUTOMOBILE,
+	DT_AMBULANCE_DEPARTMENT,
+	DT_POLICE_RIDERS,
+	DT_POLICE_VEHICLE_REQUEST,
+	DT_POLICE_ROAD_BLOCK,
+	DT_POLICE_AUTOMOBILE_WAIT_PULLED_OVER,
+	DT_POLICE_AUTOMOBILE_WAIT_CRUISING,
+	DT_GANGS,
+	DT_SWAT_HELICOPTER,
+	DT_POLICE_BOAT,
+	DT_ARMY_VEHICLE,
+	DT_BIKER_BACKUP,
+	DT_ASSASSINS
+};
+#pragma endregion
+
+#pragma region Const Arrays
 constexpr int AnimPostFXSize = 68;
 constexpr char* AnimPostFX[AnimPostFXSize] = {
 	"DefaultFlash", "DefaultLensDistortion", "DefaultColorGrade", "DefaultMenuFadeIn",
@@ -759,7 +771,7 @@ constexpr char* AnimPostFX[AnimPostFXSize] = {
 
 constexpr int AbilityPostFXSize = 8;
 constexpr char* AbilityPostFX[AbilityPostFXSize] = {
-	"DrivingFocus", "DrivingFocusOut", "BulletTime", "BulletTimeOut", 
+	"DrivingFocus", "DrivingFocusOut", "BulletTime", "BulletTimeOut",
 	"REDMIST", "REDMISTOut", "Rampage", "RampageOut"
 };
 
@@ -916,6 +928,46 @@ constexpr char* ScenarioGroups[ScenarioGroupsSize] = {
 	"W_PaletoBay_09_Vagos",   "W_Puerto_25_Bikers",   "W_Puerto_25_Cops",   "W_Puerto_25_Hookers",  "W_Puerto_25_Vagos",
 	"W_SandyShores_11_Bikers",   "W_SandyShores_11_Cops",   "W_SandyShores_11_Hookers",   "W_SandyShores_11_Vagos",  "WATERSPORTS",
 	"YellowJackInn"
+};
+
+/*
+constexpr int AllHandsBonetagsSize = 34;
+constexpr int AllHandsBonetags[AllHandsBonetagsSize] =
+						{ BONETAG_PH_R_HAND, BONETAG_R_HAND, BONETAG_R_FINGER0, BONETAG_R_FINGER01,
+						  BONETAG_R_FINGER02, BONETAG_R_FINGER1, BONETAG_R_FINGER11, BONETAG_R_FINGER12,
+						  BONETAG_R_FINGER2, BONETAG_R_FINGER21, BONETAG_R_FINGER22, BONETAG_R_FINGER3,
+						  BONETAG_R_FINGER31, BONETAG_R_FINGER32, BONETAG_R_FINGER4, BONETAG_R_FINGER41,
+						  BONETAG_R_FINGER42,
+						  BONETAG_PH_L_HAND, BONETAG_L_HAND, BONETAG_L_FINGER0, BONETAG_L_FINGER01,
+						  BONETAG_L_FINGER02, BONETAG_L_FINGER1, BONETAG_L_FINGER11, BONETAG_L_FINGER12,
+						  BONETAG_L_FINGER2, BONETAG_L_FINGER21, BONETAG_L_FINGER22, BONETAG_L_FINGER3,
+						  BONETAG_L_FINGER31, BONETAG_L_FINGER32, BONETAG_L_FINGER4, BONETAG_L_FINGER41,
+						  BONETAG_L_FINGER42
+						};
+
+constexpr int RightHandBonetagsSize = 17;
+constexpr int RightHandBonetags[RightHandBonetagsSize] =
+						{ BONETAG_PH_R_HAND, BONETAG_R_HAND, BONETAG_R_FINGER0, BONETAG_R_FINGER01,
+						  BONETAG_R_FINGER02, BONETAG_R_FINGER1, BONETAG_R_FINGER11, BONETAG_R_FINGER12,
+						  BONETAG_R_FINGER2, BONETAG_R_FINGER21, BONETAG_R_FINGER22, BONETAG_R_FINGER3,
+						  BONETAG_R_FINGER31, BONETAG_R_FINGER32, BONETAG_R_FINGER4, BONETAG_R_FINGER41,
+						  BONETAG_R_FINGER42
+						};
+*/
+#pragma endregion
+
+#pragma region Task Enums
+enum eTaskVehicleChaseBehaviorFlags {
+	VEHICLE_CHASE_CANT_BLOCK = 1,
+	VEHICLE_CHASE_CANT_BLOCK_FROM_PURSUE = 2,
+	VEHICLE_CHASE_CANT_PURSUE = 4,
+	VEHICLE_CHASE_CANT_RAM = 8,
+	VEHICLE_CHASE_CANT_SPIN_OUT = 16,
+	VEHICLE_CHASE_CANT_MAKE_AGGRESSIVE_MOVE = 32,
+	VEHICLE_CHASE_CANT_CRUISE_IN_FRONT_DURING_BLOCK = 64,
+	VEHICLE_CHASE_USE_CONTINUOUS_RAM = 128,
+	VEHICLE_CHASE_CANT_PULL_ALONGSIDE = 256,
+	VEHICLE_CHASE_CANT_PULL_ALONGSIDE_INFRONT = 512
 };
 
 enum eCodeTask {
@@ -1454,28 +1506,9 @@ enum eCodeTask {
 	CODE_TASK_ANIMATED_FALLBACK,
 	CODE_MAX_NUM_TASK_TYPES
 };
+#pragma endregion
 
-enum ePedMotionState {
-	MS_ON_FOOT_IDLE = -1871534317,	// The standing idle pose for on foot movement
-	MS_ON_FOOT_WALK = -668482597,	// Walking straight forward in on foot movement
-	MS_ON_FOOT_RUN = -530524,	// Running straight forward in on foot movement
-	MS_ON_FOOT_SPRINT = -1115154469,	// Sprinting straight forward in on foot movement
-	MS_CROUCH_IDLE = 1140525470,	// The standing idle for crouching movement
-	MS_CROUCH_WALK = 147004056,	// walking straight forward whilst crouching
-	MS_CROUCH_RUN = 898879241,	// running straight forward whilst crouching
-	MS_DO_NOTHING = 247561816,
-	MS_DIVING_IDLE = 1212730861,	// Idling whilst swimming underwater
-	MS_DIVING_SWIM = -1855028596,	// swimming forwards whilst swimming underwater
-	MS_PARACHUTING = -1161760501,	// parachuting
-	MS_AIMING = 1063765679, // aiming
-	MS_ACTIONMODE_IDLE = -633298724,
-	MS_ACTIONMODE_WALK = -762290521,
-	MS_ACTIONMODE_RUN = 834330132,
-	MS_STEALTHMODE_IDLE = 1110276645,
-	MS_STEALTHMODE_WALK = 69908130,
-	MS_STEALTHMODE_RUN = -83133983
-};
-
+#pragma region Control Enums
 enum eControlType {
 	PLAYER_CONTROL = 0,
 	CAMERA_CONTROL,
@@ -1848,3 +1881,4 @@ enum eControlAction {
 	INPUT_USE_ARMOR,
 	MAX_INPUTS
 };
+#pragma endregion

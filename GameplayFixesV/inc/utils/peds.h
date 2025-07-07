@@ -1,5 +1,5 @@
 #pragma once
-#include "options.h"
+#include "utils\player.h"
 
 class PedOption : public IOption {
 private:

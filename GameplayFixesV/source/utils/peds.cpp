@@ -1,10 +1,10 @@
 //ScriptHook
-#include <natives.h>
-// #include <types.h> //Already included in globals.h
+#include <shv\natives.h>
+#include <shv\types.h>
 //Custom
-#include "peds.h"
-#include "functions.h"
-#include "ini.h"
+#include "utils\peds.h"
+#include "utils\functions.h"
+#include "utils\ini.h"
 #include "globals.h"
 
 namespace
@@ -107,22 +107,21 @@ inline void DisableDeadPedsJumpOutOfVehicle(const Ped ped)
 }
 
 #define REGISTER_OPTION(mngr, opt, pedptr) mngr.RegisterOption(std::make_unique<PedOption>(iniValue(Ini::opt), [](Ped ped) { opt(ped); }, pedptr, #opt))
-#define REGISTER_OPTION_INI(mngr, opt, pedptr, nm) mngr.RegisterOption(std::make_unique<PedOption>(iniValue(Ini::nm), []() { opt(); }, pedptr, #opt))
+#define REGISTER_OPTION_INI(mngr, opt, pedptr, nm) mngr.RegisterOption(std::make_unique<PedOption>(iniValue(Ini::nm), [](Ped ped) { opt(ped); }, pedptr, #opt))
 
 OptionManager pedOptionsManager;
-Ped initCurrentPed = 0;
-Ped* currentPedPtr = &initCurrentPed;	// ensure this is set after calling RegisterPedOptions
+Ped currentPed = 0;
 void RegisterPedOptions()
 {
 	pedOptionsManager.UnregisterAllOptions();
 
-	REGISTER_OPTION(pedOptionsManager, DisableWrithe, currentPedPtr);
-	REGISTER_OPTION(pedOptionsManager, DisableHurt, currentPedPtr);
-	REGISTER_OPTION(pedOptionsManager, DisableShootFromGround, currentPedPtr);
-	REGISTER_OPTION(pedOptionsManager, DisableSittingPedsInstantDeath, currentPedPtr);
-	REGISTER_OPTION(pedOptionsManager, DisarmPedWhenShot, currentPedPtr);
-	REGISTER_OPTION(pedOptionsManager, DisablePedOnlyDamagedByPlayer, currentPedPtr);
-	REGISTER_OPTION(pedOptionsManager, DisableDeadPedsJumpOutOfVehicle, currentPedPtr);
+	REGISTER_OPTION(pedOptionsManager, DisableWrithe, &currentPed);
+	REGISTER_OPTION(pedOptionsManager, DisableHurt, &currentPed);
+	REGISTER_OPTION(pedOptionsManager, DisableShootFromGround, &currentPed);
+	REGISTER_OPTION(pedOptionsManager, DisableSittingPedsInstantDeath, &currentPed);
+	REGISTER_OPTION(pedOptionsManager, DisarmPedWhenShot, &currentPed);
+	REGISTER_OPTION(pedOptionsManager, DisablePedOnlyDamagedByPlayer, &currentPed);
+	REGISTER_OPTION(pedOptionsManager, DisableDeadPedsJumpOutOfVehicle, &currentPed);
 	return;
 }
 
@@ -145,7 +144,7 @@ void UpdatePedsPool()
 		if (peds[i] == GetPlayerPed() || !IS_ENTITY_A_PED(peds[i]) || !IS_PED_HUMAN(peds[i]) || IS_ENTITY_DEAD(peds[i], false))
 			continue;
 
-		currentPedPtr = &peds[i];
+		currentPed = peds[i];
 		pedOptionsManager.ApplyOptions();
 	}
 	return;

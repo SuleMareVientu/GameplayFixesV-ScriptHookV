@@ -1,5 +1,6 @@
 #pragma once
 #include <Windows.h>
+#include <string>
 
 namespace Ini
 {
@@ -34,7 +35,7 @@ extern bool DisableEngineFire;
 extern bool LeaveEngineOnWhenExitingVehicles;
 extern bool DisableWheelsAutoCenterOnCarExit;
 extern bool KeepCarHydraulicsPosition;
-extern bool EnableBrakeLightsOnStoppedVehicles;
+extern bool EnableBrakeLightsOnStoppedVehicle;
 extern bool EnableHeliWaterPhysics;
 extern bool DisableRagdollOnVehicleRoof;
 extern float MaxVehicleSpeed;
@@ -64,7 +65,7 @@ extern bool HideAbilityBarForNonMainCharacters;
 extern bool ReplaceArmourBarWithStamina;
 extern bool MergeHealthAndArmour;
 extern bool HideHudComponents;
-extern char* HudComponents;
+extern std::string HudComponents;
 extern bool HideWeaponReticle;
 extern bool HideEnemiesBlips;
 //Audio
@@ -74,7 +75,7 @@ extern bool DisableFlyingMusic;
 extern bool DisableRadioInterruptions;
 extern int DefaultVehicleRadioOff;
 extern bool MuteSounds;
-extern char* Sounds;
+extern std::string Sounds;
 extern bool DisablePlayerPainAudio;
 extern bool MuteArtificialAmbientSounds;
 

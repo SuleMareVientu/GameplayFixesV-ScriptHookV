@@ -2,9 +2,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <SimpleIni.h>
-#include "ini.h"
-#include "functions.h"
+#include <libs\SimpleIni.h>
+#include "utils\ini.h"
+#include "utils\functions.h"
 #include "globals.h"
 
 static constexpr char* inputGroup = "Input";
@@ -46,7 +46,7 @@ bool DisableEngineFire = false;
 bool LeaveEngineOnWhenExitingVehicles = true;
 bool DisableWheelsAutoCenterOnCarExit = true;
 bool KeepCarHydraulicsPosition = true;
-bool EnableBrakeLightsOnStoppedVehicles = true;
+bool EnableBrakeLightsOnStoppedVehicle = true;
 bool EnableHeliWaterPhysics = true;
 bool DisableRagdollOnVehicleRoof = true;
 float MaxVehicleSpeed = 90.0f;
@@ -76,7 +76,7 @@ bool HideAbilityBarForNonMainCharacters = true;
 bool ReplaceArmourBarWithStamina = false;
 bool MergeHealthAndArmour = true;
 bool HideHudComponents = false;
-char* HudComponents = "HUD_VEHICLE_NAME, HUD_AREA_NAME, HUD_STREET_NAME";
+std::string HudComponents = "HUD_VEHICLE_NAME, HUD_AREA_NAME, HUD_STREET_NAME";
 bool HideWeaponReticle = false;
 bool HideEnemiesBlips = false;
 //Audio
@@ -86,7 +86,7 @@ bool DisableFlyingMusic = false;
 bool DisableRadioInterruptions = false;
 int DefaultVehicleRadioOff = 0;
 bool MuteSounds = false;
-char* Sounds = "AMBIENCE, MUSIC";
+std::string Sounds = "AMBIENCE, MUSIC";
 bool DisablePlayerPainAudio = false;
 bool MuteArtificialAmbientSounds = false;
 
@@ -147,7 +147,7 @@ void ReadINI()
 	DisableForcedCarExplosionOnImpact = ini.GetBoolValue(playerGroup, "DisableForcedCarExplosionOnImpact", DisableForcedCarExplosionOnImpact);
 	DisableEngineSmoke = ini.GetBoolValue(playerGroup, "DisableEngineSmoke", DisableEngineSmoke);
 	DisableEngineFire = ini.GetBoolValue(playerGroup, "DisableEngineFire", DisableEngineFire);
-	EnableBrakeLightsOnStoppedVehicles = ini.GetBoolValue(playerGroup, "EnableBrakeLightsOnStoppedVehicles", EnableBrakeLightsOnStoppedVehicles);
+	EnableBrakeLightsOnStoppedVehicle = ini.GetBoolValue(playerGroup, "EnableBrakeLightsOnStoppedVehicle", EnableBrakeLightsOnStoppedVehicle);
 	LeaveEngineOnWhenExitingVehicles = ini.GetBoolValue(playerGroup, "LeaveEngineOnWhenExitingVehicles", LeaveEngineOnWhenExitingVehicles);
 	KeepCarHydraulicsPosition = ini.GetBoolValue(playerGroup, "KeepCarHydraulicsPosition", KeepCarHydraulicsPosition);
 	DisableWheelsAutoCenterOnCarExit = ini.GetBoolValue(playerGroup, "DisableWheelsAutoCenterOnCarExit", DisableWheelsAutoCenterOnCarExit);
@@ -181,7 +181,7 @@ void ReadINI()
 	ReplaceArmourBarWithStamina = ini.GetBoolValue(HUDGroup, "ReplaceArmourBarWithStamina", ReplaceArmourBarWithStamina);
 	MergeHealthAndArmour = ini.GetBoolValue(HUDGroup, "MergeHealthAndArmour", MergeHealthAndArmour);
 	HideHudComponents = ini.GetBoolValue(HUDGroup, "HideHudComponents", HideHudComponents);
-	HudComponents = const_cast<char*>(ini.GetValue(HUDGroup, "HudComponents", HudComponents));
+	HudComponents = ini.GetValue(HUDGroup, "HudComponents", HudComponents.c_str());
 	HideWeaponReticle = ini.GetBoolValue(HUDGroup, "HideWeaponReticle", HideWeaponReticle);
 	HideEnemiesBlips = ini.GetBoolValue(HUDGroup, "HideEnemiesBlips", HideEnemiesBlips);
 
@@ -192,7 +192,7 @@ void ReadINI()
 	DisableRadioInterruptions = ini.GetBoolValue(AudioGroup, "DisableRadioInterruptions", DisableRadioInterruptions);
 	DefaultVehicleRadioOff = static_cast<int>(ini.GetLongValue(AudioGroup, "DefaultVehicleRadioOff", DefaultVehicleRadioOff));
 	MuteSounds = ini.GetBoolValue(AudioGroup, "MuteSounds", MuteSounds);
-	Sounds = const_cast<char*>(ini.GetValue(AudioGroup, "Sounds", Sounds));
+	Sounds = ini.GetValue(AudioGroup, "Sounds", Sounds.c_str());
 	DisablePlayerPainAudio = ini.GetBoolValue(AudioGroup, "DisablePlayerPainAudio", DisablePlayerPainAudio);
 	MuteArtificialAmbientSounds = ini.GetBoolValue(AudioGroup, "MuteArtificialAmbientSounds", MuteArtificialAmbientSounds);
 
@@ -222,13 +222,12 @@ void WriteINIResource(HINSTANCE hInstance, int resourceID, const char* path)
 	const void* data = LockResource(hData);
 	const DWORD size = SizeofResource(hInstance, hRes);
 
-	FILE* f = fopen(path, "wb");
+	auto file_deleter = [](FILE* f) { if (f) { fclose(f); } };
+	std::unique_ptr<FILE, decltype(file_deleter)> f(fopen(path, "wb"), file_deleter);
 	if (f)
 	{
-#pragma warning( suppress : 6387 )
-		fwrite(data, 1, size, f);
-		fflush(f);
-		fclose(f);
+		fwrite(data, 1, size, f.get());
+		fflush(f.get());
 	}
 	return;
 }

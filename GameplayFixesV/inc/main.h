@@ -134,9 +134,9 @@ enum eGameVersion : int
     VER_1_0_678_1_NOSTEAM,
     VER_1_0_757_2_STEAM,
     VER_1_0_757_2_NOSTEAM,
-    /// The correct name would be <c>VER_1_0_757_4_STEAM</c> since the Steam v1.0.757.3 does not exist but Steam
-    /// v1.0.757.4 does. Script Hook V can log <c>VER_1_0_757_4_STEAM</c> in <c>ScriptHookV.log</c> but cannot
-    /// log <c>VER_1_0_757_3_STEAM</c> as well.
+    // The correct name would be VER_1_0_757_4_STEAM since the Steam v1.0.757.3 does not exist but Steam
+    // v1.0.757.4 does. Script Hook V can log VER_1_0_757_4_STEAM in ScriptHookV.log but cannot
+    // log VER_1_0_757_3_STEAM as well.
     VER_1_0_757_3_STEAM,
     VER_1_0_757_4_NOSTEAM,
     VER_1_0_791_2_STEAM,
@@ -165,9 +165,9 @@ enum eGameVersion : int
     VER_1_0_1604_0_NOSTEAM,
     VER_1_0_1604_1_STEAM,
     VER_1_0_1604_1_NOSTEAM,
-    /// This value also represents the exe version 1.0.1734.0 for Steam version. 1.0.1737.0 basically works in the same way as 1.0.1734.0 but with bug fixes.
+    // This value also represents the exe version 1.0.1734.0 for Steam version. 1.0.1737.0 basically works in the same way as 1.0.1734.0 but with bug fixes.
     VER_1_0_1737_0_STEAM,
-    /// This value also represents the exe version 1.0.1734.0 for non-Steam version. 1.0.1737.0 basically works in the same way as 1.0.1734.0 but with bug fixes.
+    // This value also represents the exe version 1.0.1734.0 for non-Steam version. 1.0.1737.0 basically works in the same way as 1.0.1734.0 but with bug fixes.
     VER_1_0_1737_0_NOSTEAM,
     VER_1_0_1737_6_STEAM,
     VER_1_0_1737_6_NOSTEAM,
@@ -186,9 +186,9 @@ enum eGameVersion : int
     VER_1_0_2215_0_NOSTEAM,
     VER_1_0_2245_0_STEAM,
     VER_1_0_2245_0_NOSTEAM,
-    /// This value also represents the exe version 1.0.2372.2 for Steam version. 1.0.2372.2 basically works in the same way as 1.0.2372.0 but with bug fixes.
+    // This value also represents the exe version 1.0.2372.2 for Steam version. 1.0.2372.2 basically works in the same way as 1.0.2372.0 but with bug fixes.
     VER_1_0_2372_0_STEAM,
-    /// This value also represents the exe version 1.0.2372.2 for non-Steam version. 1.0.2372.2 basically works in the same way as 1.0.2372.0 but with bug fixes.
+    // This value also represents the exe version 1.0.2372.2 for non-Steam version. 1.0.2372.2 basically works in the same way as 1.0.2372.0 but with bug fixes.
     VER_1_0_2372_0_NOSTEAM,
     VER_1_0_2545_0_STEAM,
     VER_1_0_2545_0_NOSTEAM,
@@ -216,7 +216,30 @@ enum eGameVersion : int
     VER_1_0_3442_0,
     VER_1_0_3504_0,
 
-	VER_SIZE,
+    VER_LEGACY_SIZE,
+
+	/* Enhanced info
+    v1.0.811.8      (Build 17593856)
+    v1.0.811.11     (Build 17610727)
+    v1.0.811.16     (Build 17628368)
+    v1.0.812.6      (Build 17708837)
+    v1.0.812.8      (Build 17754914)
+    v1.0.813.11     (Build 17987055)
+    v1.0.814.9      (Build 18241369)
+    v1.0.889.15     (Build 18858393)
+    */
+
+    // This value also represents the exe version 1.0.811.11, 1.0.811.16 and (presumably) 1.0.812.6.
+    VER_EN_1_0_811_8 = 1001,
+    VER_EN_1_0_811_11 = 1001,
+    VER_EN_1_0_811_16 = 1001,
+	VER_EN_1_0_812_6 = 1001,    // maybe 1001, maybe 1002, not sure
+    VER_EN_1_0_812_8 = 1002,
+    VER_EN_1_0_813_11,
+    VER_EN_1_0_814_9,
+    VER_EN_1_0_889_15,
+    VER_ENHANCED_SIZE,
+	
 	VER_UNK = -1
 };
 

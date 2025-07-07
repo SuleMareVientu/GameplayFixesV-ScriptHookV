@@ -12,30 +12,38 @@
     <ClCompile Include="source\utils\ini.cpp" />
     <ClCompile Include="source\utils\functions.cpp" />
     <ClCompile Include="source\utils\keyboard.cpp" />
-    <ClCompile Include="source\utils\options.cpp" />
+    <ClCompile Include="source\utils\player.cpp" />
     <ClCompile Include="source\utils\peds.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\enums.h" />
-    <ClInclude Include="inc\functions.h" />
     <ClInclude Include="inc\globals.h" />
-    <ClInclude Include="inc\ini.h" />
-    <ClInclude Include="inc\json.hpp" />
-    <ClInclude Include="inc\json_fwd.hpp" />
-    <ClInclude Include="inc\keyboard.h" />
+    <ClInclude Include="inc\libs\json.hpp" />
+    <ClInclude Include="inc\libs\json_fwd.hpp" />
+    <ClInclude Include="inc\libs\pattern16\Pattern16.h" />
+    <ClInclude Include="inc\libs\pattern16\pfreq.h" />
+    <ClInclude Include="inc\libs\pattern16\scanners\base.h" />
+    <ClInclude Include="inc\libs\pattern16\scanners\x64\AVX.h" />
+    <ClInclude Include="inc\libs\pattern16\scanners\x64\SSE.h" />
+    <ClInclude Include="inc\libs\pattern16\scanners\x64\x64.h" />
+    <ClInclude Include="inc\libs\pattern16\util.h" />
+    <ClInclude Include="inc\libs\SimpleIni.h" />
     <ClInclude Include="inc\main.h" />
-    <ClInclude Include="inc\nativeCaller.h" />
-    <ClInclude Include="inc\natives.h" />
     <ClInclude Include="inc\nm.h" />
-    <ClInclude Include="inc\options.h" />
-    <ClInclude Include="inc\peds.h" />
     <ClInclude Include="inc\script.h" />
-    <ClInclude Include="inc\SimpleIni.h" />
-    <ClInclude Include="inc\types.h" />
+    <ClInclude Include="inc\shv\enums.h" />
+    <ClInclude Include="inc\shv\nativeCaller.h" />
+    <ClInclude Include="inc\shv\natives.h" />
+    <ClInclude Include="inc\shv\types.h" />
+    <ClInclude Include="inc\utils\functions.h" />
+    <ClInclude Include="inc\utils\ini.h" />
+    <ClInclude Include="inc\utils\keyboard.h" />
+    <ClInclude Include="inc\utils\player.h" />
+    <ClInclude Include="inc\utils\peds.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="res\resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="inc\libs\pattern16\pfreq.inl" />
     <None Include="res\weapons.json" />
   </ItemGroup>
   <ItemGroup>

@@ -1,13 +1,13 @@
 //ScriptHook
-#include <natives.h>
-// #include <types.h> //Already included in globals.h
+#include <shv\natives.h>
+#include <shv\types.h>
 #include <main.h>
 //Custom
 #include "script.h"
-#include "functions.h"
-#include "options.h"
-#include "peds.h"
-#include "ini.h"
+#include "utils\functions.h"
+#include "utils\player.h"
+#include "utils\peds.h"
+#include "utils\ini.h"
 #include "globals.h"
 
 std::string dllInstanceName = "GameplayFixesV.asi";
@@ -49,13 +49,7 @@ void ScriptMain()
 	dllInstanceIniName = dllInstanceNameNoExt + ".ini";
 	dllInstanceLogName = dllInstanceNameNoExt + ".log";
 	gameVersion = getGameVersion();
-	std::filesystem::path gamePath = AbsoluteModulePath(GetModuleHandle(NULL));
-	if (std::filesystem::exists(gamePath.replace_filename("GTA5_Enhanced.exe")) ||
-		std::filesystem::exists(gamePath.replace_filename("GFSDK_Aftermath_Lib.x64.dll")) ||
-		std::filesystem::exists(gamePath.replace_filename("oo2core_5_win64.dll")))
-	{
-		isEnhancedVersion = true;
-	}
+	isEnhancedVersion = (GetGameVersion() >= 1000);
 
 	ReadINI();
 	srand(static_cast<unsigned int>(GetTickCount64()));

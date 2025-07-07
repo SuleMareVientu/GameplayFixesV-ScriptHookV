@@ -1,6 +1,6 @@
 //ScriptHook
-#include <natives.h>
-// #include <types.h> //Already included in globals.h
+#include <shv\natives.h>
+#include <shv\types.h>
 
 //std
 #include <sstream>
@@ -10,15 +10,15 @@
 #include <numeric>
 #include <set>
 #include <fstream>
-#include <pattern16\Pattern16.h>
+#include <libs\pattern16\Pattern16.h>
 
 #include <Psapi.h>
 
 //Custom
-#include "functions.h"
-#include "keyboard.h"
-#include "ini.h"
-#include "peds.h"
+#include "utils\functions.h"
+#include "utils\keyboard.h"
+#include "utils\ini.h"
+#include "utils\peds.h"
 
 #pragma region Generic
 std::filesystem::path AbsoluteModulePath(HINSTANCE module)
@@ -140,8 +140,8 @@ int GetPadControlFromString(const std::string& str)
 	auto it = mapPadControls.find(tmpStr);
 	if (it != mapPadControls.end())
 		return it->second;
-	else
-		return -1;
+	
+	return -1;
 }
 
 int GetVKFromString(const std::string& str)
@@ -151,8 +151,8 @@ int GetVKFromString(const std::string& str)
 	auto it = mapVKs.find(tmpStr);
 	if (it != mapVKs.end())
 		return it->second;
-	else
-		return -1;
+	
+	return -1;
 }
 #pragma endregion
 
@@ -514,7 +514,17 @@ int GetWeaponBlipSprite(const Hash weaponHash)
 	}
 }
 
-bool WillWeaponSpawnPickupWhenDropped(const Hash weaponHash, const bool checkWeaponType)
+// DO NOT USE GET_PICKUP_TYPE_FROM_WEAPON_HASH, it requires b1290
+Hash GetPickupTypeFromWeaponModel(const Hash wpModel)
+{
+	auto it = wpPickupMap.find(wpModel);
+	if (it != wpPickupMap.end())
+		return it->second;
+
+	return 0;
+}
+
+bool ShouldWeaponSpawnPickupWhenDropped(const Hash weaponHash, const bool checkWeaponType)
 {
 	if (weaponHash == WEAPON_UNARMED || weaponHash == 0)
 		return false;
@@ -550,7 +560,10 @@ void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse)
 		{
 			wp.WpHash = weaponHash;
 			wp.TintIndex = GET_PED_WEAPON_TINT_INDEX(GetPlayerPed(), weaponHash);
-			wp.CamoIndex = GET_PED_WEAPON_CAMO_INDEX(GetPlayerPed(), weaponHash);
+
+			if (GetGameVersion() >= VER_1_0_1103_2_STEAM)
+				wp.CamoIndex = GET_PED_WEAPON_CAMO_INDEX(GetPlayerPed(), weaponHash);
+
 			LOOP(i, it->Components.size())
 			{
 				const Hash component = Joaat(it->Components[i].Name.c_str());
@@ -562,7 +575,7 @@ void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse)
 			}
 		}
 
-		if (!it->Liveries.empty())
+		if (!it->Liveries.empty() && GetGameVersion() >= VER_1_0_1103_2_STEAM)
 		{
 			LOOP(i, it->Liveries.size())
 			{
@@ -583,7 +596,12 @@ void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse)
 	// Pickup Section
 	const Vector3 off = GET_PED_BONE_COORDS(GetPlayerPed(), BONETAG_PH_R_HAND, 0.0f, 0.0f, 0.0f);
 	SET_LOCAL_PLAYER_PERMITTED_TO_COLLECT_PICKUPS_WITH_MODEL(GET_WEAPONTYPE_MODEL(weaponHash), false);
-	wp.PickupIndex = CREATE_PICKUP(GET_PICKUP_TYPE_FROM_WEAPON_HASH(weaponHash), off.x, off.y, off.z, PLACEMENT_FLAG_LOCAL_ONLY, -1, false, NULL);
+
+	if (GetGameVersion() >= VER_1_0_1290_1_STEAM)
+		wp.PickupIndex = CREATE_PICKUP(GET_PICKUP_TYPE_FROM_WEAPON_HASH(weaponHash), off.x, off.y, off.z, PLACEMENT_FLAG_LOCAL_ONLY, -1, false, NULL);
+	else
+		wp.PickupIndex = CREATE_PICKUP(GetPickupTypeFromWeaponModel(GET_WEAPONTYPE_MODEL(weaponHash)), off.x, off.y, off.z, PLACEMENT_FLAG_LOCAL_ONLY, -1, false, NULL);
+	
 	wp.PickupBlip = ADD_BLIP_FOR_PICKUP(wp.PickupIndex);
 	SET_BLIP_SPRITE(wp.PickupBlip, GetWeaponBlipSprite(weaponHash));
 	SET_BLIP_SCALE(wp.PickupBlip, 0.7f);
@@ -623,15 +641,18 @@ void RestorePlayerRetrievedWeapon()
 			const Object po = GET_PICKUP_OBJECT(droppedWeapons[i].PickupIndex);
 			SET_ACTIVATE_OBJECT_PHYSICS_AS_SOON_AS_IT_IS_UNFROZEN(po, true);
 			ACTIVATE_PHYSICS(po);
-			FORCE_ACTIVATE_PHYSICS_ON_UNFIXED_PICKUP(po, true);
+			// FORCE_ACTIVATE_PHYSICS_ON_UNFIXED_PICKUP(po, true); // DO NOT ENABLE, requires b1180
 			SET_ENTITY_DYNAMIC(po, true);
-			SET_PICKUP_COLLIDES_WITH_PROJECTILES(po, true);
+			// SET_PICKUP_COLLIDES_WITH_PROJECTILES(po, true);	// DO NOT ENABLE, requires b678
 
 			if (droppedWeapons[i].TintIndex > -1)
 				SET_WEAPON_OBJECT_TINT_INDEX(po, droppedWeapons[i].TintIndex);
 
-			if (droppedWeapons[i].CamoIndex > -1)
-				SET_WEAPON_OBJECT_CAMO_INDEX(po, droppedWeapons[i].CamoIndex);
+			if (GetGameVersion() >= VER_1_0_1103_2_STEAM)
+			{
+				if (droppedWeapons[i].CamoIndex > -1)
+					SET_WEAPON_OBJECT_CAMO_INDEX(po, droppedWeapons[i].CamoIndex);
+			}
 
 			if (!droppedWeapons[i].Components.empty())
 			{
@@ -644,7 +665,7 @@ void RestorePlayerRetrievedWeapon()
 				}
 			}
 
-			if (!droppedWeapons[i].Liveries.empty())
+			if (!droppedWeapons[i].Liveries.empty() && GetGameVersion() >= VER_1_0_1103_2_STEAM)
 			{
 				LOOP(j, droppedWeapons[i].Liveries.size())
 				{
@@ -680,7 +701,7 @@ void RestorePlayerRetrievedWeapon()
 			}
 		}
 
-		if (!droppedWeapons[i].Liveries.empty())
+		if (!droppedWeapons[i].Liveries.empty() && GetGameVersion() >= VER_1_0_1103_2_STEAM)
 		{
 			LOOP(j, droppedWeapons[i].Liveries.size())
 			{
@@ -761,6 +782,7 @@ Vehicle GetVehiclePedIsEnteringOrExiting(const Ped ped)
 	return veh;
 }
 
+// Requires b944
 bool DoesVehicleHaveAbility(const Vehicle veh)
 {
 	if (DOES_ENTITY_EXIST(veh) && (GET_VEHICLE_HAS_KERS(veh) || GET_HAS_ROCKET_BOOST(veh) || GET_CAR_HAS_JUMP(veh)))
@@ -956,7 +978,6 @@ void SetFakeWanted(Player player, bool toggle)
 }
 #pragma endregion
 
-
 #pragma region Game Functions
 namespace nUnsafe
 {
@@ -1094,7 +1115,7 @@ int GetFragInstNmGtaOffset()
 	return nUnsafe::fragInstNmGtaOffset;
 }
 
-ULONG_PTR CreateNmMessage()
+NmMessage CreateNmMessage()
 {
 	if (nUnsafe::CreateNmMessage == nullptr)
 	{
@@ -1102,43 +1123,42 @@ ULONG_PTR CreateNmMessage()
 		return 0;
 	}
 
-	ULONG_PTR msgMemPtr = reinterpret_cast<ULONG_PTR>(malloc(0x1218));
-	if (!msgMemPtr)
+	constexpr size_t msgMemSize = 0x1218;
+	NmMessage msgPtr = std::make_unique<unsigned char[]>(msgMemSize);
+	if (!msgPtr)
+	{
+		WriteLog("Error", "Memory allocation for NM message failed!");
 		return 0;
+	}
 
-	nUnsafe::CreateNmMessage(msgMemPtr, msgMemPtr + 0x18, 0x40);
-	return msgMemPtr;
+	ULONG_PTR ptr = reinterpret_cast<ULONG_PTR>(msgPtr.get());
+	nUnsafe::CreateNmMessage(ptr, ptr + 0x18, 0x40);
+	return std::move(msgPtr);
 }
 
-void GivePedNMMessage(ULONG_PTR msgMemPtr, const Ped ped, const char* message)
+void GivePedNMMessage(NmMessage msgPtr, const Ped ped, const char* message)
 {
 	if (nUnsafe::GivePedNMMessage == nullptr)
 	{
-		if (msgMemPtr)
-			free(reinterpret_cast<void*>(msgMemPtr));
-
 		WriteLog("Error", "Script tried to access invalid function \"GivePedNMMessage\"!");
 		return;
 	}
 
-	if (!msgMemPtr)
+	if (!msgPtr.get())
 		return;
 
 	ULONG_PTR pedAddress = nGame::GetScriptEntity(ped);
 	if (!pedAddress)
-	{
-		free(reinterpret_cast<void*>(msgMemPtr));
 		return;
-	}
 
-	nGame::SetNMMessageParam(msgMemPtr, "start", true);
-	
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+
 	ULONG_PTR fragInstNmGtaAddress = *(reinterpret_cast<ULONG_PTR*>(pedAddress + nGame::GetFragInstNmGtaOffset()));
-	nUnsafe::GivePedNMMessage(fragInstNmGtaAddress, message, msgMemPtr);
-	free(reinterpret_cast<void*>(msgMemPtr));
+	nUnsafe::GivePedNMMessage(fragInstNmGtaAddress, message, reinterpret_cast<ULONG_PTR>(msgPtr.get()));
+	return;
 }
 
-void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, int i)
+void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, int i)
 {
 	if (nUnsafe::SetNMMessageInt == nullptr)
 	{
@@ -1146,14 +1166,14 @@ void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, int i)
 		return;
 	}
 
-	if (!msgMemPtr)
+	if (!msgPtr)
 		return;
 
-	nUnsafe::SetNMMessageInt(msgMemPtr, msgParam, i);
+	nUnsafe::SetNMMessageInt(reinterpret_cast<ULONG_PTR>(msgPtr), msgParam, i);
 	return;
 }
 
-void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, bool b)
+void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, bool b)
 {
 	if (nUnsafe::SetNMMessageBool == nullptr)
 	{
@@ -1161,14 +1181,14 @@ void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, bool b)
 		return;
 	}
 
-	if (!msgMemPtr)
+	if (!msgPtr)
 		return;
 
-	nUnsafe::SetNMMessageInt(msgMemPtr, msgParam, b);
+	nUnsafe::SetNMMessageInt(reinterpret_cast<ULONG_PTR>(msgPtr), msgParam, b);
 	return;
 }
 
-void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, float f)
+void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, float f)
 {
 	if (nUnsafe::SetNMMessageFloat == nullptr)
 	{
@@ -1176,14 +1196,14 @@ void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, float f)
 		return;
 	}
 
-	if (!msgMemPtr)
+	if (!msgPtr)
 		return;
 
-	nUnsafe::SetNMMessageFloat(msgMemPtr, msgParam, f);
+	nUnsafe::SetNMMessageFloat(reinterpret_cast<ULONG_PTR>(msgPtr), msgParam, f);
 	return;
 }
 
-void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, const char* str)
+void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, const char* str)
 {
 	if (nUnsafe::SetNMMessageString == nullptr)
 	{
@@ -1191,14 +1211,14 @@ void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, const char* st
 		return;
 	}
 
-	if (!msgMemPtr)
+	if (!msgPtr)
 		return;
 
-	nUnsafe::SetNMMessageString(msgMemPtr, msgParam, str);
+	nUnsafe::SetNMMessageString(reinterpret_cast<ULONG_PTR>(msgPtr), msgParam, str);
 	return;
 }
 
-void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, float x, float y, float z)
+void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, float x, float y, float z)
 {
 	if (nUnsafe::SetNMMessageVec3 == nullptr)
 	{
@@ -1206,10 +1226,10 @@ void SetNMMessageParam(ULONG_PTR msgMemPtr, const char* msgParam, float x, float
 		return;
 	}
 
-	if (!msgMemPtr)
+	if (!msgPtr)
 		return;
 
-	nUnsafe::SetNMMessageVec3(msgMemPtr, msgParam, x, y, z);
+	nUnsafe::SetNMMessageVec3(reinterpret_cast<ULONG_PTR>(msgPtr), msgParam, x, y, z);
 	return;
 }
 }
