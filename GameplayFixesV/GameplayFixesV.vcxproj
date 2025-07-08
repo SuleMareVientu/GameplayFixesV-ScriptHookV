@@ -12,6 +12,7 @@
     <ClCompile Include="source\utils\ini.cpp" />
     <ClCompile Include="source\utils\functions.cpp" />
     <ClCompile Include="source\utils\keyboard.cpp" />
+    <ClCompile Include="source\utils\mem.cpp" />
     <ClCompile Include="source\utils\player.cpp" />
     <ClCompile Include="source\utils\peds.cpp" />
   </ItemGroup>
@@ -28,7 +29,6 @@
     <ClInclude Include="inc\libs\pattern16\util.h" />
     <ClInclude Include="inc\libs\SimpleIni.h" />
     <ClInclude Include="inc\main.h" />
-    <ClInclude Include="inc\nm.h" />
     <ClInclude Include="inc\script.h" />
     <ClInclude Include="inc\shv\enums.h" />
     <ClInclude Include="inc\shv\nativeCaller.h" />
@@ -37,6 +37,8 @@
     <ClInclude Include="inc\utils\functions.h" />
     <ClInclude Include="inc\utils\ini.h" />
     <ClInclude Include="inc\utils\keyboard.h" />
+    <ClInclude Include="inc\utils\mem.h" />
+    <ClInclude Include="inc\utils\nm.h" />
     <ClInclude Include="inc\utils\player.h" />
     <ClInclude Include="inc\utils\peds.h" />
     <ClInclude Include="resource.h" />

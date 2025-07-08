@@ -2,10 +2,7 @@
 #include <shv\natives.h>
 #include <globals.h>
 #include <script.h>
-#include "nm.h"
-#include <Windows.h>
-#include <filesystem>
-
+#include "utils\nm.h"
 
 class Timer {
 	int gameTimer = 0;
@@ -51,8 +48,6 @@ inline bool BetweenExclude(const T val, const T min, const T max)
 }
 
 std::filesystem::path AbsoluteModulePath(HINSTANCE module);
-ULONG_PTR FindPattern(std::string signature);
-ULONG_PTR FindPatternGlobal(std::string signature);
 void SplitString(const char* charStr, std::string arr[], const int arrSize, const bool toUpper = false);
 int GetRandomIntInRange(int startRange = 0, int endRange = 65535);
 bool GetWeightedBool(int chance);
@@ -163,115 +158,49 @@ bool ShouldWeaponSpawnPickupWhenDropped(const Hash weaponHash, const bool checkW
 void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse);
 void RestorePlayerRetrievedWeapon();
 
+void ClearEntityLastDamageEntity(Entity entity);
+void ClearPedLastDamageBone(Ped ped);
+void ClearEntityLastWeaponDamage(Entity entity);
+void ClearLastDamages();
+
+// Weapon Model Hash -> Pickup Hash
 static const std::unordered_map<unsigned int, unsigned int> wpPickupMap = {
-	{Joaat("W_SG_BULLPUPSHOTGUN"), Joaat("PICKUP_WEAPON_BULLPUPSHOTGUN")},
-	{Joaat("W_SB_ASSAULTSMG"), Joaat("PICKUP_WEAPON_ASSAULTSMG")},
-	{Joaat("W_PI_PISTOL50"), Joaat("PICKUP_WEAPON_PISTOL50")},
-	{Joaat("W_AR_ASSAULTRIFLE"), Joaat("PICKUP_WEAPON_ASSAULTRIFLE")},
-	{Joaat("W_AR_CARBINERIFLE"), Joaat("PICKUP_WEAPON_CARBINERIFLE")},
-	{Joaat("W_AR_ADVANCEDRIFLE"), Joaat("PICKUP_WEAPON_ADVANCEDRIFLE")},
-	{Joaat("W_MG_MG"), Joaat("PICKUP_WEAPON_MG")},
-	{Joaat("W_MG_COMBATMG"), Joaat("PICKUP_WEAPON_COMBATMG")},
-	{Joaat("W_SR_SNIPERRIFLE"), Joaat("PICKUP_WEAPON_SNIPERRIFLE")},
-	{Joaat("W_SR_HEAVYSNIPER"), Joaat("PICKUP_WEAPON_HEAVYSNIPER")},
-	{Joaat("W_SB_MICROSMG"), Joaat("PICKUP_WEAPON_MICROSMG")},
-	{Joaat("W_SB_SMG"), Joaat("PICKUP_WEAPON_SMG")},
-	{Joaat("W_LR_RPG"), Joaat("PICKUP_WEAPON_RPG")},
-	{Joaat("W_MG_Minigun"), Joaat("PICKUP_WEAPON_MINIGUN")},
-	{Joaat("W_SG_PUMPSHOTGUN"), Joaat("PICKUP_WEAPON_PUMPSHOTGUN")},
-	{Joaat("W_SG_SawnOff"), Joaat("PICKUP_WEAPON_SAWNOFFSHOTGUN")},
-	{Joaat("W_SG_ASSAULTSHOTGUN"), Joaat("PICKUP_WEAPON_ASSAULTSHOTGUN")},
-	{Joaat("W_EX_GRENADEFRAG"), Joaat("PICKUP_WEAPON_GRENADE")},
-	{Joaat("W_EX_MOLOTOV"), Joaat("PICKUP_WEAPON_MOLOTOV")},
-	{Joaat("W_EX_GRENADESMOKE"), Joaat("PICKUP_WEAPON_SMOKEGRENADE")},
-	{Joaat("W_EX_PE"), Joaat("PICKUP_WEAPON_STICKYBOMB")},
-	{Joaat("W_PI_PISTOL"), Joaat("PICKUP_WEAPON_PISTOL")},
-	{Joaat("W_PI_COMBATPISTOL"), Joaat("PICKUP_WEAPON_COMBATPISTOL")},
-	{Joaat("W_PI_APPISTOL"), Joaat("PICKUP_WEAPON_APPISTOL")},
-	{Joaat("W_LR_GRENADELAUNCHER"), Joaat("PICKUP_WEAPON_GRENADELAUNCHER")},
-	{Joaat("W_PI_STUNGUN"), Joaat("PICKUP_WEAPON_STUNGUN")},
-	{Joaat("W_AM_Jerrycan"), Joaat("PICKUP_WEAPON_PETROLCAN")},
-	{Joaat("W_ME_knife_01"), Joaat("PICKUP_WEAPON_KNIFE")},
-	{Joaat("W_ME_Nightstick"), Joaat("PICKUP_WEAPON_NIGHTSTICK")},
-	{Joaat("W_ME_Hammer"), Joaat("PICKUP_WEAPON_HAMMER")},
-	{Joaat("W_ME_Bat"), Joaat("PICKUP_WEAPON_BAT")},
-	{Joaat("W_ME_GClub"), Joaat("PICKUP_WEAPON_GolfClub")},
-	{Joaat("w_me_crowbar"), Joaat("PICKUP_WEAPON_CROWBAR")},
-	{Joaat("w_me_bottle"), Joaat("PICKUP_WEAPON_BOTTLE")},
-	{Joaat("w_pi_sns_pistol"), Joaat("PICKUP_WEAPON_SNSPISTOL")},
-	{Joaat("w_pi_heavypistol"), Joaat("PICKUP_WEAPON_HEAVYPISTOL")},
-	{Joaat("w_ar_specialcarbine"), Joaat("PICKUP_WEAPON_SPECIALCARBINE")},
-	{Joaat("w_ar_bullpuprifle"), Joaat("PICKUP_WEAPON_BULLPUPRIFLE")},
-	{Joaat("W_PI_RAYGUN"), Joaat("PICKUP_WEAPON_RAYPISTOL")},
-	{Joaat("W_AR_SRIFLE"), Joaat("PICKUP_WEAPON_RAYCARBINE")},
-	{Joaat("W_MG_SMINIGUN"), Joaat("PICKUP_WEAPON_RAYMINIGUN")},
-	{Joaat("W_AR_BullpupRifleMK2"), Joaat("PICKUP_WEAPON_BULLPUPRIFLE_MK2")},
-	{Joaat("W_PI_Wep1_Gun"), Joaat("PICKUP_WEAPON_DOUBLEACTION")},
-	{Joaat("w_sr_marksmanriflemk2"), Joaat("PICKUP_WEAPON_MARKSMANRIFLE_MK2")},
-	{Joaat("w_sg_pumpshotgunmk2"), Joaat("PICKUP_WEAPON_PUMPSHOTGUN_MK2")},
-	{Joaat("w_pi_revolvermk2"), Joaat("PICKUP_WEAPON_REVOLVER_MK2")},
-	{Joaat("W_PI_SNS_PistolMK2"), Joaat("PICKUP_WEAPON_SNSPISTOL_MK2")},
-	{Joaat("w_ar_specialcarbinemk2"), Joaat("PICKUP_WEAPON_SPECIALCARBINE_MK2")},
-	{Joaat("W_PI_Pistol_XM3"), Joaat("PICKUP_WEAPON_PISTOLXM3")},
-	{Joaat("W_ME_Candy_XM3"), Joaat("PICKUP_WEAPON_CANDYCANE")},
-	{Joaat("W_AR_RailGun_XM3"), Joaat("PICKUP_WEAPON_RAILGUNXM3")},
-	{Joaat("w_ex_apmine"), Joaat("PICKUP_WEAPON_PROXMINE")},
-	{Joaat("w_lr_homing"), Joaat("PICKUP_WEAPON_HOMINGLAUNCHER")},
-	{Joaat("w_ex_snowball"), Joaat("PICKUP_WEAPON_SNOWBALL")},
-	{Joaat("w_sb_gusenberg"), Joaat("PICKUP_WEAPON_GUSENBERG")},
-	{Joaat("w_me_dagger"), Joaat("PICKUP_WEAPON_DAGGER")},
-	{Joaat("w_pi_vintage_pistol"), Joaat("PICKUP_WEAPON_VINTAGEPISTOL")},
-	{Joaat("W_LR_FIREWORK"), Joaat("PICKUP_WEAPON_FIREWORK")},
-	{Joaat("w_ar_musket"), Joaat("PICKUP_WEAPON_MUSKET")},
-	{Joaat("w_me_hatchet"), Joaat("PICKUP_WEAPON_HATCHET")},
-	{Joaat("w_ar_railgun"), Joaat("PICKUP_WEAPON_RAILGUN")},
-	{Joaat("w_sg_heavyshotgun"), Joaat("PICKUP_WEAPON_HEAVYSHOTGUN")},
-	{Joaat("w_sr_marksmanrifle"), Joaat("PICKUP_WEAPON_MARKSMANRIFLE")},
-	{Joaat("w_sg_pumpshotgunh4"), Joaat("PICKUP_WEAPON_COMBATSHOTGUN")},
-	{Joaat("w_pi_singleshoth4"), Joaat("PICKUP_WEAPON_GADGETPISTOL")},
-	{Joaat("w_ar_bullpuprifleh4"), Joaat("PICKUP_WEAPON_MILITARYRIFLE")},
-	{Joaat("w_pi_ceramic_pistol"), Joaat("PICKUP_WEAPON_CERAMICPISTOL")},
-	{Joaat("w_ch_jerrycan"), Joaat("PICKUP_WEAPON_HAZARDCAN")},
-	{Joaat("w_pi_wep2_gun"), Joaat("PICKUP_WEAPON_NAVYREVOLVER")},
-	{Joaat("w_pi_flaregun"), Joaat("PICKUP_WEAPON_FLAREGUN")},
-	{Joaat("W_SB_PDW"), Joaat("PICKUP_WEAPON_COMBATPDW")},
-	{Joaat("W_ME_Knuckle"), Joaat("PICKUP_WEAPON_KNUCKLE")},
-	{Joaat("W_PI_SingleShot"), Joaat("PICKUP_WEAPON_MARKSMANPISTOL")},
-	{Joaat("w_ar_assaultrifle_smg"), Joaat("PICKUP_WEAPON_COMPACTRIFLE")},
-	{Joaat("w_sg_doublebarrel"), Joaat("PICKUP_WEAPON_DBSHOTGUN")},
-	{Joaat("w_me_machette_lr"), Joaat("PICKUP_WEAPON_MACHETE")},
-	{Joaat("W_SB_CompactSMG"), Joaat("PICKUP_WEAPON_MACHINEPISTOL")},
-	{Joaat("w_me_flashlight"), Joaat("PICKUP_WEAPON_FLASHLIGHT")},
-	{Joaat("w_pi_revolver"), Joaat("PICKUP_WEAPON_REVOLVER")},
-	{Joaat("w_me_switchblade"), Joaat("PICKUP_WEAPON_SWITCHBLADE")},
-	{Joaat("w_sg_sweeper"), Joaat("PICKUP_WEAPON_AUTOSHOTGUN")},
-	{Joaat("w_me_battleaxe"), Joaat("PICKUP_WEAPON_BATTLEAXE")},
-	{Joaat("w_lr_compactgl"), Joaat("PICKUP_WEAPON_COMPACTLAUNCHER")},
-	{Joaat("w_sb_minismg"), Joaat("PICKUP_WEAPON_MINISMG")},
-	{Joaat("w_ex_pipebomb"), Joaat("PICKUP_WEAPON_PIPEBOMB")},
-	{Joaat("w_me_poolcue"), Joaat("PICKUP_WEAPON_POOLCUE")},
-	{Joaat("w_me_wrench"), Joaat("PICKUP_WEAPON_WRENCH")},
-	{Joaat("W_AR_ASSAULTRIFLEMK2"), Joaat("PICKUP_WEAPON_ASSAULTRIFLE_MK2")},
-	{Joaat("W_AR_CARBINERIFLEMK2"), Joaat("PICKUP_WEAPON_CARBINERIFLE_MK2")},
-	{Joaat("W_MG_COMBATMGMK2"), Joaat("PICKUP_WEAPON_COMBATMG_MK2")},
-	{Joaat("W_SR_HEAVYSNIPERMK2"), Joaat("PICKUP_WEAPON_HEAVYSNIPER_MK2")},
-	{Joaat("W_PI_PISTOLMK2"), Joaat("PICKUP_WEAPON_PISTOL_MK2")},
-	{Joaat("W_SB_SMGMK2"), Joaat("PICKUP_WEAPON_SMG_MK2")},
-	{Joaat("w_me_Stonehatchet"), Joaat("PICKUP_WEAPON_STONE_HATCHET")},
-	{Joaat("W_AM_Digiscanner_REH"), Joaat("PICKUP_WEAPON_METALDETECTOR")},
-	{Joaat("W_AR_CarbineRifle_REH"), Joaat("PICKUP_WEAPON_TACTICALRIFLE")},
-	{Joaat("W_SR_PrecisionRifle_REH"), Joaat("PICKUP_WEAPON_PRECISIONRIFLE")},
-	{Joaat("W_LR_CompactML"), Joaat("PICKUP_WEAPON_EMPLAUNCHER")},
-	{Joaat("W_AR_HEAVYRIFLEH"), Joaat("PICKUP_WEAPON_HEAVYRIFLE")},
-	{Joaat("W_AM_Jerrycan"), Joaat("PICKUP_WEAPON_PETROLCAN_SMALL_RADIUS")},
-	{Joaat("W_AM_Jerrycan_SF"), Joaat("PICKUP_WEAPON_FERTILIZERCAN")},
-	{Joaat("W_PI_STUNGUN"), Joaat("PICKUP_WEAPON_STUNGUN_MP")},
-	{Joaat("W_PI_PistolSMG_M31"), Joaat("PICKUP_WEAPON_TECPISTOL")},
-	{Joaat("W_SL_BattleRifle_M32"), Joaat("PICKUP_WEAPON_BATTLERIFLE")},
-	{Joaat("W_LR_CompactSL_M32"), Joaat("PICKUP_WEAPON_SNOWLAUNCHER")},
-	{Joaat("W_AM_HackDevice_M32"), Joaat("PICKUP_WEAPON_HACKINGDEVICE")},
-	{Joaat("W_ME_Rod_M41"), Joaat("PICKUP_WEAPON_STUNROD")},
-	{Joaat("W_AR_BullpupRifleM42"), Joaat("PICKUP_WEAPON_STRICKLER")}
+	{0xA0BD351E, 0x6E4E65C2},	{0xE3C5D4DF, 0x741C684A},	{0xF55C8CD1, 0x6C5B941A},
+	{0x1053C3FD, 0xF33C83B0},	{0x3D2E1AE8, 0xDF711959},	{0x9A385232, 0xB2B5325E},
+	{0x856E5E8E, 0x85CAA9B1},	{0xD3EDBC71, 0xB2930A14},	{0x14A5B1EB, 0xFE2A352C},
+	{0xD37A33C0, 0x693583AD},	{0xC103D44A, 0x1D9588D3},	{0xE231B874, 0x3A4C2AD2},
+	{0xF2F47DA7, 0x4D36C349},	{0x19314199, 0x2F36B434},	{0x291CEA47, 0xA9355DCD},
+	{0xD7B77A96, 0x96B412A3},	{0x4AD4095A, 0x9299C95B},	{0x1152354B, 0x5E0683A1},
+	{0xCB82F7CD, 0x2DD30479},	{0x5EDD1FDA, 0x1CD604C7},	{0xBDD3A2FF, 0x7C119D58},
+	{0x5778A9B1, 0xF9AFB48F},	{0x1807703D, 0x8967B4F3},	{0x35FDE08C, 0x3B662889},
+	{0xDBD6BF92, 0x2E764125},	{0x5FECD5DB, 0xFD16169E},	{0x0E727AA0, 0xC69DE3FF},
+	{0x89D650BF, 0x278D8734},	{0x9E8C3644, 0x5EA16D74},	{0x03D22723, 0x295691A9},
+	{0x01F242A3, 0x81EE601E},	{0xDD6AE86A, 0x88EAACA7},	{0x6EFFF508, 0x872DC888},
+	{0x44973FE6, 0xFA51ABF5},	{0x1443689A, 0xC5B72713},	{0x72E1C281, 0x9CF13918},
+	{0x97F39713, 0x0968339D},	{0xB332242B, 0x815D66E8},	{0xD6678401, 0xE342F8F0},
+	{0x167C5572, 0x74C4BDE2},	{0xA991DAE8, 0x3BA8D4DF},	{0x54628D86, 0x8C0FCB13},
+	{0x7A3DFC6A, 0x3B0F70A7},	{0x913C962E, 0x9F55D149},	{0xBE66C593, 0x5DB6C18A},
+	{0xF24DB7E1, 0x6D60976C},	{0xFBA55721, 0x3DE942BD},	{0x8DD7AC21, 0x05A26FE0},
+	{0x458AA8A3, 0xB692F043},	{0x8340605C, 0x4FB4C410},	{0xF8C6DF84, 0xF4F897B3},
+	{0x6FD84B0A, 0x624F7213},	{0x715C7E1F, 0xC01EB678},	{0x4D5603F0, 0x46E43EBC},
+	{0x223BDDC4, 0x5307A4EC},	{0x23DD6B9D, 0xBFEE6C3B},	{0xBD006A3C, 0xEBF89D5F},
+	{0x1D4575B8, 0x22B15640},	{0x6277C21A, 0x763F7121},	{0x62954071, 0x4E301CD0},
+	{0x9026C985, 0xE46E11B4},	{0xB7E2DDAF, 0xBED46EC5},	{0x9A006B02, 0x079284A9},
+	{0xA1E9339B, 0x7BABC7FF},	{0xBD73D886, 0x77D8B593},	{0x25E0D719, 0x34B4EED0},
+	{0xE9E94EA9, 0x5F787310},	{0x2CE227AC, 0x79E54E5D},	{0x832A1A76, 0xCA2E3CA5},
+	{0x50685513, 0xBD4DE242},	{0xACF847EC, 0x789576E2},	{0xB32BE614, 0xFD9CAEDE},
+	{0xF9D04ADB, 0x8ADDEC75},	{0x731A7664, 0x0FE73AB5},	{0x0D42D39D, 0xF9E2DF1F},
+	{0x99D81D79, 0xD8257ABF},	{0xEC3D031B, 0xF5C5DADC},	{0x87CEDC90, 0xBDB6FFA5},
+	{0x3683EE4B, 0x614BFCAC},	{0xC68D1A60, 0xDDE4181A},	{0x524A1B1A, 0xBCC5C1F2},
+	{0xCB09B7F2, 0x0977C0F2},	{0xA5306B35, 0xF0EA0639},	{0xC603E5F5, 0xD3722A5B},
+	{0xF5A94D45, 0xAF692CA9},	{0x215844F3, 0x093EBB26},	{0xBBBBBD0F, 0xE5121369},
+	{0x6911A7A9, 0x8187206F},	{0x5AA545FF, 0xBDD874BC},	{0xB10406B1, 0xA91FDC8B},
+	{0x24F01D7F, 0xFF0A8297},	{0x3B4FA26F, 0x499A096A},	{0x97D698A7, 0xEF2B7390},
+	{0xCA13B425, 0xCC90A373},	{0x12A7F642, 0x84BC86BB},	{0x6378759D, 0x8A161D60},
+	{0xEAFC7C95, 0xA82571E4},	{0x255CF054, 0xFF5C260B},	{0x5907ED46, 0x58E67768},
+	{0x0E727AA0, 0xC3805DF7},	{0xFAEB2D36, 0xDD11C54F},	{0x5FECD5DB, 0xB4583E02},
+	{0x477B68E5, 0x88A66E6D},	{0x22B52501, 0xC4695016},	{0x1496BAC3, 0xF8C55D2B},
+	{0xD814E756, 0xB095C646},	{0x57156C93, 0x1EEAD374},	{0x8602C536, 0xE1F8A128}
 };
 Hash GetPickupTypeFromWeaponModel(const Hash wpModel);
 #pragma endregion
@@ -299,45 +228,7 @@ void SetDispatchServices(bool toggle);
 bool GetFakeWanted();
 void SetFakeWanted(Player player, bool toggle);
 inline int GetNumberOfScriptInstances(const char* name) { return (GET_NUMBER_OF_THREADS_RUNNING_THE_SCRIPT_WITH_THIS_HASH(Joaat(name))); }
+int GetNMPartIndexFromBoneTag(const int boneTag);
 #pragma endregion
 
-#pragma region Game Functions
-typedef std::unique_ptr<unsigned char[]> NmMessage;
-typedef unsigned char* NmMessagePtr;
-
-namespace nGame
-{
-ULONG_PTR GetScriptEntity(Entity entity);
-int GetFragInstNmGtaOffset();
-NmMessage CreateNmMessage();
-void GivePedNMMessage(NmMessage msgPtr, const Ped ped, const char* message);
-void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, int i);
-void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, bool b);
-void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, float f);
-void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, const char* str);
-void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, float x, float y, float z);
-inline void GivePedNMMessage(NmMessage msgPtr, const Ped ped, eNMStr message) { GivePedNMMessage(std::move(msgPtr), ped, NMStrings[message]); return; }
-inline void SetNMMessageParam(NmMessagePtr msgPtr, eNMStr msgParam, int i) { SetNMMessageParam(msgPtr, NMStrings[msgParam], i); return; }
-inline void SetNMMessageParam(NmMessagePtr msgPtr, eNMStr msgParam, bool b) { SetNMMessageParam(msgPtr, NMStrings[msgParam], b); return; }
-inline void SetNMMessageParam(NmMessagePtr msgPtr, eNMStr msgParam, float f) { SetNMMessageParam(msgPtr, NMStrings[msgParam], f); return; }
-inline void SetNMMessageParam(NmMessagePtr msgPtr, eNMStr msgParam, const char* str) { SetNMMessageParam(msgPtr, NMStrings[msgParam], str); return; }
-inline void SetNMMessageParam(NmMessagePtr msgPtr, eNMStr msgParam, float x, float y, float z) { SetNMMessageParam(msgPtr, NMStrings[msgParam], x, y, z); return; }
-/*
-void SetNMMessageInt(ULONG_PTR msgMemPtr, const char* msgParam, int i);
-void SetNMMessageBool(ULONG_PTR msgMemPtr, const char* msgParam, bool b);
-void SetNMMessageFloat(ULONG_PTR msgMemPtr, const char* msgParam, float f);
-void SetNMMessageString(ULONG_PTR msgMemPtr, const char* msgParam, const char* str);
-void SetNMMessageVec3(ULONG_PTR msgMemPtr, const char* msgParam, float x, float y, float z);
-inline void GivePedNMMessage(ULONG_PTR msgMemPtr, const Ped ped, eNMStr message) { GivePedNMMessage(msgMemPtr, ped, NMStrings[message]); return; }
-inline void SetNMMessageInt(ULONG_PTR msgMemPtr, eNMStr msgParam, int i) { SetNMMessageInt(msgMemPtr, NMStrings[msgParam], i); return; }
-inline void SetNMMessageBool(ULONG_PTR msgMemPtr, eNMStr msgParam, bool b) { SetNMMessageBool(msgMemPtr, NMStrings[msgParam], b); return; }
-inline void SetNMMessageFloat(ULONG_PTR msgMemPtr, eNMStr msgParam, float f) { SetNMMessageFloat(msgMemPtr, NMStrings[msgParam], f); return; }
-inline void SetNMMessageString(ULONG_PTR msgMemPtr, eNMStr msgParam, const char* str) { SetNMMessageString(msgMemPtr, NMStrings[msgParam], str); return; }
-inline void SetNMMessageVec3(ULONG_PTR msgMemPtr, eNMStr msgParam, float x, float y, float z) { SetNMMessageVec3(msgMemPtr, NMStrings[msgParam], x, y, z); return; }
-*/
-}
-#pragma endregion
-
-void GetGameFunctionsAddresses();
-void ApplyExePatches();
 void UpdatePlayerVars();

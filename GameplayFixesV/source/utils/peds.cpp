@@ -75,7 +75,7 @@ void DisarmPedWhenShot(const Ped ped)
 		shoudDisarm = true;
 	else if (CanDisarmPed(ped, Ini::DisarmIncludeLeftHand))
 	{
-		CLEAR_ENTITY_LAST_WEAPON_DAMAGE(ped);
+		ClearEntityLastWeaponDamage(ped);
 		if (GetWeightedBool(Ini::DisarmChance))
 			shoudDisarm = true;
 	}

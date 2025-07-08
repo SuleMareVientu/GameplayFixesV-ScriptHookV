@@ -1,5 +1,6 @@
 #pragma once
 #include "globals.h"
+#include "utils\functions.h"
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -58,8 +59,16 @@ public:
 	}
 
 	bool IsEnabled() const override {
-		if (GetGameVersion() < m_minGameVer || (!m_supportsEnhanced && GetIsEnhancedVersion()))
+		if (GetGameVersion() < m_minGameVer)
+		{
+			WriteLog("Error", "Option \"%s\" not compatible with current game version.", m_name.c_str());
 			return false;
+		}
+		else if (!m_supportsEnhanced && GetIsEnhancedVersion())
+		{
+			WriteLog("Error", "Option \"%s\" not compatible with the Enhanced version of the game.", m_name.c_str());
+			return false;
+		}
 
 		switch (m_iniFlag.type) {
 		case IVT_INT:

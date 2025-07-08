@@ -46,6 +46,8 @@ try:
         os.remove("wpPickupMap.txt")
 
     with open('wpPickupMap.txt', 'a', encoding='utf-8') as f:
+        f.write("\n")
+        f.write("// Weapon Model Hash -> Pickup Hash\n")
         f.write("static const std::unordered_map<unsigned int, unsigned int> wpPickupMap = {\n")
         for item in data: # item is expected to be a dictionary
             if isinstance(item, dict):
@@ -57,13 +59,20 @@ try:
                     if key == "Model":
                         model = value
                         if "VEHICLE" not in pickup.upper() and "AMMO" not in pickup.upper() and "WEAPON" in pickup.upper():  
-                            s = '	' + "{" + "Joaat(" + '"' + model + '"' + ')' + ", " + "Joaat(" + '"' + pickup + '"' + ')' + "},"
+                            s = '	' + "{0x" + "{0:08x}".format(joaat(model)).upper() + ", 0x" + "{0:08x}".format(joaat(pickup)).upper() + "},"
+                            # s = '	' + "{" + "Joaat(" + '"' + model + '"' + ')' + ", " + "Joaat(" + '"' + pickup + '"' + ')' + "},"
                             f.write(s + '\n')
                         
     with open('wpPickupMap.txt', 'r', encoding='utf-8') as f:
         lines = f.readlines()
         
     if lines:
+        for i, line in enumerate(lines):
+            if not (i + 1) % 3 == 0:
+                if not i == 0 and not i == 1:
+                    new_line = line.rstrip('\n')
+                    lines[i] = new_line
+        
         last_line_content = lines[-1].rstrip('\n')
         if last_line_content.endswith(','):
             modified_last_line = last_line_content[:-len(',')]

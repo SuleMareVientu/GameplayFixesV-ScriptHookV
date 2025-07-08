@@ -5,6 +5,7 @@
 //Custom
 #include "script.h"
 #include "utils\functions.h"
+#include "utils\mem.h"
 #include "utils\player.h"
 #include "utils\peds.h"
 #include "utils\ini.h"
@@ -37,6 +38,9 @@ static void update()
 
 	//Update ped pool every frame... was set to 500ms to save on performance but it's needed for ped disarm
 	UpdatePedsPool();
+
+	//Remember to clear last damages
+	ClearLastDamages();
 	return;
 }
 

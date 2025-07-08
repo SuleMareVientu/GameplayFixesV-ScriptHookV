@@ -18,6 +18,9 @@
     <ClCompile Include="source\utils\player.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="source\utils\mem.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\main.h">
@@ -33,9 +36,6 @@
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
-    <ClInclude Include="inc\nm.h">
-      <Filter>inc</Filter>
-    </ClInclude>
     <ClInclude Include="inc\libs\json.hpp">
       <Filter>inc\libs</Filter>
     </ClInclude>
@@ -91,6 +91,12 @@
       <Filter>inc\utils</Filter>
     </ClInclude>
     <ClInclude Include="inc\utils\peds.h">
+      <Filter>inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\utils\nm.h">
+      <Filter>inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\utils\mem.h">
       <Filter>inc\utils</Filter>
     </ClInclude>
   </ItemGroup>

@@ -36,7 +36,7 @@ typedef int Sphere;
 typedef int ScrHandle;
 
 #pragma pack(push, 1)
-typedef struct
+typedef struct Vector3
 {
 	float x;
 	DWORD _paddingx;
@@ -44,5 +44,7 @@ typedef struct
 	DWORD _paddingy;
 	float z;
 	DWORD _paddingz;
+
+	constexpr Vector3(float X, float Y, float Z) : x(X), y(Y), z(Z), _paddingx(0), _paddingy(0), _paddingz(0) {}
 } Vector3;
 #pragma pack(pop)

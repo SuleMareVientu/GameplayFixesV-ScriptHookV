@@ -14,8 +14,6 @@
 #include <vector>
 #include <memory>
 
-#include <Psapi.h>
-
 //Custom
 #include "utils\player.h"
 #include "utils\functions.h"
@@ -1212,28 +1210,33 @@ void AlwaysHideAbilityBar()
 
 void HideAbilityBarForNonMainCharacters()
 {
-	bool res = false;
+	bool shouldHide = true;
 	if (IS_SPECIAL_ABILITY_ENABLED(GetPlayer(), 0))
-		res = true;
+		shouldHide = false;
 	else if (GetGameVersion() >= VER_1_0_944_2_STEAM)
 	{
 		if (DoesVehicleHaveAbility(GetVehiclePedIsIn(GetPlayerPed())))
-			res = true;
+			shouldHide = false;
+	}
+	else if (GetGameVersion() >= VER_1_0_372_2_STEAM)
+	{
+		if (GET_VEHICLE_HAS_KERS(GetVehiclePedIsIn(GetPlayerPed())))
+			shouldHide = false;
 	}
 
-	if (res)
+	if (shouldHide)
 	{
-		if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "MULTIPLAYER_IS_ACTIVE"))
+		if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER"))
 		{
-			SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
 			SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
 			END_SCALEFORM_MOVIE_METHOD();
 		}
 		return;
 	}
-
-	if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "SET_ABILITY_BAR_VISIBILITY_IN_MULTIPLAYER"))
+	
+	if (BEGIN_SCALEFORM_MOVIE_METHOD(RequestMinimapScaleform(), "MULTIPLAYER_IS_ACTIVE"))
 	{
+		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
 		SCALEFORM_MOVIE_METHOD_ADD_PARAM_BOOL(false);
 		END_SCALEFORM_MOVIE_METHOD();
 	}
@@ -1520,12 +1523,11 @@ void RegisterPlayerOptions()
 	REGISTER_OPTION(playerOptionsManager, HideMinimapFog, nHUD, VER_UNK, true);
 	REGISTER_OPTION_INI(playerOptionsManager, HideSatNav, nHUD, HideMinimapSatNav, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, HideMinimapDepth, nHUD, VER_UNK, true);
-	if (REGISTER_OPTION(playerOptionsManager, HideMinimapBars, nHUD, VER_UNK, true))
+	if (!REGISTER_OPTION(playerOptionsManager, HideMinimapBars, nHUD, VER_UNK, true))
 	{
 		if (!REGISTER_OPTION(playerOptionsManager, AlwaysHideAbilityBar, nHUD, VER_UNK, true))
-		{
 			REGISTER_OPTION(playerOptionsManager, HideAbilityBarForNonMainCharacters, nHUD, VER_UNK, true);
-		}
+
 		REGISTER_OPTION(playerOptionsManager, ReplaceArmourBarWithStamina, nHUD, VER_UNK, true);
 	}
 	REGISTER_OPTION(playerOptionsManager, HideHudComponents, nHUD, VER_UNK, true);
