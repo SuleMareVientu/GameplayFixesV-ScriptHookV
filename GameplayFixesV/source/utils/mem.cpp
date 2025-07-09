@@ -6,6 +6,7 @@
 #include <Psapi.h>
 #include <globals.h>
 #include <libs\pattern16\Pattern16.h>
+#include "utils\ini.h"
 #include "utils\functions.h"
 #include "utils\mem.h"
 
@@ -81,11 +82,22 @@ bool (*SetNMMessageString)(ULONG_PTR, const char*, const char*) = nullptr;
 bool (*SetNMMessageVec3)(ULONG_PTR, const char*, float, float, float) = nullptr;
 }
 
+bool foundNMFunctions = false;
+const bool GetFoundNMFunctions() { return foundNMFunctions; }
+
 bool hasSearchedForGameFunctions = false;
 void GetGameFunctionsAddresses()
 {
 	if (hasSearchedForGameFunctions)
 		return;
+
+	if (!Ini::HookGameFunctions)
+	{
+		WriteLog("Info", "Hooking game functions is disabled.");
+		hasSearchedForGameFunctions = true;
+	}
+
+	foundNMFunctions = true;
 
 	WriteLog("Info", "---------------------- General Functions -----------------------");
 
@@ -100,7 +112,10 @@ void GetGameFunctionsAddresses()
 		WriteLog("Operation", "Found address of \"GetScriptEntity\" at 0x%X!", nUnsafe::GetScriptEntity);
 	}
 	else
+	{
 		WriteLog("Error", "Could not find address of \"GetScriptEntity\"!");
+		foundNMFunctions = false;
+	}
 
 	WriteLog("Info", "------------------------- NM Functions -------------------------");
 
@@ -108,10 +123,13 @@ void GetGameFunctionsAddresses()
 	if (adr)
 	{
 		nUnsafe::fragInstNmGtaOffset = *reinterpret_cast<int*>(adr + 16);
-		WriteLog("Operation", "Found address of \"FragInstNmGtaOffset\" at 0x%X!", (adr + 16));
+		WriteLog("Operation", "Found address of \"FragInstNmGtaOffset\" at 0x%X!", nUnsafe::fragInstNmGtaOffset);
 	}
 	else
+	{
 		WriteLog("Error", "Could not find address of \"FragInstNmGtaOffset\"!");
+		foundNMFunctions = false;
+	}
 
 	adr = FindPattern("40 53 48 83 EC 20 83 61 0C 00 44 89 41 08 49 63 C0");
 	if (adr)
@@ -120,7 +138,10 @@ void GetGameFunctionsAddresses()
 		WriteLog("Operation", "Found address of \"CreateNmMessage\" at 0x%X!", nUnsafe::CreateNmMessage);
 	}
 	else
+	{
 		WriteLog("Error", "Could not find address of \"CreateNmMessage\"!");
+		foundNMFunctions = false;
+	}
 
 	adr = FindPattern("0F 84 8B 00 00 00 48 8B 47 30 48 8B 48 10 48 8B 51 20 80 7A 10 0A");
 	if (adr)
@@ -129,7 +150,10 @@ void GetGameFunctionsAddresses()
 		WriteLog("Operation", "Found address of \"GiveNmMessage\" at 0x%X!", nUnsafe::GivePedNMMessage);
 	}
 	else
+	{
 		WriteLog("Error", "Could not find address of \"GiveNmMessage\"!");
+		foundNMFunctions = false;
+	}
 
 	adr = FindPattern("48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 48 63 49 0C 41 8B F8");
 	if (adr)
@@ -138,7 +162,10 @@ void GetGameFunctionsAddresses()
 		WriteLog("Operation", "Found address of \"SetNmParameterInt\" at 0x%X!", nUnsafe::SetNMMessageInt);
 	}
 	else
+	{
 		WriteLog("Error", "Could not find address of \"SetNmParameterInt\"!");
+		foundNMFunctions = false;
+	}
 
 	adr = FindPattern("48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 48 63 49 0C 41 8A F8");
 	if (adr)
@@ -147,7 +174,10 @@ void GetGameFunctionsAddresses()
 		WriteLog("Operation", "Found address of \"SetNmParameterBool\" at 0x%X!", nUnsafe::SetNMMessageBool);
 	}
 	else
+	{
 		WriteLog("Error", "Could not find address of \"SetNmParameterBool\"!");
+		foundNMFunctions = false;
+	}
 
 	adr = FindPattern("40 53 48 83 EC 30 48 8B D9 48 63 49 0C");
 	if (adr)
@@ -156,7 +186,10 @@ void GetGameFunctionsAddresses()
 		WriteLog("Operation", "Found address of \"SetNmParameterFloat\" at 0x%X!", nUnsafe::SetNMMessageFloat);
 	}
 	else
+	{
 		WriteLog("Error", "Could not find address of \"SetNmParameterFloat\"!");
+		foundNMFunctions = false;
+	}
 
 	adr = FindPattern("57 48 83 EC 20 48 8B D9 48 63 49 0C 49 8B E8");
 	if (adr)
@@ -165,7 +198,10 @@ void GetGameFunctionsAddresses()
 		WriteLog("Operation", "Found address of \"SetNmParameterString\" at 0x%X!", nUnsafe::SetNMMessageString);
 	}
 	else
+	{
 		WriteLog("Error", "Could not find address of \"SetNmParameterString\"!");
+		foundNMFunctions = false;
+	}
 
 	adr = FindPattern("40 53 48 83 EC 40 48 8B D9 48 63 49 0C");
 	if (adr)
@@ -174,7 +210,10 @@ void GetGameFunctionsAddresses()
 		WriteLog("Operation", "Found address of \"SetNmParameterVector\" at 0x%X!", nUnsafe::SetNMMessageVec3);
 	}
 	else
+	{
 		WriteLog("Error", "Could not find address of \"SetNmParameterVector\"!");
+		foundNMFunctions = false;
+	}
 
 	hasSearchedForGameFunctions = true;
 	return;
@@ -239,8 +278,6 @@ void GivePedNMMessage(NmMessage msgPtr, const Ped ped, const char* message)
 	ULONG_PTR pedAddress = nGame::GetScriptEntity(ped);
 	if (!pedAddress)
 		return;
-
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
 
 	ULONG_PTR fragInstNmGtaAddress = *(reinterpret_cast<ULONG_PTR*>(pedAddress + nGame::GetFragInstNmGtaOffset()));
 	nUnsafe::GivePedNMMessage(fragInstNmGtaAddress, message, reinterpret_cast<ULONG_PTR>(msgPtr.get()));
@@ -325,26 +362,50 @@ void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, float x, float
 #pragma endregion
 
 #pragma region Memory Patching
-// Credits aint-no-other-option: https://github.com/aint-no-other-option/CopBumpSteeringPatch
-void CopBumpSteeringPatch()
+// Credits FiveM: https://github.com/citizenfx/fivem/blob/master/code/components/gta-streaming-five/src/UnkStuff.cpp
+void LowPriorityPropsPatch()
 {
-	constexpr int nBytes = 8;
+	if ((GetModuleHandleW(L"vfs.dll") != nullptr))
+	{
+		WriteLog("Info", "Lenny's Mod Loader detected, low priority props patch disabled to prevent crashes.");
+		return;
+	}
 
-	WriteLog("Info", "--------------------------- Cop Bump ---------------------------");
-	WriteLog("Operation", "Finding cop bump address...");
+	WriteLog("Info", "---------------------- Low Priority Props ----------------------");
+	WriteLog("Operation", "Finding prop priority address 1...");
 
-	ULONG_PTR address = FindPattern("33 F6 F3 0F 11 87 ?? ?? ?? ?? 45 84 ED 74 25");
+	ULONG_PTR address = FindPattern("BB 02 00 00 00 39 1D");
 	if (address)
 	{
-		WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes);
-		memset(reinterpret_cast<void*>(address + 2), 0x90, nBytes);
-		WriteLog("Operation", "Done!");
+		WriteLog("Operation", "Found address at 0x%X! Patching 1 byte...", address);
+
+		// Make GTA default rage::fwMapData::ms_entityLevelCap to PRI_OPTIONAL_LOW, not PRI_OPTIONAL_MEDIUM (RAGE suite defaults)
+		*reinterpret_cast<char*>(address + 1) = '\x03';	// mov ebx, 0x02 (PRI_OPTIONAL_MEDIUM) to mov ebx, 0x03 (PRI_OPTIONAL_LOW)
+
+		//constexpr char priOptionLow = '\x03';
+		//memmove(reinterpret_cast<void*>(address + 1), &priOptionLow, 1);
+
+		WriteLog("Operation", "Finding prop priority address 2...");
+		address = FindPattern("0F 2F 47 24 0F 93 05");
+		if (address)
+		{
+			WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, 7);
+
+			// Don't disable low-priority objects when LOD distance is <20%
+			memset(reinterpret_cast<void*>(address + 4), 0x90, 7);
+			WriteLog("Operation", "Done!");
+		}
+		else
+			WriteLog("Error", "Could not find address!");
 	}
 	else
 		WriteLog("Error", "Could not find address!");
 
 	return;
 }
+
+bool patchedCenterSteering = false;
+const bool GetPatchedCenterSteering() { return patchedCenterSteering; }
 
 // Credits aint-no-other-option: https://github.com/aint-no-other-option/CenterSteeringPatch/
 void CenterSteeringPatch()
@@ -360,6 +421,7 @@ void CenterSteeringPatch()
 	{
 		WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes1);
 		memset(reinterpret_cast<void*>(address), 0x90, nBytes1);
+		patchedCenterSteering = true;
 
 		/* Address of centering when diving out */
 		WriteLog("Operation", "Finding steering address 2...");
@@ -379,14 +441,84 @@ void CenterSteeringPatch()
 	return;
 }
 
+// Credits aint-no-other-option: https://github.com/aint-no-other-option/CopBumpSteeringPatch
+void CopBumpSteeringPatch()
+{
+	constexpr int nBytes = 8;
+
+	WriteLog("Info", "--------------------------- Cop Bump ---------------------------");
+	WriteLog("Operation", "Finding cop bump address...");
+
+	const ULONG_PTR address = FindPattern("33 F6 F3 0F 11 87 ?? ?? ?? ?? 45 84 ED 74 25");
+	if (address)
+	{
+		WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes);
+		memset(reinterpret_cast<void*>(address + 2), 0x90, nBytes);
+		WriteLog("Operation", "Done!");
+	}
+	else
+		WriteLog("Error", "Could not find address!");
+
+	return;
+}
+
+bool patchedHUDWheelSlowdown = false;
+const bool GetPatchedHUDWheelSlowdown() { return patchedHUDWheelSlowdown; }
+
+// Credits CamxxCore: https://github.com/CamxxCore/GTAVWeaponWheelMod
+// Has to be paired with a function that runs every frame
+void HUDWheelSlowdownPatch()
+{
+	constexpr int nBytes = 12;
+
+	WriteLog("Info", "---------------------- HUD Wheel Slowdown ----------------------");
+	WriteLog("Operation", "Finding HUD wheel slowdown address...");
+
+	const ULONG_PTR address = FindPattern("38 51 64 74 19");
+	if (address)
+	{
+		WriteLog("Operation", "Found address at 0x%X! Patching %d total bytes...", address, nBytes);
+
+		// Remove vignetting
+		ULONG_PTR vignettingAdr = address + 26;
+		vignettingAdr = vignettingAdr + *reinterpret_cast<int*>(vignettingAdr) + 4;
+		constexpr int patchVignettingSize = 5;
+		constexpr char patchVignetting[patchVignettingSize] = { '\xC3', '\x90', '\x90', '\x90', '\x90' };
+		memmove(reinterpret_cast<void*>(vignettingAdr), patchVignetting, patchVignettingSize);
+
+		// Vignetting call patch (NOP)
+		memset(reinterpret_cast<void*>(address + 8), 0x90, 5);
+
+		// Timescale override patch
+		constexpr int patchTimescaleSize = 2;
+		constexpr char patchTimescale[patchTimescaleSize] = { '\x31', '\xD2' };
+		memmove(reinterpret_cast<void*>(address + 34), patchTimescale, patchTimescaleSize);
+
+		patchedHUDWheelSlowdown = true;
+		WriteLog("Operation", "Done!");
+	}
+	else
+		WriteLog("Error", "Could not find address!");
+
+	return;
+}
+
 bool hasAppliedExePatches = false;
 void ApplyExePatches()
 {
 	if (hasAppliedExePatches)
 		return;
 
-	CopBumpSteeringPatch();
-	CenterSteeringPatch();
+	if (!Ini::ApplyExePatches)
+	{
+		WriteLog("Info", "Memory patches are disabled.");
+		hasAppliedExePatches = true;
+	}
+
+	if (Ini::LowPriorityPropsPatch) { LowPriorityPropsPatch(); }
+	if (Ini::CenterSteeringPatch) { CenterSteeringPatch(); }
+	if (Ini::CopBumpSteeringPatch) { CopBumpSteeringPatch(); }
+	if (Ini::HUDWheelSlowdownPatch) { HUDWheelSlowdownPatch(); }
 
 	hasAppliedExePatches = true;
 	return;

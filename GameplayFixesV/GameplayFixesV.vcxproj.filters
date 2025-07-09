@@ -99,6 +99,9 @@
     <ClInclude Include="inc\utils\mem.h">
       <Filter>inc\utils</Filter>
     </ClInclude>
+    <ClInclude Include="inc\nm_globals.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="utils">

@@ -55,21 +55,50 @@ void SplitString(const char* charStr, std::string arr[], const int arrSize, cons
 	return;
 }
 
-int GetRandomIntInRange(int startRange, int endRange)
+//    The range [minValue, maxValue] is inclusive.
+int GetRandomIntInRange(int minValue, int maxValue, bool std)
 {
-	endRange += 1;
+	if (std)
+	{
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_int_distribution<int> distrib(minValue, maxValue);
+		return distrib(gen);
+	}
+
+	maxValue += 1;
 	SET_RANDOM_SEED(GET_GAME_TIMER());
-	return GET_RANDOM_INT_IN_RANGE(startRange, endRange);
+	return GET_RANDOM_INT_IN_RANGE(minValue, maxValue);
 }
 
-bool GetWeightedBool(int chance)	//Chance out of 100
+//Chance out of 100
+bool GetWeightedBool(int chance, bool std)
 {
 	if (chance <= 0) return false;
 	if (chance >= 100) return true;
+	
 	const double n = chance * 0.01;
+	
+	if (std)
+	{
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::bernoulli_distribution dist(n);
+		return dist(gen);
+	}
+
 	std::default_random_engine gen(GET_GAME_TIMER());
 	std::bernoulli_distribution dist(n);
 	return dist(gen);
+}
+
+Vector3 Normalize(Vector3 v)
+{
+	const float w = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+	v.x /= w;
+	v.y /= w;
+	v.z /= w;
+	return v;
 }
 
 int GetPadControlFromString(const std::string& str)
@@ -126,6 +155,9 @@ bool hasWrittenToLog = false;
 constexpr int logBufferSize = 2048;
 void WriteLog(const char* szInfo, const char* szFormat, ...)
 {
+	if (!Ini::EnableLogging)
+		return;
+
 	if (!hasWrittenToLog)
 	{
 		ClearLog();
@@ -539,7 +571,7 @@ bool ShouldWeaponSpawnPickupWhenDropped(const Hash weaponHash, const bool checkW
 }
 
 std::vector<WeaponPickup> droppedWeapons;
-void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse)
+void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse, Vector3 wpRot)
 {
 	while (!LoadWeaponJson()) {}
 
@@ -589,14 +621,30 @@ void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse)
 	REMOVE_WEAPON_FROM_PED(GetPlayerPed(), weaponHash);
 
 	// Pickup Section
-	const Vector3 off = GET_PED_BONE_COORDS(GetPlayerPed(), BONETAG_PH_R_HAND, 0.0f, 0.0f, 0.0f);
+	const Vector3 loc = GET_PED_BONE_COORDS(GetPlayerPed(), BONETAG_PH_R_HAND, 0.0f, 0.0f, 0.0f);
 	SET_LOCAL_PLAYER_PERMITTED_TO_COLLECT_PICKUPS_WITH_MODEL(GET_WEAPONTYPE_MODEL(weaponHash), false);
 
-	if (GetGameVersion() >= VER_1_0_1290_1_STEAM)
-		wp.PickupIndex = CREATE_PICKUP(GET_PICKUP_TYPE_FROM_WEAPON_HASH(weaponHash), off.x, off.y, off.z, PLACEMENT_FLAG_LOCAL_ONLY, -1, false, NULL);
+	if (wpRot != Vector3{ 0.0f, 0.0f, 0.0f })
+	{
+		if (GetGameVersion() >= VER_1_0_1290_1_STEAM)
+		{
+			wp.PickupIndex = CREATE_PICKUP_ROTATE(GET_PICKUP_TYPE_FROM_WEAPON_HASH(weaponHash),
+				loc.x, loc.y, loc.z, wpRot.x, wpRot.y, wpRot.z, PLACEMENT_FLAG_LOCAL_ONLY, -1, EULER_YXZ, false, NULL);
+		}
+		else
+		{
+			wp.PickupIndex = CREATE_PICKUP_ROTATE(GetPickupTypeFromWeaponModel(GET_WEAPONTYPE_MODEL(weaponHash)),
+				loc.x, loc.y, loc.z, wpRot.x, wpRot.y, wpRot.z, PLACEMENT_FLAG_LOCAL_ONLY, -1, EULER_YXZ, false, NULL);
+		}
+	}
 	else
-		wp.PickupIndex = CREATE_PICKUP(GetPickupTypeFromWeaponModel(GET_WEAPONTYPE_MODEL(weaponHash)), off.x, off.y, off.z, PLACEMENT_FLAG_LOCAL_ONLY, -1, false, NULL);
-	
+	{
+		if (GetGameVersion() >= VER_1_0_1290_1_STEAM)
+			wp.PickupIndex = CREATE_PICKUP(GET_PICKUP_TYPE_FROM_WEAPON_HASH(weaponHash), loc.x, loc.y, loc.z, PLACEMENT_FLAG_LOCAL_ONLY, -1, false, NULL);
+		else
+			wp.PickupIndex = CREATE_PICKUP(GetPickupTypeFromWeaponModel(GET_WEAPONTYPE_MODEL(weaponHash)), loc.x, loc.y, loc.z, PLACEMENT_FLAG_LOCAL_ONLY, -1, false, NULL);
+	}
+
 	wp.PickupBlip = ADD_BLIP_FOR_PICKUP(wp.PickupIndex);
 	SET_BLIP_SPRITE(wp.PickupBlip, GetWeaponBlipSprite(weaponHash));
 	SET_BLIP_SCALE(wp.PickupBlip, 0.7f);
@@ -605,7 +653,7 @@ void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse)
 }
 
 bool retrievedWeaponThisFrame = false;
-void RestorePlayerRetrievedWeapon()
+void RestorePlayerRetrievedWeapon(bool autoEquip)
 {
 	while (!LoadWeaponJson()) {}
 
@@ -711,11 +759,180 @@ void RestorePlayerRetrievedWeapon()
 			}
 		}
 
+		Hash weapon = NULL; GET_CURRENT_PED_WEAPON(GetPlayerPed(), &weapon, false);
+		if (autoEquip && weapon == WEAPON_UNARMED)
+			SET_CURRENT_PED_WEAPON(GetPlayerPed(), droppedWeapons[i].WpHash, false);
+
 		retrievedWeaponThisFrame = true;
 		REMOVE_PICKUP(droppedWeapons[i].PickupIndex);
 		droppedWeapons.erase(droppedWeapons.begin() + i);
 		break;
 	}
+	return;
+}
+
+void TaskNMShot(Ped ped, Hash wpHash, int partIndex, Vector3 hitLoc, Vector3 impulseNorm, bool isAiming, bool isCrouched)
+{
+	bool bulletProofVest = false;
+	if (ped == GetPlayerPed())
+		bulletProofVest = (GET_PED_ARMOUR(ped) / GET_PLAYER_MAX_ARMOUR(GetPlayer())) >= 0.25f;
+	else
+		bulletProofVest = GET_PED_ARMOUR(ped) >= 25;
+
+	bool crouching = false;
+	if ((IS_PED_IN_COVER(ped, false) && !IS_PED_IN_HIGH_COVER(ped)) || isCrouched)
+		crouching = true;
+
+	constexpr float pistolImpulseMult = 30.0f;
+	constexpr float rifleImpulseMult = pistolImpulseMult * 2.0f;
+	constexpr float shotgunImpulseMult = rifleImpulseMult * 2.0f;
+	constexpr float sniperImpulseMult = shotgunImpulseMult;
+	constexpr float heavyImpulseMult = shotgunImpulseMult * 1.5f;
+
+	bool pointGun = false;
+	float impulseMult = pistolImpulseMult;
+	const Hash wpGroup = GET_WEAPONTYPE_GROUP(wpHash);
+	switch (wpGroup)
+	{
+	case WEAPONGROUP_PISTOL:
+	case WEAPONGROUP_SMG:
+		impulseMult = pistolImpulseMult;
+		pointGun = true;
+		break;
+	case WEAPONGROUP_RIFLE:
+	case WEAPONGROUP_MG:
+		impulseMult = rifleImpulseMult;
+		pointGun = true;
+		break;
+	case WEAPONGROUP_SHOTGUN:
+		impulseMult = shotgunImpulseMult;
+		break;
+	case WEAPONGROUP_SNIPER:
+		impulseMult = sniperImpulseMult;
+		break;
+	case WEAPONGROUP_HEAVY:
+		impulseMult = heavyImpulseMult;
+		break;
+	case WEAPONGROUP_RUBBERGUN:
+	case WEAPONGROUP_STUNGUN:
+		impulseMult = pistolImpulseMult;
+		pointGun = true;
+		break;
+	}
+
+	if (!isAiming)
+		pointGun = false;
+
+	NmMessage msgPtr = nGame::CreateNmMessage();
+	NMMessageShot shot;
+	shot.initialNeckDamping = 0.5f;
+	shot.minArmsLooseness = 0.0f;
+	shot.angVelScale = 0.5f;
+	shot.timeBeforeReachForWound = 0.0f;
+	shot.cpainSmooth2Time = 0.0f;
+	shot.cpainMag = 0.0f;
+	shot.cpainTwistMag = 0.0f;
+	shot.cpainSmooth2Zero = 0.5f;
+	shot.crouching = crouching;
+	shot.bulletProofVest = bulletProofVest;
+	shot.reachForWound = !bulletProofVest;
+	shot.allowInjuredLeg = true;
+	shot.allowInjuredThighReach = true;
+	shot.fallingReaction = 0;
+	shot.initialWeaknessZeroDuration = 0.2f;
+	shot.initialWeaknessRampDuration = 0.2f;
+	shot.cStrUpperMin = 1.0f;
+	shot.cStrLowerMin = 1.0f;
+	shot(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "shot");
+
+	msgPtr = nGame::CreateNmMessage();
+	NMMessageShotShockSpin shotShockSpin; shotShockSpin(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "shotShockSpin");
+
+	msgPtr = nGame::CreateNmMessage();
+	NMMessageShotInGuts shotInGuts; shotInGuts(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "shotInGuts");
+
+	msgPtr = nGame::CreateNmMessage();
+	NMMessageShotConfigureArms shotConfigureArms;
+	shotConfigureArms.pointGun = pointGun;
+	shotConfigureArms.useArmsWindmill = GetWeightedBool(50) && !bulletProofVest && !pointGun;
+	shotConfigureArms(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "shotConfigureArms");
+
+	msgPtr = nGame::CreateNmMessage();
+	NMMessageBodyBalance bodyBalance; bodyBalance(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "bodyBalance");
+
+	msgPtr = nGame::CreateNmMessage();
+	NMMessageStayUpright stayUpright; stayUpright(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "stayUpright");
+
+	msgPtr = nGame::CreateNmMessage();
+	NMMessageSetFallingReaction setFallingReaction; setFallingReaction(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "setFallingReaction");
+
+	msgPtr = nGame::CreateNmMessage();
+	NMMessageShotNewBullet shotNewBullet;
+	shotNewBullet.normal = -(impulseNorm);
+	shotNewBullet.bodyPart = partIndex;
+	shotNewBullet.hitPoint = hitLoc;
+	shotNewBullet.localHitPointInfo = false;
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "shotNewBullet");
+
+	msgPtr = nGame::CreateNmMessage();
+	NMMessageApplyBulletImpulse applyBulletImpulse;
+	applyBulletImpulse.equalizeAmount = 0.5f;
+	applyBulletImpulse.partIndex = partIndex;
+	applyBulletImpulse.impulse = impulseNorm * impulseMult;
+	applyBulletImpulse.hitPoint = hitLoc;
+	applyBulletImpulse.localHitPointInfo = false;
+	applyBulletImpulse.extraShare = 0.25f;
+	applyBulletImpulse(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "localImpulseInfo", false);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "applyBulletImpulse");
+
+	msgPtr = nGame::CreateNmMessage();
+	NMMessageConfigureBullets configureBullets;
+	configureBullets.doCounterImpulse = GetWeightedBool(50);
+	configureBullets(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "configureBullets");
+	return;
+}
+
+void TaskNMElectrocute(Ped ped)
+{
+	NmMessage msgPtr = nGame::CreateNmMessage();
+	NMMessageElectrocute electrocute; electrocute(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "electrocute");
+
+	msgPtr = nGame::CreateNmMessage();
+	NMMessageBodyBalance bodyBalance; bodyBalance(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "bodyBalance");
+	
+	msgPtr = nGame::CreateNmMessage();
+	NMMessageConfigureBalance configureBalance;
+	configureBalance.maxSteps = 15;
+	configureBalance(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "configureBalance");
+
+	msgPtr = nGame::CreateNmMessage();
+	NMMessageStaggerFall staggerFall; staggerFall(msgPtr.get());
+	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
+	nGame::GivePedNMMessage(std::move(msgPtr), ped, "staggerFall");
 	return;
 }
 #pragma endregion
@@ -1047,6 +1264,63 @@ int GetNMPartIndexFromBoneTag(const int boneTag)
 	}
 
 	return partIndex;
+}
+
+int GetBoneTagFromNMPartIndex(const int partIndex)
+{
+	int boneTag = -1;
+	if (partIndex < 0)
+		return boneTag;
+
+	switch (partIndex)
+	{
+	case RAGDOLL_PELVIS:
+		boneTag = BONETAG_PELVIS; break;
+	case RAGDOLL_THIGH_L:
+		boneTag = BONETAG_L_THIGH; break;
+	case RAGDOLL_CALF_L:
+		boneTag = BONETAG_L_CALF; break;
+	case RAGDOLL_FOOT_L:
+		boneTag = BONETAG_L_FOOT; break;
+	case RAGDOLL_THIGH_R:
+		boneTag = BONETAG_R_THIGH; break;
+	case RAGDOLL_CALF_R:
+		boneTag = BONETAG_R_CALF; break;
+	case RAGDOLL_FOOT_R:
+		boneTag = BONETAG_R_FOOT; break;
+	case RAGDOLL_SPINE:
+		boneTag = BONETAG_SPINE; break;
+	case RAGDOLL_SPINE1:
+		boneTag = BONETAG_SPINE1; break;
+	case RAGDOLL_SPINE2:
+		boneTag = BONETAG_SPINE2; break;
+	case RAGDOLL_SPINE3:
+		boneTag = BONETAG_SPINE3; break;
+	case RAGDOLL_CLAVICLE_L:
+		boneTag = BONETAG_L_CLAVICLE; break;
+	case RAGDOLL_UPPERARM_L:
+		boneTag = BONETAG_L_UPPERARM; break;
+	case RAGDOLL_LOWERARM_L:
+		boneTag = BONETAG_L_FOREARM; break;
+	case RAGDOLL_HAND_L:
+		boneTag = BONETAG_L_HAND; break;
+	case RAGDOLL_CLAVICLE_R:
+		boneTag = BONETAG_R_CLAVICLE; break;
+	case RAGDOLL_UPPERARM_R:
+		boneTag = BONETAG_R_UPPERARM; break;
+	case RAGDOLL_LOWERARM_R:
+		boneTag = BONETAG_R_FOREARM; break;
+	case RAGDOLL_HAND_R:
+		boneTag = BONETAG_R_HAND; break;
+	case RAGDOLL_NECK:
+		boneTag = BONETAG_NECK; break;
+	case RAGDOLL_HEAD:
+		boneTag = BONETAG_HEAD; break;
+	default:
+		boneTag = BONETAG_PELVIS; break;
+	}
+
+	return boneTag;
 }
 #pragma endregion
 

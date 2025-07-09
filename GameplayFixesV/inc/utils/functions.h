@@ -49,8 +49,9 @@ inline bool BetweenExclude(const T val, const T min, const T max)
 
 std::filesystem::path AbsoluteModulePath(HINSTANCE module);
 void SplitString(const char* charStr, std::string arr[], const int arrSize, const bool toUpper = false);
-int GetRandomIntInRange(int startRange = 0, int endRange = 65535);
-bool GetWeightedBool(int chance);
+int GetRandomIntInRange(int minValue = 0, int maxValue = 65535, bool std = false); // 0-65535 is the max range for natives, std has no such limit
+bool GetWeightedBool(int chance, bool std = false);
+Vector3 Normalize(Vector3 v);
 
 static const std::unordered_map<std::string, int> mapPadControls = {
 	{"PAD_UP", INPUT_FRONTEND_UP},
@@ -150,18 +151,21 @@ void DisablePedResetFlag(Ped ped, int flag);
 #pragma endregion
 
 #pragma region Weapons
+void ClearEntityLastDamageEntity(Entity entity);
+void ClearPedLastDamageBone(Ped ped);
+void ClearEntityLastWeaponDamage(Entity entity);
+void ClearLastDamages();
+
 bool HasEntityBeenDamagedByWeaponThisFrame(Ped ped, Hash weaponHash, int weaponType = 0);
 //bool HasEntityBeenDamagedByAnyPedThisFrame(Ped ped);
 bool CanDisarmPed(Ped ped, bool includeLeftHand);
 int GetWeaponBlipSprite(const Hash weaponHash);
 bool ShouldWeaponSpawnPickupWhenDropped(const Hash weaponHash, const bool checkWeaponType);
-void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse);
-void RestorePlayerRetrievedWeapon();
+void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse, Vector3 wpRot = { 0.0f, 0.0f, 0.0f });
+void RestorePlayerRetrievedWeapon(bool autoEquip);
 
-void ClearEntityLastDamageEntity(Entity entity);
-void ClearPedLastDamageBone(Ped ped);
-void ClearEntityLastWeaponDamage(Entity entity);
-void ClearLastDamages();
+void TaskNMShot(Ped ped, Hash wpHash, int partIndex, Vector3 hitLoc, Vector3 impulseNorm, bool isAiming = false, bool isCrouched = false);
+void TaskNMElectrocute(Ped ped);
 
 // Weapon Model Hash -> Pickup Hash
 static const std::unordered_map<unsigned int, unsigned int> wpPickupMap = {
@@ -229,6 +233,7 @@ bool GetFakeWanted();
 void SetFakeWanted(Player player, bool toggle);
 inline int GetNumberOfScriptInstances(const char* name) { return (GET_NUMBER_OF_THREADS_RUNNING_THE_SCRIPT_WITH_THIS_HASH(Joaat(name))); }
 int GetNMPartIndexFromBoneTag(const int boneTag);
+int GetBoneTagFromNMPartIndex(const int partIndex);
 #pragma endregion
 
 void UpdatePlayerVars();

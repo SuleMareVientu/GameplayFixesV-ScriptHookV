@@ -46,5 +46,9 @@ typedef struct Vector3
 	DWORD _paddingz;
 
 	constexpr Vector3(float X, float Y, float Z) : x(X), y(Y), z(Z), _paddingx(0), _paddingy(0), _paddingz(0) {}
+	bool operator==(Vector3& v) const { return (v.x == x && v.y == y && v.z == z); }
+	bool operator!=(Vector3& v) const { return (v.x != x || v.y != y || v.z != z); }
+	Vector3 operator-() const { return Vector3(-x, -y, -z); }
+	Vector3 operator*(const float f) const { return Vector3(f*x, f*y, f*z); }
 } Vector3;
 #pragma pack(pop)

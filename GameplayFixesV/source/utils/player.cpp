@@ -21,6 +21,10 @@
 #include "utils\ini.h"
 #include "utils\peds.h"
 
+// Globals
+bool isPlayerCrouching = false;
+const bool GetIsPlayerCrouching() { return isPlayerCrouching; }
+
 /////////////////////////////////////////////Player//////////////////////////////////////////////
 namespace nGeneral
 {
@@ -42,7 +46,6 @@ bool CanCrouch(Ped ped)
 constexpr char* crouchedMovementClipSet = "move_ped_crouched";
 constexpr char* crouchedStrafingClipSet = "move_ped_crouched_strafing";
 constexpr float blendSpeedCrouched = 0.55f;
-bool isCrouched = false;
 void SetCrouch(Ped ped, bool state)
 {
 	if (state)
@@ -52,13 +55,13 @@ void SetCrouch(Ped ped, bool state)
 		EnablePedConfigFlag(ped, PCF_PhoneDisableTalkingAnimations);
 		EnablePedConfigFlag(ped, PCF_PhoneDisableCameraAnimations);
 
-		isCrouched = true;
+		isPlayerCrouching = true;
 		SET_PED_MOVEMENT_CLIPSET(ped, crouchedMovementClipSet, blendSpeedCrouched);
 		SET_PED_STRAFE_CLIPSET(ped, crouchedStrafingClipSet);
 	}
 	else
 	{
-		isCrouched = false;
+		isPlayerCrouching = false;
 		SET_PED_STEALTH_MOVEMENT(ped, false, NULL);
 		RESET_PED_MOVEMENT_CLIPSET(ped, blendSpeedCrouched);
 		RESET_PED_STRAFE_CLIPSET(ped);
@@ -84,7 +87,7 @@ void EnableCrouching()
 
 	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_DUCK))
 	{
-		if (isCrouched)
+		if (isPlayerCrouching)
 			SetCrouch(GetPlayerPed(), false);
 		else
 		{
@@ -112,11 +115,11 @@ void EnableCrouching()
 	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_DUCK) && timerCrouch.Get() > crouchHold)
 	{
 		timerCrouch.Set(INT_MIN);
-		if (!isCrouched && CanCrouch(GetPlayerPed()))
+		if (!isPlayerCrouching && CanCrouch(GetPlayerPed()))
 			SetCrouch(GetPlayerPed(), true);
 	}
 
-	if (isCrouched)
+	if (isPlayerCrouching)
 	{
 		if (!CanCrouch(GetPlayerPed()))
 			SetCrouch(GetPlayerPed(), false);
@@ -210,38 +213,55 @@ inline void DisableActionMode() { EnablePedResetFlag(GetPlayerPed(), PRF_Disable
 
 void DisarmPlayerWhenShot()
 {
-	RestorePlayerRetrievedWeapon();
+	RestorePlayerRetrievedWeapon(Ini::AutoEquipDroppedWeapon);
 
 	if (CanDisarmPed(GetPlayerPed(), true) || HasEntityBeenDamagedByWeaponThisFrame(GetPlayerPed(), WEAPON_STUNGUN, GENERALWEAPON_TYPE_INVALID))
 	{
 		Hash wp = NULL; GET_CURRENT_PED_WEAPON(GetPlayerPed(), &wp, false);
 		if (ShouldWeaponSpawnPickupWhenDropped(wp, true))
-			DropPlayerWeapon(wp, true);
+			DropPlayerWeapon(wp, true, GET_ENTITY_ROTATION(GET_CURRENT_PED_WEAPON_ENTITY_INDEX(GetPlayerPed(), false), EULER_YXZ));
 	}
 	return;
 }
 
+//Compatibility with custom NM reactions
+int lastNMReactionTime = 0;
+Timer NMReactionTimer;
+
 Hash lastRagdollWp = NULL;
+Vector3 lastRagdollWpRot = { 0.0f, 0.0f, 0.0f };
 void DropPlayerWeaponWhenRagdolling()
 {
-	RestorePlayerRetrievedWeapon();
+	RestorePlayerRetrievedWeapon(Ini::AutoEquipDroppedWeapon);
+
+	//Compatibility with custom NM reactions
+	if (GetNMReactionTime() != lastNMReactionTime)
+	{
+		lastNMReactionTime = GetNMReactionTime();
+		NMReactionTimer.Reset();
+	}
 
 	Hash tmp = NULL;
 	const bool res = GET_CURRENT_PED_WEAPON(GetPlayerPed(), &tmp, false);
 
-	if (tmp == lastRagdollWp)
+	if (tmp == lastRagdollWp && NMReactionTimer.Get() > (GetNMReactionTime() + 100))
 	{
 		if (IS_PED_RAGDOLL(GetPlayerPed()) && ShouldWeaponSpawnPickupWhenDropped(lastRagdollWp, true))
-			DropPlayerWeapon(lastRagdollWp, false);
+			DropPlayerWeapon(lastRagdollWp, false, lastRagdollWpRot);
 	}
 
 	// GET_CURRENT_PED_WEAPON returns true when a weapon is usable (i.e. in their hand). We do this to check if
-	// the player was holding the gun correctly
+	// the player was holding the gun correctly (since for two-handed weapons their model is hidden on the same frame a ragdoll starts)
 	if (res)
+	{
 		lastRagdollWp = tmp;
+		lastRagdollWpRot = GET_ENTITY_ROTATION(GET_CURRENT_PED_WEAPON_ENTITY_INDEX(GetPlayerPed(), false), EULER_YXZ);
+	}
 	else
+	{
 		lastRagdollWp = NULL;
-
+		lastRagdollWpRot = { 0.0f, 0.0f, 0.0f };
+	}
 	return;
 }
 
@@ -1462,6 +1482,16 @@ void DisableWorldPopulation()
 }
 }
 
+namespace nMemory
+{
+void HUDWheelSlowdownPatch()
+{	
+	SET_AUDIO_FLAG("AllowAmbientSpeechInSlowMo", true);
+	SET_AUDIO_FLAG("AllowScriptedSpeechInSlowMo", true);
+	return;
+}
+}
+
 #define REGISTER_OPTION(mngr, opt, nspace, minVer, en) mngr.RegisterOption(std::make_unique<PlayerOption>(iniValue(Ini::opt), minVer, en, []() { nspace::opt(); }, #opt))
 #define REGISTER_OPTION_INI(mngr, opt, nspace, nm, minVer, en) mngr.RegisterOption(std::make_unique<PlayerOption>(iniValue(Ini::nm), minVer, en, []() { nspace::opt(); }, #opt))
 
@@ -1497,7 +1527,7 @@ void RegisterPlayerOptions()
 	REGISTER_OPTION(playerOptionsManager, DisableEngineSmoke, nVehicle, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableEngineFire, nVehicle, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, LeaveEngineOnWhenExitingVehicles, nVehicle, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, DisableWheelsAutoCenterOnCarExit, nVehicle, VER_UNK, true);
+	if (!GetPatchedCenterSteering()) { REGISTER_OPTION(playerOptionsManager, DisableWheelsAutoCenterOnCarExit, nVehicle, VER_UNK, true); }
 	REGISTER_OPTION(playerOptionsManager, KeepCarHydraulicsPosition, nVehicle, VER_1_0_2372_0_STEAM, true);
 	REGISTER_OPTION(playerOptionsManager, EnableBrakeLightsOnStoppedVehicle, nVehicle, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, EnableHeliWaterPhysics, nVehicle, VER_UNK, true);
@@ -1546,6 +1576,9 @@ void RegisterPlayerOptions()
 	//////////////////////////////////////////Peds/////////////////////////////////////////
 	REGISTER_OPTION(playerOptionsManager, DisableScenarios, nPeds, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableWorldPopulation, nPeds, VER_UNK, true);
+
+	/////////////////////////////////////////Memory////////////////////////////////////////
+	if (GetPatchedHUDWheelSlowdown()) { REGISTER_OPTION(playerOptionsManager, HUDWheelSlowdownPatch, nMemory, VER_UNK, true); }
 	return;
 }
 

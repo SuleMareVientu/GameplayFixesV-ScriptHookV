@@ -8,6 +8,7 @@
 #include "globals.h"
 
 static constexpr char* inputGroup = "Input";
+static constexpr char* memoryGroup = "Memory";
 static constexpr char* playerGroup = "Player";
 static constexpr char* HUDGroup = "HUD";
 static constexpr char* AudioGroup = "Audio";
@@ -17,6 +18,14 @@ namespace Ini
 {
 //Input Settings
 unsigned long ReloadIniKey = VK_F12;
+//Memory Settings
+bool ApplyExePatches = true;
+bool LowPriorityPropsPatch = true;
+bool CenterSteeringPatch = true;
+bool CopBumpSteeringPatch = true;
+bool HUDWheelSlowdownPatch = false;
+bool HookGameFunctions = true;
+bool EnableLogging = false;
 //Player Settings
 bool EnableCrouching = true;
 bool FriendlyFire = true;
@@ -24,6 +33,13 @@ bool EnableStealthForAllPeds = true;
 bool DisableActionMode = false;
 bool DisarmPlayerWhenShot = true;
 bool DropPlayerWeaponWhenRagdolling = true;
+bool AutoEquipDroppedWeapon = true;
+bool EnablePlayerNMReactionsWhenShot = true;
+int RagdollChance = 30;
+int MinimumRagdollTime = 450;
+int MaximumRagdollTime = 1500;
+bool ShouldRagdollInCover = false;
+bool DontDropWeapon = true;
 bool DynamicallyCleanWoundsAndDirt = true;
 bool SprintInsideInteriors = true;
 bool AllowWeaponsInsideSafeHouse = false;
@@ -105,6 +121,11 @@ bool DisableWorldPopulation = false;
 }
 using namespace Ini;
 
+#define GET_INI_BOOL(ini, group, value) ini.GetBoolValue(group, #value, Ini::value);
+#define GET_INI_INT(ini, group, value) static_cast<int>(ini.GetLongValue(group, #value, Ini::value));
+#define GET_INI_FLOAT(ini, group, value) static_cast<float>(ini.GetDoubleValue(group, #value, Ini::value));
+#define GET_INI_STRING(ini, group, value) ini.GetValue(group, #value, Ini::value.c_str());
+
 static CSimpleIniA ini;
 void ReadINI()
 {
@@ -119,95 +140,111 @@ void ReadINI()
 	SplitString(const_cast<char*>(ini.GetValue(inputGroup, "ReloadIniKey", DefaultReloadIniKeyStr)), tmpStrArr, 1);
 	ReloadIniKey = GetVKFromString(tmpStrArr[0]);
 
+	//////////////////////////////////////Memory//////////////////////////////////////////
+	Ini::ApplyExePatches = GET_INI_BOOL(ini, memoryGroup, ApplyExePatches);
+	Ini::LowPriorityPropsPatch = GET_INI_BOOL(ini, memoryGroup, LowPriorityPropsPatch);
+	Ini::CenterSteeringPatch = GET_INI_BOOL(ini, memoryGroup, CenterSteeringPatch);
+	Ini::CopBumpSteeringPatch = GET_INI_BOOL(ini, memoryGroup, CopBumpSteeringPatch);
+	Ini::HUDWheelSlowdownPatch = GET_INI_BOOL(ini, memoryGroup, HUDWheelSlowdownPatch);
+	Ini::HookGameFunctions = GET_INI_BOOL(ini, memoryGroup, HookGameFunctions);
+	Ini::EnableLogging = GET_INI_BOOL(ini, memoryGroup, EnableLogging);
+
 	//////////////////////////////////////Player//////////////////////////////////////////
-	EnableCrouching = ini.GetBoolValue(playerGroup, "EnableCrouching", EnableCrouching);
-	FriendlyFire = ini.GetBoolValue(playerGroup, "FriendlyFire", FriendlyFire);
-	EnableStealthForAllPeds = ini.GetBoolValue(playerGroup, "EnableStealthForAllPeds", EnableStealthForAllPeds);
-	DisableActionMode = ini.GetBoolValue(playerGroup, "DisableActionMode", DisableActionMode);
-	DisarmPlayerWhenShot = ini.GetBoolValue(playerGroup, "DisarmPlayerWhenShot", DisarmPlayerWhenShot);
-	DropPlayerWeaponWhenRagdolling = ini.GetBoolValue(playerGroup, "DropPlayerWeaponWhenRagdolling", DropPlayerWeaponWhenRagdolling);
-	DynamicallyCleanWoundsAndDirt = ini.GetBoolValue(playerGroup, "DynamicallyCleanWoundsAndDirt", DynamicallyCleanWoundsAndDirt);
-	SprintInsideInteriors = ini.GetBoolValue(playerGroup, "SprintInsideInteriors", SprintInsideInteriors);
-	AllowWeaponsInsideSafeHouse = ini.GetBoolValue(playerGroup, "AllowWeaponsInsideSafeHouse", AllowWeaponsInsideSafeHouse);
-	SilentWanted = ini.GetBoolValue(playerGroup, "SilentWanted", SilentWanted);
+	Ini::EnableCrouching = GET_INI_BOOL(ini, playerGroup, EnableCrouching);
+	Ini::FriendlyFire = GET_INI_BOOL(ini, playerGroup, FriendlyFire);
+	Ini::EnableStealthForAllPeds = GET_INI_BOOL(ini, playerGroup, EnableStealthForAllPeds);
+	Ini::DisableActionMode = GET_INI_BOOL(ini, playerGroup, DisableActionMode);
+	Ini::DisarmPlayerWhenShot = GET_INI_BOOL(ini, playerGroup, DisarmPlayerWhenShot);
+	Ini::DropPlayerWeaponWhenRagdolling = GET_INI_BOOL(ini, playerGroup, DropPlayerWeaponWhenRagdolling);
+	Ini::AutoEquipDroppedWeapon = GET_INI_BOOL(ini, playerGroup, AutoEquipDroppedWeapon);
+	Ini::EnablePlayerNMReactionsWhenShot = GET_INI_BOOL(ini, playerGroup, EnablePlayerNMReactionsWhenShot);
+	Ini::RagdollChance = GET_INI_INT(ini, playerGroup, RagdollChance);
+	Ini::MinimumRagdollTime = GET_INI_INT(ini, playerGroup, MinimumRagdollTime);
+	Ini::MaximumRagdollTime = GET_INI_INT(ini, playerGroup, MaximumRagdollTime);
+	Ini::ShouldRagdollInCover = GET_INI_BOOL(ini, playerGroup, ShouldRagdollInCover);
+	Ini::DontDropWeapon = GET_INI_BOOL(ini, playerGroup, DontDropWeapon);
+	Ini::DynamicallyCleanWoundsAndDirt = GET_INI_BOOL(ini, playerGroup, DynamicallyCleanWoundsAndDirt);
+	Ini::SprintInsideInteriors = GET_INI_BOOL(ini, playerGroup, SprintInsideInteriors);
+	Ini::AllowWeaponsInsideSafeHouse = GET_INI_BOOL(ini, playerGroup, AllowWeaponsInsideSafeHouse);
+	Ini::SilentWanted = GET_INI_BOOL(ini, playerGroup, SilentWanted);
 
 	//////////////////////////////////////Player Controls//////////////////////////////////
-	DisableAssistedMovement = ini.GetBoolValue(playerGroup, "DisableAssistedMovement", DisableAssistedMovement);
-	ToggleFPSWalking = ini.GetBoolValue(playerGroup, "ToggleFPSWalking", ToggleFPSWalking);
-	DisableCameraAutoCenter = static_cast<int>(ini.GetLongValue(playerGroup, "DisableCameraAutoCenter", DisableCameraAutoCenter));
-	CamFollowVehicleDuringHandbrake = ini.GetBoolValue(playerGroup, "CamFollowVehicleDuringHandbrake", CamFollowVehicleDuringHandbrake);
-	CamFollowVehDelay = static_cast<int>(ini.GetLongValue(playerGroup, "CamFollowVehDelay", CamFollowVehDelay));
-	DisableFirstPersonView = ini.GetBoolValue(playerGroup, "DisableFirstPersonView", DisableFirstPersonView);
-	DisableIdleCamera = ini.GetBoolValue(playerGroup, "DisableIdleCamera", DisableIdleCamera);
-	DisableRecording = ini.GetBoolValue(playerGroup, "DisableRecording", DisableRecording);
-	DisableMobilePhone = ini.GetBoolValue(playerGroup, "DisableMobilePhone", DisableMobilePhone);
+	Ini::DisableAssistedMovement = GET_INI_BOOL(ini, playerGroup, DisableAssistedMovement);
+	Ini::ToggleFPSWalking = GET_INI_BOOL(ini, playerGroup, ToggleFPSWalking);
+	Ini::DisableCameraAutoCenter = GET_INI_INT(ini, playerGroup, DisableCameraAutoCenter);
+	Ini::CamFollowVehicleDuringHandbrake = GET_INI_BOOL(ini, playerGroup, CamFollowVehicleDuringHandbrake);
+	Ini::CamFollowVehDelay = GET_INI_INT(ini, playerGroup, CamFollowVehDelay);
+	Ini::DisableFirstPersonView = GET_INI_BOOL(ini, playerGroup, DisableFirstPersonView);
+	Ini::DisableIdleCamera = GET_INI_BOOL(ini, playerGroup, DisableIdleCamera);
+	Ini::DisableRecording = GET_INI_BOOL(ini, playerGroup, DisableRecording);
+	Ini::DisableMobilePhone = GET_INI_BOOL(ini, playerGroup, DisableMobilePhone);
 
 	//////////////////////////////////////Player Vehicle///////////////////////////////////
-	DisableCarMidAirAndRollControl = ini.GetBoolValue(playerGroup, "DisableCarMidAirAndRollControl", DisableCarMidAirAndRollControl);
-	DisableForcedCarExplosionOnImpact = ini.GetBoolValue(playerGroup, "DisableForcedCarExplosionOnImpact", DisableForcedCarExplosionOnImpact);
-	DisableEngineSmoke = ini.GetBoolValue(playerGroup, "DisableEngineSmoke", DisableEngineSmoke);
-	DisableEngineFire = ini.GetBoolValue(playerGroup, "DisableEngineFire", DisableEngineFire);
-	EnableBrakeLightsOnStoppedVehicle = ini.GetBoolValue(playerGroup, "EnableBrakeLightsOnStoppedVehicle", EnableBrakeLightsOnStoppedVehicle);
-	LeaveEngineOnWhenExitingVehicles = ini.GetBoolValue(playerGroup, "LeaveEngineOnWhenExitingVehicles", LeaveEngineOnWhenExitingVehicles);
-	KeepCarHydraulicsPosition = ini.GetBoolValue(playerGroup, "KeepCarHydraulicsPosition", KeepCarHydraulicsPosition);
-	DisableWheelsAutoCenterOnCarExit = ini.GetBoolValue(playerGroup, "DisableWheelsAutoCenterOnCarExit", DisableWheelsAutoCenterOnCarExit);
-	EnableHeliWaterPhysics = ini.GetBoolValue(playerGroup, "EnableHeliWaterPhysics", EnableHeliWaterPhysics);
-	DisableRagdollOnVehicleRoof = ini.GetBoolValue(playerGroup, "DisableRagdollOnVehicleRoof", DisableRagdollOnVehicleRoof);
-	MaxVehicleSpeed = static_cast<float>(ini.GetDoubleValue(playerGroup, "MaxVehicleSpeed", MaxVehicleSpeed));
-	DisableFlyThroughWindscreen = ini.GetBoolValue(playerGroup, "DisableFlyThroughWindscreen", DisableFlyThroughWindscreen);
-	DisableBikeKnockOff = ini.GetBoolValue(playerGroup, "DisableBikeKnockOff", DisableBikeKnockOff);
-	DisableDragOutCar = ini.GetBoolValue(playerGroup, "DisableDragOutCar", DisableDragOutCar);
-	DisableShallowWaterBikeJumpOut = ini.GetBoolValue(playerGroup, "DisableShallowWaterBikeJumpOut", DisableShallowWaterBikeJumpOut);
-	DisableStuntJumps = ini.GetBoolValue(playerGroup, "DisableStuntJumps", DisableStuntJumps);
-	DisableVehicleJitter = ini.GetBoolValue(playerGroup, "DisableVehicleJitter", DisableVehicleJitter);
-	DisableAirVehicleTurbulence = ini.GetBoolValue(playerGroup, "DisableAirVehicleTurbulence", DisableAirVehicleTurbulence);
-	DisableAutoEquipHelmets = static_cast<int>(ini.GetLongValue(playerGroup, "DisableAutoEquipHelmets", DisableAutoEquipHelmets));
+	Ini::DisableCarMidAirAndRollControl = GET_INI_BOOL(ini, playerGroup, DisableCarMidAirAndRollControl);
+	Ini::DisableForcedCarExplosionOnImpact = GET_INI_BOOL(ini, playerGroup, DisableForcedCarExplosionOnImpact);
+	Ini::DisableEngineSmoke = GET_INI_BOOL(ini, playerGroup, DisableEngineSmoke);
+	Ini::DisableEngineFire = GET_INI_BOOL(ini, playerGroup, DisableEngineFire);
+	Ini::EnableBrakeLightsOnStoppedVehicle = GET_INI_BOOL(ini, playerGroup, EnableBrakeLightsOnStoppedVehicle);
+	Ini::LeaveEngineOnWhenExitingVehicles = GET_INI_BOOL(ini, playerGroup, LeaveEngineOnWhenExitingVehicles);
+	Ini::KeepCarHydraulicsPosition = GET_INI_BOOL(ini, playerGroup, KeepCarHydraulicsPosition);
+	Ini::DisableWheelsAutoCenterOnCarExit = GET_INI_BOOL(ini, playerGroup, DisableWheelsAutoCenterOnCarExit);
+	Ini::EnableHeliWaterPhysics = GET_INI_BOOL(ini, playerGroup, EnableHeliWaterPhysics);
+	Ini::DisableRagdollOnVehicleRoof = GET_INI_BOOL(ini, playerGroup, DisableRagdollOnVehicleRoof);
+	Ini::MaxVehicleSpeed = GET_INI_FLOAT(ini, playerGroup, MaxVehicleSpeed);
+	Ini::DisableFlyThroughWindscreen = GET_INI_BOOL(ini, playerGroup, DisableFlyThroughWindscreen);
+	Ini::DisableBikeKnockOff = GET_INI_BOOL(ini, playerGroup, DisableBikeKnockOff);
+	Ini::DisableDragOutCar = GET_INI_BOOL(ini, playerGroup, DisableDragOutCar);
+	Ini::DisableShallowWaterBikeJumpOut = GET_INI_BOOL(ini, playerGroup, DisableShallowWaterBikeJumpOut);
+	Ini::DisableStuntJumps = GET_INI_BOOL(ini, playerGroup, DisableStuntJumps);
+	Ini::DisableVehicleJitter = GET_INI_BOOL(ini, playerGroup, DisableVehicleJitter);
+	Ini::DisableAirVehicleTurbulence = GET_INI_BOOL(ini, playerGroup, DisableAirVehicleTurbulence);
+	Ini::DisableAutoEquipHelmets = GET_INI_INT(ini, playerGroup, DisableAutoEquipHelmets);
 
 	//////////////////////////////////////HUD//////////////////////////////////////////////
-	AllowGameExecutionOnPauseMenu = ini.GetBoolValue(HUDGroup, "AllowGameExecutionOnPauseMenu", AllowGameExecutionOnPauseMenu);
-	DisablePauseMenuPostFX = ini.GetBoolValue(HUDGroup, "DisablePauseMenuPostFX", DisablePauseMenuPostFX);
-	DisableHUDPostFX = ini.GetBoolValue(HUDGroup, "DisableHUDPostFX", DisableHUDPostFX);
-	DisableSpecialAbilityPostFX = ini.GetBoolValue(HUDGroup, "DisableSpecialAbilityPostFX", DisableSpecialAbilityPostFX);
-	EnableBigMapToggle = ini.GetBoolValue(HUDGroup, "EnableBigMapToggle", EnableBigMapToggle);
-	MinimapSpeedometer = ini.GetBoolValue(HUDGroup, "MinimapSpeedometer", MinimapSpeedometer);
-	SetRadarZoom = static_cast<float>(ini.GetDoubleValue(HUDGroup, "SetRadarZoom", SetRadarZoom));
-	DisableMinimapTilt = ini.GetBoolValue(HUDGroup, "DisableMinimapTilt", DisableMinimapTilt);
-	HideMinimapFog = ini.GetBoolValue(HUDGroup, "HideMinimapFog", HideMinimapFog);
-	HideMinimapSatNav = ini.GetBoolValue(HUDGroup, "HideMinimapSatNav", HideMinimapSatNav);
-	HideMinimapDepth = ini.GetBoolValue(HUDGroup, "HideMinimapDepth", HideMinimapDepth);
-	HideMinimapBars = ini.GetBoolValue(HUDGroup, "HideMinimapBars", HideMinimapBars);
-	AlwaysHideAbilityBar = ini.GetBoolValue(HUDGroup, "AlwaysHideAbilityBar", AlwaysHideAbilityBar);
-	HideAbilityBarForNonMainCharacters = ini.GetBoolValue(HUDGroup, "HideAbilityBarForNonMainCharacters", HideAbilityBarForNonMainCharacters);
-	ReplaceArmourBarWithStamina = ini.GetBoolValue(HUDGroup, "ReplaceArmourBarWithStamina", ReplaceArmourBarWithStamina);
-	MergeHealthAndArmour = ini.GetBoolValue(HUDGroup, "MergeHealthAndArmour", MergeHealthAndArmour);
-	HideHudComponents = ini.GetBoolValue(HUDGroup, "HideHudComponents", HideHudComponents);
-	HudComponents = ini.GetValue(HUDGroup, "HudComponents", HudComponents.c_str());
-	HideWeaponReticle = ini.GetBoolValue(HUDGroup, "HideWeaponReticle", HideWeaponReticle);
-	HideEnemiesBlips = ini.GetBoolValue(HUDGroup, "HideEnemiesBlips", HideEnemiesBlips);
+	Ini::AllowGameExecutionOnPauseMenu = GET_INI_BOOL(ini, HUDGroup, AllowGameExecutionOnPauseMenu);
+	Ini::DisablePauseMenuPostFX = GET_INI_BOOL(ini, HUDGroup, DisablePauseMenuPostFX);
+	Ini::DisableHUDPostFX = GET_INI_BOOL(ini, HUDGroup, DisableHUDPostFX);
+	Ini::DisableSpecialAbilityPostFX = GET_INI_BOOL(ini, HUDGroup, DisableSpecialAbilityPostFX);
+	Ini::EnableBigMapToggle = GET_INI_BOOL(ini, HUDGroup, EnableBigMapToggle);
+	Ini::MinimapSpeedometer = GET_INI_BOOL(ini, HUDGroup, MinimapSpeedometer);
+	Ini::SetRadarZoom = GET_INI_FLOAT(ini, HUDGroup, SetRadarZoom);
+	Ini::DisableMinimapTilt = GET_INI_BOOL(ini, HUDGroup, DisableMinimapTilt);
+	Ini::HideMinimapFog = GET_INI_BOOL(ini, HUDGroup, HideMinimapFog);
+	Ini::HideMinimapSatNav = GET_INI_BOOL(ini, HUDGroup, HideMinimapSatNav);
+	Ini::HideMinimapDepth = GET_INI_BOOL(ini, HUDGroup, HideMinimapDepth);
+	Ini::HideMinimapBars = GET_INI_BOOL(ini, HUDGroup, HideMinimapBars);
+	Ini::AlwaysHideAbilityBar = GET_INI_BOOL(ini, HUDGroup, AlwaysHideAbilityBar);
+	Ini::HideAbilityBarForNonMainCharacters = GET_INI_BOOL(ini, HUDGroup, HideAbilityBarForNonMainCharacters);
+	Ini::ReplaceArmourBarWithStamina = GET_INI_BOOL(ini, HUDGroup, ReplaceArmourBarWithStamina);
+	Ini::MergeHealthAndArmour = GET_INI_BOOL(ini, HUDGroup, MergeHealthAndArmour);
+	Ini::HideHudComponents = GET_INI_BOOL(ini, HUDGroup, HideHudComponents);
+	Ini::HudComponents = GET_INI_STRING(ini, HUDGroup, HudComponents);
+	Ini::HideWeaponReticle = GET_INI_BOOL(ini, HUDGroup, HideWeaponReticle);
+	Ini::HideEnemiesBlips = GET_INI_BOOL(ini, HUDGroup, HideEnemiesBlips);
 
 	/////////////////////////////////////Audio/////////////////////////////////////////////
-	DisableWantedMusic = ini.GetBoolValue(AudioGroup, "DisableWantedMusic", DisableWantedMusic);
-	DisablePoliceScanner = ini.GetBoolValue(AudioGroup, "DisablePoliceScanner", DisablePoliceScanner);
-	DisableFlyingMusic = ini.GetBoolValue(AudioGroup, "DisableFlyingMusic", DisableFlyingMusic);
-	DisableRadioInterruptions = ini.GetBoolValue(AudioGroup, "DisableRadioInterruptions", DisableRadioInterruptions);
-	DefaultVehicleRadioOff = static_cast<int>(ini.GetLongValue(AudioGroup, "DefaultVehicleRadioOff", DefaultVehicleRadioOff));
-	MuteSounds = ini.GetBoolValue(AudioGroup, "MuteSounds", MuteSounds);
-	Sounds = ini.GetValue(AudioGroup, "Sounds", Sounds.c_str());
-	DisablePlayerPainAudio = ini.GetBoolValue(AudioGroup, "DisablePlayerPainAudio", DisablePlayerPainAudio);
-	MuteArtificialAmbientSounds = ini.GetBoolValue(AudioGroup, "MuteArtificialAmbientSounds", MuteArtificialAmbientSounds);
+	Ini::DisableWantedMusic = GET_INI_BOOL(ini, AudioGroup, DisableWantedMusic);
+	Ini::DisablePoliceScanner = GET_INI_BOOL(ini, AudioGroup, DisablePoliceScanner);
+	Ini::DisableFlyingMusic = GET_INI_BOOL(ini, AudioGroup, DisableFlyingMusic);
+	Ini::DisableRadioInterruptions = GET_INI_BOOL(ini, AudioGroup, DisableRadioInterruptions);
+	Ini::DefaultVehicleRadioOff = GET_INI_INT(ini, AudioGroup, DefaultVehicleRadioOff);
+	Ini::MuteSounds = GET_INI_BOOL(ini, AudioGroup, MuteSounds);
+	Ini::Sounds = GET_INI_STRING(ini, AudioGroup, Sounds);
+	Ini::DisablePlayerPainAudio = GET_INI_BOOL(ini, AudioGroup, DisablePlayerPainAudio);
+	Ini::MuteArtificialAmbientSounds = GET_INI_BOOL(ini, AudioGroup, MuteArtificialAmbientSounds);
 
 	//////////////////////////////////////Peds/////////////////////////////////////////////
-	DisableWrithe = ini.GetBoolValue(pedsGroup, "DisableWrithe", DisableWrithe);
-	DisableHurt = ini.GetBoolValue(pedsGroup, "DisableHurt", DisableHurt);
-	DisableShootFromGround = ini.GetBoolValue(pedsGroup, "DisableShootFromGround", DisableShootFromGround);
-	DisableSittingPedsInstantDeath = ini.GetBoolValue(pedsGroup, "DisableSittingPedsInstantDeath", DisableSittingPedsInstantDeath);
-	DisarmPedWhenShot = ini.GetBoolValue(pedsGroup, "DisarmPedWhenShot", DisarmPedWhenShot);
-	DisarmChance = static_cast<int>(ini.GetLongValue(pedsGroup, "DisarmChance", DisarmChance));
-	DisarmIncludeLeftHand = ini.GetBoolValue(pedsGroup, "DisarmIncludeLeftHand", DisarmIncludeLeftHand);
-	DisablePedOnlyDamagedByPlayer = ini.GetBoolValue(pedsGroup, "DisablePedOnlyDamagedByPlayer", DisablePedOnlyDamagedByPlayer);
-	DisableDeadPedsJumpOutOfVehicle = ini.GetBoolValue(pedsGroup, "DisableDeadPedsJumpOutOfVehicle", DisableDeadPedsJumpOutOfVehicle);
-	DisableScenarios = ini.GetBoolValue(pedsGroup, "DisableScenarios", DisableScenarios);
-	DisableWorldPopulation = ini.GetBoolValue(pedsGroup, "DisableWorldPopulation", DisableWorldPopulation);
+	Ini::DisableWrithe = GET_INI_BOOL(ini, pedsGroup, DisableWrithe);
+	Ini::DisableHurt = GET_INI_BOOL(ini, pedsGroup, DisableHurt);
+	Ini::DisableShootFromGround = GET_INI_BOOL(ini, pedsGroup, DisableShootFromGround);
+	Ini::DisableSittingPedsInstantDeath = GET_INI_BOOL(ini, pedsGroup, DisableSittingPedsInstantDeath);
+	Ini::DisarmPedWhenShot = GET_INI_BOOL(ini, pedsGroup, DisarmPedWhenShot);
+	Ini::DisarmChance = GET_INI_INT(ini, pedsGroup, DisarmChance);
+	Ini::DisarmIncludeLeftHand = GET_INI_BOOL(ini, pedsGroup, DisarmIncludeLeftHand);
+	Ini::DisablePedOnlyDamagedByPlayer = GET_INI_BOOL(ini, pedsGroup, DisablePedOnlyDamagedByPlayer);
+	Ini::DisableDeadPedsJumpOutOfVehicle = GET_INI_BOOL(ini, pedsGroup, DisableDeadPedsJumpOutOfVehicle);
+	Ini::DisableScenarios = GET_INI_BOOL(ini, pedsGroup, DisableScenarios);
+	Ini::DisableWorldPopulation = GET_INI_BOOL(ini, pedsGroup, DisableWorldPopulation);
 	return;
 }
 

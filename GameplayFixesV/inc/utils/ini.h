@@ -6,6 +6,14 @@ namespace Ini
 {
 //Input Settings
 extern unsigned long ReloadIniKey;
+//Memory Settings
+extern bool ApplyExePatches;
+extern bool LowPriorityPropsPatch;
+extern bool CenterSteeringPatch;
+extern bool CopBumpSteeringPatch;
+extern bool HUDWheelSlowdownPatch;
+extern bool HookGameFunctions;
+extern bool EnableLogging;
 //Player Settings
 extern bool EnableCrouching;
 extern bool FriendlyFire;
@@ -13,6 +21,13 @@ extern bool EnableStealthForAllPeds;
 extern bool DisableActionMode;
 extern bool DisarmPlayerWhenShot;
 extern bool DropPlayerWeaponWhenRagdolling;
+extern bool AutoEquipDroppedWeapon;
+extern bool EnablePlayerNMReactionsWhenShot;
+extern int RagdollChance;
+extern int MinimumRagdollTime;
+extern int MaximumRagdollTime;
+extern bool ShouldRagdollInCover;
+extern bool DontDropWeapon;
 extern bool DynamicallyCleanWoundsAndDirt;
 extern bool SprintInsideInteriors;
 extern bool AllowWeaponsInsideSafeHouse;

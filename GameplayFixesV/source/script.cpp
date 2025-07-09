@@ -61,14 +61,12 @@ void ScriptMain()
 	if (GetIsEnhancedVersion())
 	{
 		WriteLog("Info",
-			"Memory patches and associated functions are not currently available on the Enhanced version of the game."
+			"Memory patches and associated functions are not currently fully compatible with the Enhanced version of the game."
 		);
 	}
-	else
-	{
-		GetGameFunctionsAddresses();
-		ApplyExePatches();
-	}
+
+	GetGameFunctionsAddresses();
+	ApplyExePatches();
 
 	while (true)
 	{

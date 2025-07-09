@@ -20,14 +20,6 @@ using json = nlohmann::json;
 #pragma endregion
 
 #pragma region Global Functions
-HINSTANCE GetDllInstance();
-const char* GetDllInstanceName();
-const char* GetDllInstanceNameNoExt();
-const char* GetDllInstanceIniName();
-const char* GetDllInstanceLogName();
-const int GetGameVersion();
-const bool GetIsEnhancedVersion();
-
 constexpr unsigned int Joaat(const char* str)
 {
 	if (str == nullptr || *str == '\0')
@@ -53,6 +45,20 @@ constexpr unsigned int Joaat(const char* str)
 	hash += hash << 15;
 	return hash;
 };
+
+HINSTANCE GetDllInstance();
+const char* GetDllInstanceName();
+const char* GetDllInstanceNameNoExt();
+const char* GetDllInstanceIniName();
+const char* GetDllInstanceLogName();
+const int GetGameVersion();
+const bool GetIsEnhancedVersion();
+
+const bool GetFoundNMFunctions();
+const bool GetPatchedHUDWheelSlowdown();
+const bool GetPatchedCenterSteering();
+const bool GetIsPlayerCrouching();
+const int GetNMReactionTime();
 #pragma endregion
 
 #pragma region Custom Types and Structures
@@ -797,6 +803,16 @@ constexpr TextStyle defaultTextStyle = { FONT_STANDARD, 0.35f, 0.35f, RGBA{255, 
 #pragma endregion
 
 #pragma region Misc Enums
+enum eEulerRotOrder {
+	EULER_XYZ = 0,
+	EULER_XZY,
+	EULER_YXZ,
+	EULER_YZX,
+	EULER_ZXY,
+	EULER_ZYX,
+	EULER_MAX
+};
+
 enum eCamViewMode {
 	CAM_VIEW_MODE_THIRD_PERSON_NEAR = 0,
 	CAM_VIEW_MODE_THIRD_PERSON_MEDIUM,
@@ -847,6 +863,19 @@ enum eDispatchType {
 	DT_ARMY_VEHICLE,
 	DT_BIKER_BACKUP,
 	DT_ASSASSINS
+};
+
+enum AudioSpecialEffectMode
+{
+	AUDIO_SPECIAL_EFFECT_MODE_NORMAL,
+	AUDIO_SPECIAL_EFFECT_MODE_UNDERWATER,
+	AUDIO_SPECIAL_EFFECT_MODE_STONED,
+	AUDIO_SPECIAL_EFFECT_MODE_PAUSE_MENU,
+	AUDIO_SPECIAL_EFFECT_MODE_SLOW_MOTION,
+	AUDIO_SPECIAL_EFFECT_MODE_DRUNK_STAGE01,
+	AUDIO_SPECIAL_EFFECT_MODE_DRUNK_STAGE02,
+	AUDIO_SPECIAL_EFFECT_MODE_DRUNK_STAGE03,
+	NUM_AUDIO_SPECIAL_EFFECT_MODE
 };
 #pragma endregion
 
