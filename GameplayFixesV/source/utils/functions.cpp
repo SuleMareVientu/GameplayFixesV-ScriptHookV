@@ -56,9 +56,9 @@ void SplitString(const char* charStr, std::string arr[], const int arrSize, cons
 }
 
 //    The range [minValue, maxValue] is inclusive.
-int GetRandomIntInRange(int minValue, int maxValue, bool std)
+int GetRandomIntInRange(int minValue, int maxValue, bool useRd)
 {
-	if (std)
+	if (useRd)
 	{
 		std::random_device rd;
 		std::mt19937 gen(rd());
@@ -67,19 +67,19 @@ int GetRandomIntInRange(int minValue, int maxValue, bool std)
 	}
 
 	maxValue += 1;
-	SET_RANDOM_SEED(GET_GAME_TIMER());
+	SET_RANDOM_SEED(rand());
 	return GET_RANDOM_INT_IN_RANGE(minValue, maxValue);
 }
 
 //Chance out of 100
-bool GetWeightedBool(int chance, bool std)
+bool GetWeightedBool(int chance, bool useRd)
 {
 	if (chance <= 0) return false;
 	if (chance >= 100) return true;
 	
 	const double n = chance * 0.01;
 	
-	if (std)
+	if (useRd)
 	{
 		std::random_device rd;
 		std::mt19937 gen(rd());
@@ -87,7 +87,7 @@ bool GetWeightedBool(int chance, bool std)
 		return dist(gen);
 	}
 
-	std::default_random_engine gen(GET_GAME_TIMER());
+	std::default_random_engine gen(rand());
 	std::bernoulli_distribution dist(n);
 	return dist(gen);
 }
@@ -624,7 +624,7 @@ void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse, Vector3 wpRot)
 	const Vector3 loc = GET_PED_BONE_COORDS(GetPlayerPed(), BONETAG_PH_R_HAND, 0.0f, 0.0f, 0.0f);
 	SET_LOCAL_PLAYER_PERMITTED_TO_COLLECT_PICKUPS_WITH_MODEL(GET_WEAPONTYPE_MODEL(weaponHash), false);
 
-	if (wpRot != Vector3{ 0.0f, 0.0f, 0.0f })
+	if (wpRot != Vector3())
 	{
 		if (GetGameVersion() >= VER_1_0_1290_1_STEAM)
 		{
@@ -645,9 +645,13 @@ void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse, Vector3 wpRot)
 			wp.PickupIndex = CREATE_PICKUP(GetPickupTypeFromWeaponModel(GET_WEAPONTYPE_MODEL(weaponHash)), loc.x, loc.y, loc.z, PLACEMENT_FLAG_LOCAL_ONLY, -1, false, NULL);
 	}
 
-	wp.PickupBlip = ADD_BLIP_FOR_PICKUP(wp.PickupIndex);
-	SET_BLIP_SPRITE(wp.PickupBlip, GetWeaponBlipSprite(weaponHash));
-	SET_BLIP_SCALE(wp.PickupBlip, 0.7f);
+	if (Ini::DroppedWeaponsBlip)
+	{
+		wp.PickupBlip = ADD_BLIP_FOR_PICKUP(wp.PickupIndex);
+		SET_BLIP_SPRITE(wp.PickupBlip, GetWeaponBlipSprite(weaponHash));
+		SET_BLIP_SCALE(wp.PickupBlip, 0.7f);
+	}
+
 	droppedWeapons.push_back(wp);
 	return;
 }
@@ -660,112 +664,120 @@ void RestorePlayerRetrievedWeapon(bool autoEquip)
 	if (retrievedWeaponThisFrame || droppedWeapons.empty())
 		return;
 
-	//EnablePedConfigFlag(GetPlayerPed(), PCF_BlockAutoSwapOnWeaponPickups);
-
-	LOOP(i, droppedWeapons.size())
+	for (auto it = droppedWeapons.begin(); it != droppedWeapons.end(); )
 	{
-		if (!DOES_PICKUP_EXIST(droppedWeapons[i].PickupIndex))
+		if (!DOES_PICKUP_EXIST(it->PickupIndex))
 		{
-			droppedWeapons.erase(droppedWeapons.begin() + i);
+			it = droppedWeapons.erase(it);
 			continue;
 		}
 
-		const Vector3 loc1 = GetPlayerCoords(); const Vector3 loc2 = GET_PICKUP_COORDS(droppedWeapons[i].PickupIndex);
-		if (VDIST2(loc1.x, loc1.y, loc1.z, loc2.x, loc2.y, loc2.z) > (256.0f * 256.0f))
+		const float maxDist = Ini::DroppedWeaponsMaxDistance;
+		const Vector3 loc1 = GetPlayerCoords(); const Vector3 loc2 = GET_PICKUP_COORDS(it->PickupIndex);
+		if (VDIST2(loc1.x, loc1.y, loc1.z, loc2.x, loc2.y, loc2.z) > (maxDist * maxDist))
 		{
-			REMOVE_PICKUP(droppedWeapons[i].PickupIndex);
-			droppedWeapons.erase(droppedWeapons.begin() + i);
+			REMOVE_PICKUP(it->PickupIndex);
+			it = droppedWeapons.erase(it);
 			continue;
 		}
 
 		// Restore original model appearance
-		if (DOES_PICKUP_OBJECT_EXIST(droppedWeapons[i].PickupIndex))
+		if (DOES_PICKUP_OBJECT_EXIST(it->PickupIndex))
 		{
-			const Object po = GET_PICKUP_OBJECT(droppedWeapons[i].PickupIndex);
+			const Object po = GET_PICKUP_OBJECT(it->PickupIndex);
 			SET_ACTIVATE_OBJECT_PHYSICS_AS_SOON_AS_IT_IS_UNFROZEN(po, true);
 			ACTIVATE_PHYSICS(po);
-			// FORCE_ACTIVATE_PHYSICS_ON_UNFIXED_PICKUP(po, true); // DO NOT ENABLE, requires b1180
-			SET_ENTITY_DYNAMIC(po, true);
-			// SET_PICKUP_COLLIDES_WITH_PROJECTILES(po, true);	// DO NOT ENABLE, requires b678
 
-			if (droppedWeapons[i].TintIndex > -1)
-				SET_WEAPON_OBJECT_TINT_INDEX(po, droppedWeapons[i].TintIndex);
+			if (GetGameVersion() >= VER_1_0_1180_2_STEAM)
+				FORCE_ACTIVATE_PHYSICS_ON_UNFIXED_PICKUP(po, true);
+
+			SET_ENTITY_DYNAMIC(po, true);
+			SET_ENTITY_REQUIRES_MORE_EXPENSIVE_RIVER_CHECK(po, true);
+
+			if (GetGameVersion() >= VER_1_0_678_1_STEAM)
+				SET_PICKUP_COLLIDES_WITH_PROJECTILES(po, true);
+
+			if (it->TintIndex > -1)
+				SET_WEAPON_OBJECT_TINT_INDEX(po, it->TintIndex);
 
 			if (GetGameVersion() >= VER_1_0_1103_2_STEAM)
 			{
-				if (droppedWeapons[i].CamoIndex > -1)
-					SET_WEAPON_OBJECT_CAMO_INDEX(po, droppedWeapons[i].CamoIndex);
+				if (it->CamoIndex > -1)
+					SET_WEAPON_OBJECT_CAMO_INDEX(po, it->CamoIndex);
 			}
 
-			if (!droppedWeapons[i].Components.empty())
+			if (!it->Components.empty())
 			{
-				LOOP(j, droppedWeapons[i].Components.size())
+				LOOP(j, it->Components.size())
 				{
-					if (droppedWeapons[i].Components[j] == Joaat("UNK"))
+					if (it->Components[j] == Joaat("UNK"))
 						continue;
 
-					GIVE_WEAPON_COMPONENT_TO_WEAPON_OBJECT(po, droppedWeapons[i].Components[j]);
+					GIVE_WEAPON_COMPONENT_TO_WEAPON_OBJECT(po, it->Components[j]);
 				}
 			}
 
-			if (!droppedWeapons[i].Liveries.empty() && GetGameVersion() >= VER_1_0_1103_2_STEAM)
+			if (!it->Liveries.empty() && GetGameVersion() >= VER_1_0_1103_2_STEAM)
 			{
-				LOOP(j, droppedWeapons[i].Liveries.size())
+				LOOP(j, it->Liveries.size())
 				{
-					if (droppedWeapons[i].Liveries[j].LiveryHash == Joaat("UNK") ||
-						droppedWeapons[i].Liveries[j].TintIndex < 0)
+					if (it->Liveries[j].LiveryHash == Joaat("UNK") ||
+						it->Liveries[j].TintIndex < 0)
 						continue;
 
-					GIVE_WEAPON_COMPONENT_TO_WEAPON_OBJECT(po, droppedWeapons[i].Liveries[j].LiveryHash);
-					SET_WEAPON_OBJECT_COMPONENT_TINT_INDEX(po, droppedWeapons[i].Liveries[j].LiveryHash,
-						droppedWeapons[i].Liveries[j].TintIndex);
+					GIVE_WEAPON_COMPONENT_TO_WEAPON_OBJECT(po, it->Liveries[j].LiveryHash);
+					SET_WEAPON_OBJECT_COMPONENT_TINT_INDEX(po, it->Liveries[j].LiveryHash,
+						it->Liveries[j].TintIndex);
 				}
 			}
 		}
 
 		// Restore ability to pickup weapons after ragdoll has ended
 		if (!IS_PED_RAGDOLL(GetPlayerPed()))
-			SET_LOCAL_PLAYER_PERMITTED_TO_COLLECT_PICKUPS_WITH_MODEL(GET_WEAPONTYPE_MODEL(droppedWeapons[i].WpHash), true);
+			SET_LOCAL_PLAYER_PERMITTED_TO_COLLECT_PICKUPS_WITH_MODEL(GET_WEAPONTYPE_MODEL(it->WpHash), true);
 
-		if (!HAS_PICKUP_BEEN_COLLECTED(droppedWeapons[i].PickupIndex))
-			continue;
-
-		if (droppedWeapons[i].TintIndex > -1)
-			SET_PED_WEAPON_TINT_INDEX(GetPlayerPed(), droppedWeapons[i].WpHash, droppedWeapons[i].TintIndex);
-
-		if (!droppedWeapons[i].Components.empty())
+		if (!HAS_PICKUP_BEEN_COLLECTED(it->PickupIndex))
 		{
-			LOOP(j, droppedWeapons[i].Components.size())
+			++it; // Remember to increment iterator
+			continue;
+		}
+
+		if (it->TintIndex > -1)
+			SET_PED_WEAPON_TINT_INDEX(GetPlayerPed(), it->WpHash, it->TintIndex);
+
+		if (!it->Components.empty())
+		{
+			LOOP(j, it->Components.size())
 			{
-				if (droppedWeapons[i].Components[j] == Joaat("UNK"))
+				if (it->Components[j] == Joaat("UNK"))
 					continue;
 
-				GIVE_WEAPON_COMPONENT_TO_PED(GetPlayerPed(), droppedWeapons[i].WpHash, droppedWeapons[i].Components[j]);
+				GIVE_WEAPON_COMPONENT_TO_PED(GetPlayerPed(), it->WpHash, it->Components[j]);
 			}
 		}
 
-		if (!droppedWeapons[i].Liveries.empty() && GetGameVersion() >= VER_1_0_1103_2_STEAM)
+		if (!it->Liveries.empty() && GetGameVersion() >= VER_1_0_1103_2_STEAM)
 		{
-			LOOP(j, droppedWeapons[i].Liveries.size())
+			LOOP(j, it->Liveries.size())
 			{
-				if (droppedWeapons[i].Liveries[j].LiveryHash == Joaat("UNK") ||
-					droppedWeapons[i].Liveries[j].TintIndex < 0)
+				if (it->Liveries[j].LiveryHash == Joaat("UNK") ||
+					it->Liveries[j].TintIndex < 0)
 					continue;
 
-				GIVE_WEAPON_COMPONENT_TO_PED(GetPlayerPed(), droppedWeapons[i].WpHash, droppedWeapons[i].Liveries[j].LiveryHash);
-				SET_PED_WEAPON_COMPONENT_TINT_INDEX(GetPlayerPed(), droppedWeapons[i].WpHash,
-					droppedWeapons[i].Liveries[j].LiveryHash,
-					droppedWeapons[i].Liveries[j].TintIndex);
+				GIVE_WEAPON_COMPONENT_TO_PED(GetPlayerPed(), it->WpHash, it->Liveries[j].LiveryHash);
+				SET_PED_WEAPON_COMPONENT_TINT_INDEX(GetPlayerPed(), it->WpHash,
+					it->Liveries[j].LiveryHash,
+					it->Liveries[j].TintIndex);
 			}
 		}
 
 		Hash weapon = NULL; GET_CURRENT_PED_WEAPON(GetPlayerPed(), &weapon, false);
 		if (autoEquip && weapon == WEAPON_UNARMED)
-			SET_CURRENT_PED_WEAPON(GetPlayerPed(), droppedWeapons[i].WpHash, false);
+			SET_CURRENT_PED_WEAPON(GetPlayerPed(), it->WpHash, false);
 
 		retrievedWeaponThisFrame = true;
-		REMOVE_PICKUP(droppedWeapons[i].PickupIndex);
-		droppedWeapons.erase(droppedWeapons.begin() + i);
+		REMOVE_PICKUP(it->PickupIndex);
+		it = droppedWeapons.erase(it);
 		break;
 	}
 	return;
@@ -814,7 +826,6 @@ void TaskNMShot(Ped ped, Hash wpHash, int partIndex, Vector3 hitLoc, Vector3 imp
 		impulseMult = heavyImpulseMult;
 		break;
 	case WEAPONGROUP_RUBBERGUN:
-	case WEAPONGROUP_STUNGUN:
 		impulseMult = pistolImpulseMult;
 		pointGun = true;
 		break;
@@ -1091,6 +1102,25 @@ void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool 
 #pragma endregion
 
 #pragma region Misc
+bool IsPedACop(const Ped ped)
+{
+	/*
+	const Vector3 loc = GET_ENTITY_COORDS(ped, true);
+	const Hash model = GET_ENTITY_MODEL(ped);
+
+	if (!IS_MODEL_VALID(model))
+		return;
+
+	Vector3 min{ 0.0f, 0.0f, 0.0f }; Vector3 max{ 0.0f, 0.0f, 0.0f };
+	GET_MODEL_DIMENSIONS(model, &min, &max);
+	min += loc; max += loc;
+	return IS_COP_PED_IN_AREA_3D(min.x, min.y, min.z, max.x, max.y, max.z);
+	*/
+
+	const int type = GET_PED_TYPE(ped);
+	return (type == PEDTYPE_COP || type == PEDTYPE_SWAT || type == PEDTYPE_ARMY);
+}
+
 bool IsPlayerAiming()
 {
 	if (IS_PLAYER_FREE_AIMING(GET_PLAYER_INDEX()) || IS_PED_AIMING_FROM_COVER(GetPlayerPed() ||

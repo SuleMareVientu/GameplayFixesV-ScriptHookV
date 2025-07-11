@@ -49,8 +49,8 @@ inline bool BetweenExclude(const T val, const T min, const T max)
 
 std::filesystem::path AbsoluteModulePath(HINSTANCE module);
 void SplitString(const char* charStr, std::string arr[], const int arrSize, const bool toUpper = false);
-int GetRandomIntInRange(int minValue = 0, int maxValue = 65535, bool std = false); // 0-65535 is the max range for natives, std has no such limit
-bool GetWeightedBool(int chance, bool std = false);
+int GetRandomIntInRange(int minValue = 0, int maxValue = 65535, bool useRd = false); // 0-65535 is the max range for natives, useRd has no such limit
+bool GetWeightedBool(int chance, bool useRd = false);
 Vector3 Normalize(Vector3 v);
 
 static const std::unordered_map<std::string, int> mapPadControls = {
@@ -226,6 +226,7 @@ void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool 
 #pragma endregion
 
 #pragma region Misc
+bool IsPedACop(const Ped ped);
 bool IsPlayerAiming();
 bool IsPlayerInsideSafehouse();
 void SetDispatchServices(bool toggle);

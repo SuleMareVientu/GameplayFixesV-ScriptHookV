@@ -51,14 +51,14 @@ const char* GetDllInstanceName();
 const char* GetDllInstanceNameNoExt();
 const char* GetDllInstanceIniName();
 const char* GetDllInstanceLogName();
-const int GetGameVersion();
-const bool GetIsEnhancedVersion();
+int GetGameVersion();
+bool GetIsEnhancedVersion();
 
-const bool GetFoundNMFunctions();
-const bool GetPatchedHUDWheelSlowdown();
-const bool GetPatchedCenterSteering();
-const bool GetIsPlayerCrouching();
-const int GetNMReactionTime();
+bool GetFoundNMFunctions();
+bool GetPatchedCenterSteering();
+bool GetPatchedHUDWheelSlowdown();
+bool GetIsPlayerCrouching();
+int GetNMReactionTime();
 #pragma endregion
 
 #pragma region Custom Types and Structures
@@ -248,6 +248,65 @@ enum ePedMotionState {
 	MS_JETPACK = 0x535E6A5E
 };
 
+enum ePedtype {
+	PEDTYPE_INVALID = -1,
+	PEDTYPE_PLAYER1 = 0,			// Michael
+	PEDTYPE_PLAYER2,            // Franklin
+	PEDTYPE_PLAYER_NETWORK,     // Player controlled over the network (not by this machine)
+	PEDTYPE_PLAYER_UNUSED,		// Trevor
+	PEDTYPE_CIVMALE,
+	PEDTYPE_CIVFEMALE,
+	PEDTYPE_COP,
+	PEDTYPE_GANG1,
+	PEDTYPE_GANG2,
+	PEDTYPE_GANG3,
+	PEDTYPE_GANG4,
+	PEDTYPE_GANG5,
+	PEDTYPE_GANG6,
+	PEDTYPE_GANG7,
+	PEDTYPE_GANG8,
+	PEDTYPE_GANG9,
+	PEDTYPE_GANG10,
+	PEDTYPE_GANG_CHINESE_JAPANESE,
+	PEDTYPE_GANG_PUERTO_RICAN,
+	PEDTYPE_DEALER,
+	PEDTYPE_MEDIC,
+	PEDTYPE_FIRE,
+	PEDTYPE_CRIMINAL,
+	PEDTYPE_BUM,
+	PEDTYPE_PROSTITUTE,
+	PEDTYPE_SPECIAL,
+	PEDTYPE_MISSION,
+	PEDTYPE_SWAT,
+	PEDTYPE_ANIMAL,
+	PEDTYPE_ARMY,
+	PEDTYPE_LAST_PEDTYPE
+};
+
+enum eRelGroupHash {
+	RELGROUPHASH_PLAYER = 1862763509,
+	RELGROUPHASH_CIVMALE = 45677184,
+	RELGROUPHASH_CIVFEMALE = 1191392768,
+	RELGROUPHASH_COP = -1533126372,
+	RELGROUPHASH_HATES_PLAYER = -2065892691,
+	RELGROUPHASH_AMBIENT_GANG_LOST = -1865950624,
+	RELGROUPHASH_AMBIENT_GANG_MEXICAN = 296331235,
+	RELGROUPHASH_AMBIENT_GANG_FAMILY = 1166638144,
+	RELGROUPHASH_AMBIENT_ARMY = -472287501,
+	RELGROUPHASH_SECURITY_GUARD = -183807561,
+	RELGROUPHASH_AMBIENT_GANG_MARABUNTE = 2037579709,
+	RELGROUPHASH_AMBIENT_GANG_CULT = 2017343592,
+	RELGROUPHASH_AMBIENT_GANG_SALVA = -1821475077,
+	RELGROUPHASH_AMBIENT_GANG_WEICHENG = 1782292358,
+	RELGROUPHASH_AMBIENT_GANG_BALLAS = -1033021910,
+	RELGROUPHASH_AMBIENT_GANG_HILLBILLY = -1285976420,
+	RELGROUPHASH_AGGRESSIVE_INVESTIGATE = -347613984,
+	RELGROUPHASH_NO_RELATIONSHIP = -86095805,
+	RELGROUPHASH_SHARK = 580191176,
+	RELGROUPHASH_PRIVATE_SECURITY = -1467815081,
+	RELGROUPHASH_CAT = 1157867945
+};
+
 enum eRagdollBlockingFlags
 {
 	RBF_NONE = 0,
@@ -363,6 +422,20 @@ enum ePedBoneTag {
 #pragma endregion
 
 #pragma region Vehicle Enums
+enum eVehicleSeat {
+	VS_ANY_PASSENGER = -2,		// Any passenger seat
+	VS_DRIVER = -1,				// Drivers seat
+	VS_FRONT_RIGHT = 0,			// Front Right seat
+	VS_BACK_LEFT,				// Back left 	
+	VS_BACK_RIGHT,				// Back right
+	VS_EXTRA_LEFT_1,
+	VS_EXTRA_RIGHT_1,
+	VS_EXTRA_LEFT_2,
+	VS_EXTRA_RIGHT_2,
+	VS_EXTRA_LEFT_3,
+	VS_EXTRA_RIGHT_3
+};
+
 enum eVehicleSearchFlag {
 	VEHICLE_SEARCH_FLAG_RETURN_LAW_ENFORCER_VEHICLES = 1,						//  Don't mind if the returned vehicle is a law enforcer
 	VEHICLE_SEARCH_FLAG_RETURN_MISSION_VEHICLES = 2,							//  Don't mind if the returned vehicle has been created by a script
@@ -1103,6 +1176,75 @@ constexpr int RightHandBonetags[RightHandBonetagsSize] =
 #pragma endregion
 
 #pragma region Task Enums
+enum eScriptLookFlag {
+	SLF_DEFAULT = 0,
+	SLF_SLOW_TURN_RATE = 1,   // turn the head toward the target slowly
+	SLF_FAST_TURN_RATE = 2,   // turn the head toward the target quickly
+	SLF_EXTEND_YAW_LIMIT = 4,   // wide yaw head limits
+	SLF_EXTEND_PITCH_LIMIT = 8,   // wide pitch head limit
+	SLF_WIDEST_YAW_LIMIT = 16,  // widest yaw head limit
+	SLF_WIDEST_PITCH_LIMIT = 32,  // widest pitch head limit
+	SLF_NARROW_YAW_LIMIT = 64,  // narrow yaw head limits
+	SLF_NARROW_PITCH_LIMIT = 128, // narrow pitch head limit
+	SLF_NARROWEST_YAW_LIMIT = 256, // narrowest yaw head limit
+	SLF_NARROWEST_PITCH_LIMIT = 512, // narrowest pitch head limit
+	SLF_USE_TORSO = 1024, // use the torso aswell as the neck and head (currently disabled)
+	SLF_WHILE_NOT_IN_FOV = 2048,// keep tracking the target even if they are not in the hard coded FOV
+	SLF_USE_CAMERA_FOCUS = 4096,// use the camera as the target
+	SLF_USE_EYES_ONLY = 8192,// only track the target with the eyes   
+	SLF_USE_LOOK_DIR = 16384,// use information in look dir DOF
+	SLF_FROM_SCRIPT = 32768, // internal use only
+	SLF_USE_REF_DIR_ABSOLUTE = 65536  // use absolute reference direction mode for solver
+};
+
+enum eScriptLookPriority {
+	SLF_LOOKAT_VERY_LOW = 0,
+	SLF_LOOKAT_LOW,
+	SLF_LOOKAT_MEDIUM,
+	SLF_LOOKAT_HIGH,
+	SLF_LOOKAT_VERY_HIGH
+};
+
+enum eTaskHandsUpFlags {
+	HANDS_UP_NOTHING = 0,
+	HANDS_UP_STRAIGHT_TO_LOOP = 1
+};
+
+enum eEnterExitVehicleFlags {
+	// If the task is interupted (bumped, shot), dont resume.
+	ECF_RESUME_IF_INTERRUPTED = 1,
+	// Warps ped to entry point ready to open the door/enter seat
+	ECF_WARP_ENTRY_POINT = 2,
+	// Jack the ped occupying the vehicle, regardless of relationship status
+	ECF_JACK_ANYONE = 8,
+	// Warp the ped onto the vehicle
+	ECF_WARP_PED = 16,
+	// Dont wait for the vehicle to stop before exiting
+	ECF_DONT_WAIT_FOR_VEHICLE_TO_STOP = 64,
+	// Dont close the vehicle door
+	ECF_DONT_CLOSE_DOOR = 256,
+	// Allow ped to warp to the seat if entry is blocked
+	ECF_WARP_IF_DOOR_IS_BLOCKED = 512,
+	// Jump out of the vehicle
+	ECF_JUMP_OUT = 4096,
+	// TASK_LEAVE_ANY_VEHICLE auto defaults the ECF_WARP_IF_DOOR_IS_BLOCKED, set this flag to not set that
+	ECF_DONT_DEFAULT_WARP_IF_DOOR_BLOCKED = 65536,
+	// Use entry/exit point on the left hand side
+	ECF_USE_LEFT_ENTRY = 131072,
+	// Use entry/exit point on the right hand side
+	ECF_USE_RIGHT_ENTRY = 262144,
+	// When jacking just pull the ped out, but don't get in
+	ECF_JUST_PULL_PED_OUT = 524288,
+	// Disable shuffling - forces ped to use direct door only
+	ECF_BLOCK_SEAT_SHUFFLING = 1048576,
+	//  Allow ped to warp if the shuffle link to that seat is blocked by someone
+	ECF_WARP_IF_SHUFFLE_LINK_IS_BLOCKED = 4194304,
+	// Never jack anyone when entering/exiting
+	ECF_DONT_JACK_ANYONE = 8388608,
+	// Wait for our entry point to be clear of peds before exiting
+	ECF_WAIT_FOR_ENTRY_POINT_TO_BE_CLEAR = 16777216
+};
+
 enum eTaskVehicleChaseBehaviorFlags {
 	VEHICLE_CHASE_CANT_BLOCK = 1,
 	VEHICLE_CHASE_CANT_BLOCK_FROM_PURSUE = 2,

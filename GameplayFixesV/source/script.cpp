@@ -22,8 +22,8 @@ const char* GetDllInstanceName() { return dllInstanceName.c_str(); }
 const char* GetDllInstanceNameNoExt() { return dllInstanceNameNoExt.c_str(); }
 const char* GetDllInstanceIniName() { return dllInstanceIniName.c_str(); }
 const char* GetDllInstanceLogName() { return dllInstanceLogName.c_str(); }
-const int GetGameVersion() { return gameVersion; }
-const bool GetIsEnhancedVersion() { return isEnhancedVersion; }
+int GetGameVersion() { return gameVersion; }
+bool GetIsEnhancedVersion() { return isEnhancedVersion; }
 
 static void update()
 {

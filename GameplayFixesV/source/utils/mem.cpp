@@ -83,7 +83,7 @@ bool (*SetNMMessageVec3)(ULONG_PTR, const char*, float, float, float) = nullptr;
 }
 
 bool foundNMFunctions = false;
-const bool GetFoundNMFunctions() { return foundNMFunctions; }
+bool GetFoundNMFunctions() { return foundNMFunctions; }
 
 bool hasSearchedForGameFunctions = false;
 void GetGameFunctionsAddresses()
@@ -405,7 +405,7 @@ void LowPriorityPropsPatch()
 }
 
 bool patchedCenterSteering = false;
-const bool GetPatchedCenterSteering() { return patchedCenterSteering; }
+bool GetPatchedCenterSteering() { return patchedCenterSteering; }
 
 // Credits aint-no-other-option: https://github.com/aint-no-other-option/CenterSteeringPatch/
 void CenterSteeringPatch()
@@ -463,7 +463,7 @@ void CopBumpSteeringPatch()
 }
 
 bool patchedHUDWheelSlowdown = false;
-const bool GetPatchedHUDWheelSlowdown() { return patchedHUDWheelSlowdown; }
+bool GetPatchedHUDWheelSlowdown() { return patchedHUDWheelSlowdown; }
 
 // Credits CamxxCore: https://github.com/CamxxCore/GTAVWeaponWheelMod
 // Has to be paired with a function that runs every frame

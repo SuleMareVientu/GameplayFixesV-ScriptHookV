@@ -23,7 +23,7 @@
 
 // Globals
 bool isPlayerCrouching = false;
-const bool GetIsPlayerCrouching() { return isPlayerCrouching; }
+bool GetIsPlayerCrouching() { return isPlayerCrouching; }
 
 /////////////////////////////////////////////Player//////////////////////////////////////////////
 namespace nGeneral
@@ -85,6 +85,9 @@ void EnableCrouching()
 	if (!RequestClipSet(crouchedMovementClipSet) || !RequestClipSet(crouchedStrafingClipSet))
 		return;
 
+	if (!IS_PED_HUMAN(GetPlayerPed()))
+		return;
+
 	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_DUCK))
 	{
 		if (isPlayerCrouching)
@@ -108,7 +111,8 @@ void EnableCrouching()
 			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, NULL);
 			break;
 		default:
-			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
+			if (Ini::EnableStealthForAllPeds)
+				SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
 			break;
 		}
 	}
@@ -156,19 +160,20 @@ void FriendlyFire()
 		{
 			//int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(GetPlayerPed(), ped);
 			//if (relationship == ACQUAINTANCE_TYPE_PED_RESPECT || relationship == ACQUAINTANCE_TYPE_PED_LIKE)
-				SET_PED_CAN_BE_TARGETTED(ped, true);
-				SET_PED_CAN_BE_TARGETTED_BY_PLAYER(ped, GetPlayer(), true);
-				SET_PED_CAN_BE_TARGETED_WHEN_INJURED(ped, true);
-				SET_ALLOW_LOCKON_TO_PED_IF_FRIENDLY(ped, true);	// same as setting PCF_AllowPlayerLockOnIfFriendly
-				SET_PED_CAN_RAGDOLL(ped, true);
-				CLEAR_RAGDOLL_BLOCKING_FLAGS(ped, RAGDOLL_BLOCKING_FLAGS_ALL);
-				SET_ENTITY_PROOFS(ped, false, false, false, false, false, false, false, false);
-				SET_PED_DIES_WHEN_INJURED(ped, true);
-				SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, false);
-				DisablePedConfigFlag(ped, PCF_PreventAllMeleeTaunts);
-				DisablePedConfigFlag(ped, PCF_NeverEverTargetThisPed);
-				DisablePedConfigFlag(ped, PCF_DisablePlayerLockon);
-				DisablePedResetFlag(ped, PRF_DisablePlayerLockon);
+			SET_PED_CAN_BE_TARGETTED(ped, true);
+			SET_PED_CAN_BE_TARGETTED_BY_PLAYER(ped, GetPlayer(), true);
+			SET_PED_CAN_BE_TARGETED_WHEN_INJURED(ped, true);
+			SET_ALLOW_LOCKON_TO_PED_IF_FRIENDLY(ped, true);	// same as setting PCF_AllowPlayerLockOnIfFriendly
+			//SET_ENTITY_IS_TARGET_PRIORITY(ped, false, 1000.0f);
+			SET_PED_CAN_RAGDOLL(ped, true);
+			CLEAR_RAGDOLL_BLOCKING_FLAGS(ped, RAGDOLL_BLOCKING_FLAGS_ALL);
+			SET_ENTITY_PROOFS(ped, false, false, false, false, false, false, false, false);
+			SET_PED_DIES_WHEN_INJURED(ped, true);
+			// SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, false); // might not be desirable
+			DisablePedConfigFlag(ped, PCF_PreventAllMeleeTaunts);
+			DisablePedConfigFlag(ped, PCF_NeverEverTargetThisPed);
+			DisablePedConfigFlag(ped, PCF_DisablePlayerLockon);
+			DisablePedResetFlag(ped, PRF_DisablePlayerLockon);
 		};
 
 	Ped ped = NULL;
@@ -201,7 +206,7 @@ void EnableStealthForAllPeds()
 	case TrevorPed:
 		return;
 	default:
-		if (GET_PED_STEALTH_MOVEMENT(GetPlayerPed())) // Not an error, GET_PED_STEALTH_MOVEMENT needs to return true here
+		if (IS_PED_HUMAN(GetPlayerPed()) && GET_PED_STEALTH_MOVEMENT(GetPlayerPed())) // Not an error, GET_PED_STEALTH_MOVEMENT needs to return true here
 			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
 
 		return;
@@ -215,12 +220,19 @@ void DisarmPlayerWhenShot()
 {
 	RestorePlayerRetrievedWeapon(Ini::AutoEquipDroppedWeapon);
 
-	if (CanDisarmPed(GetPlayerPed(), true) || HasEntityBeenDamagedByWeaponThisFrame(GetPlayerPed(), WEAPON_STUNGUN, GENERALWEAPON_TYPE_INVALID))
-	{
-		Hash wp = NULL; GET_CURRENT_PED_WEAPON(GetPlayerPed(), &wp, false);
-		if (ShouldWeaponSpawnPickupWhenDropped(wp, true))
-			DropPlayerWeapon(wp, true, GET_ENTITY_ROTATION(GET_CURRENT_PED_WEAPON_ENTITY_INDEX(GetPlayerPed(), false), EULER_YXZ));
-	}
+	bool drop = false;
+	if (HasEntityBeenDamagedByWeaponThisFrame(GetPlayerPed(), WEAPON_STUNGUN, GENERALWEAPON_TYPE_INVALID))
+		drop = true;
+	else if (CanDisarmPed(GetPlayerPed(), true) && GetWeightedBool(Ini::DisarmPlayerChance))
+		drop = true;
+
+	if (!drop)
+		return;
+
+	Hash wp = NULL; GET_CURRENT_PED_WEAPON(GetPlayerPed(), &wp, false);
+	if (ShouldWeaponSpawnPickupWhenDropped(wp, true))
+		DropPlayerWeapon(wp, true, GET_ENTITY_ROTATION(GET_CURRENT_PED_WEAPON_ENTITY_INDEX(GetPlayerPed(), false), EULER_YXZ));
+
 	return;
 }
 
@@ -229,7 +241,7 @@ int lastNMReactionTime = 0;
 Timer NMReactionTimer;
 
 Hash lastRagdollWp = NULL;
-Vector3 lastRagdollWpRot = { 0.0f, 0.0f, 0.0f };
+Vector3 lastRagdollWpRot = Vector3();
 void DropPlayerWeaponWhenRagdolling()
 {
 	RestorePlayerRetrievedWeapon(Ini::AutoEquipDroppedWeapon);
@@ -776,10 +788,13 @@ void LeaveEngineOnWhenExitingVehicles()
 	SET_VEHICLE_KEEP_ENGINE_ON_WHEN_ABANDONED(veh, true);	//Same thing as setting PCF_LeaveEngineOnWhenExitingVehicles
 	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT))
 		timerEngineControl.Reset();
-	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && 
-		timerEngineControl.Get() > TURN_OFF_ENGINE_DURATION &&
-		GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
-	{ SET_VEHICLE_ENGINE_ON(veh, false, true, false); }
+	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) &&  
+			timerEngineControl.Get() > TURN_OFF_ENGINE_DURATION &&
+			GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
+	{ 
+		SET_VEHICLE_ENGINE_ON(veh, false, true, false);
+		timerEngineControl.Set(INT_MIN);
+	}
 	return;
 }
 
@@ -918,18 +933,23 @@ void KeepCarHydraulicsPosition()
 			wasPlayerEnteringOrExitingVehLastFrame = false;
 	}
 
-	LOOP(i, VehHydraulics.size())
+	for (auto it = VehHydraulics.begin(); it != VehHydraulics.end(); )
 	{
-		if (!DOES_ENTITY_EXIST(VehHydraulics[i].veh))
-			VehHydraulics.erase(VehHydraulics.begin() + i);
-		else if (VehHydraulics[i].veh != veh && VehHydraulics[i].update)
+		if (!DOES_ENTITY_EXIST(it->veh))
 		{
-			VehHydraulics[i].update = false;
-			LOOP(j, MAX_WHEELS)
+			it = VehHydraulics.erase(it);
+			continue;
+		}
+
+		if (it->veh != veh && it->update)
+		{
+			it->update = false;
+			LOOP(i, MAX_WHEELS)
 			{
-				SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(VehHydraulics[i].veh, j, VehHydraulics[i].hydState[j]);
+				SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(it->veh, i, it->hydState[i]);
 			}
 		}
+		++it; // Remember to increment iterator
 	}
 	return;
 }
@@ -945,7 +965,8 @@ void EnableBrakeLightsOnStoppedVehicle()
 		&& !IS_THIS_MODEL_A_QUADBIKE(model))
 		return;
 
-	if (GET_IS_VEHICLE_ENGINE_RUNNING(veh) && IS_VEHICLE_STOPPED(veh))
+	// Preferrably, do NOT use IS_VEHICLE_STOPPED: "Returns true if the vehicle's current speed is less than, or equal to 0.0025f."
+	if (GET_IS_VEHICLE_ENGINE_RUNNING(veh) && GET_ENTITY_SPEED(veh) > 0.1f)
 		SET_VEHICLE_BRAKE_LIGHTS(veh, true);
 
 	return;
@@ -1137,7 +1158,7 @@ void EnableBigMapToggle()
 {
 	if (IS_CONTROL_JUST_PRESSED(FRONTEND_CONTROL, INPUT_HUD_SPECIAL))
 		timerBigMap.Reset();
-	else if (IS_CONTROL_JUST_RELEASED(FRONTEND_CONTROL, INPUT_HUD_SPECIAL) && timerBigMap.Get() < 200)
+	else if (IS_CONTROL_JUST_RELEASED(FRONTEND_CONTROL, INPUT_HUD_SPECIAL) && timerBigMap.Get() < 250)
 	{
 		isBigMapActive ^= true;
 		SET_BIGMAP_ACTIVE(isBigMapActive, false);
@@ -1437,6 +1458,104 @@ inline void DisablePlayerPainAudio() { DISABLE_PED_PAIN_AUDIO(GetPlayerPed(), tr
 
 namespace nPeds
 {
+std::set<Ped> jackedPeds;
+void DynamicCarJackingReactions()
+{
+	for (auto it = jackedPeds.begin(); it != jackedPeds.end(); )
+	{
+		if (!DOES_ENTITY_EXIST(*it))
+		{
+			it = jackedPeds.erase(it);
+			continue;
+		}
+		++it; // Remember to increment iterator
+	}
+
+	const Hash playerVehModel = GET_ENTITY_MODEL(GetVehiclePedIsUsing(GetPlayerPed()));
+	if (IS_THIS_MODEL_A_CAR(playerVehModel) || IS_THIS_MODEL_A_QUADBIKE(playerVehModel) ||
+		IS_THIS_MODEL_A_BOAT(playerVehModel) || IS_THIS_MODEL_A_JETSKI(playerVehModel) ||
+		IS_THIS_MODEL_A_PLANE(playerVehModel) || IS_THIS_MODEL_A_HELI(playerVehModel))
+		return;
+
+	Entity target = NULL;
+	if (!GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(GetPlayer(), &target))
+		return;
+
+	// GET_CAN_PED_BE_GRABBED_BY_SCRIPT(target, true, false, false, false, true, false, false, PEDTYPE_ANIMAL)
+	if (!IS_ENTITY_A_PED(target) || jackedPeds.count(target) > 0 || IS_ENTITY_A_MISSION_ENTITY(target) ||
+		IS_PED_IN_COMBAT(target, GetPlayerPed()) || IS_PED_ARMED(target, 4) || IsPedACop(target) ||
+		GET_ENTITY_SPEED(target) > 72 || !IS_PED_FACING_PED(target, GetPlayerPed(), 90.0f) || !IS_PED_FACING_PED(GetPlayerPed(), target, 90.0f))
+		return;
+
+	const int relGroup = GET_PED_RELATIONSHIP_GROUP_HASH(target);
+	if (relGroup != RELGROUPHASH_CIVMALE && relGroup != RELGROUPHASH_CIVFEMALE && relGroup != RELGROUPHASH_NO_RELATIONSHIP)
+		return;
+
+	const Vehicle veh = GetVehiclePedIsIn(target, false, false);
+	const Hash vehModel = GET_ENTITY_MODEL(GetVehiclePedIsUsing(target));
+	if (!DOES_ENTITY_EXIST(veh) ||
+		(!IS_THIS_MODEL_A_CAR(vehModel) && !IS_THIS_MODEL_A_BIKE(vehModel) &&
+			!IS_THIS_MODEL_A_QUADBIKE(vehModel) && !IS_THIS_MODEL_A_BICYCLE(vehModel)) ||
+		GET_PED_IN_VEHICLE_SEAT(veh, VS_DRIVER, false) != target ||
+		!HAS_ENTITY_CLEAR_LOS_TO_ENTITY_IN_FRONT(target, GetPlayerPed())) // We want to do the LOS check at the end of everything to avoid wasting resources
+		return;
+
+	if (!GetWeightedBool(65))	// Some peds should not flee
+	{
+		jackedPeds.emplace(target);
+		return;
+	}
+
+	constexpr float dist = 10.0f;
+	const Vector3 loc = GetPlayerCoords();
+	const Vector3 targetLoc = GET_ENTITY_COORDS(target, true);
+	if (VDIST2(loc.x, loc.y, loc.z, targetLoc.x, targetLoc.y, targetLoc.z) > (dist * dist))
+		return;
+
+	SET_VEHICLE_CAN_BE_USED_BY_FLEEING_PEDS(veh, false);
+
+	const int nSeats = GET_VEHICLE_MAX_NUMBER_OF_PASSENGERS(veh);
+	for (int i = VS_DRIVER; i < nSeats; ++i)
+	{
+		if (IS_VEHICLE_SEAT_FREE(veh, i, false))
+			continue;
+
+		const Ped ped = GET_PED_IN_VEHICLE_SEAT(veh, i, false);
+		STOP_CURRENT_PLAYING_SPEECH(ped);
+		STOP_CURRENT_PLAYING_AMBIENT_SPEECH(ped);
+		CLEAR_PED_TASKS(ped);
+		TASK_LOOK_AT_ENTITY(ped, GetPlayerPed(), -1, SLF_FAST_TURN_RATE, SLF_LOOKAT_VERY_HIGH);
+
+		const int standStillTime = GetRandomIntInRange(250, 1250);
+		const int handsUpTime = GetRandomIntInRange(1750, 2250);
+		const bool shouldReact = GetWeightedBool(50);
+
+		int sequence = 0;
+		OPEN_SEQUENCE_TASK(&sequence);
+		TASK_SET_DECISION_MAKER(NULL, Joaat("empty"));	// Required to prevent the ped from running the player over, it's NOT necessary to use TASK_SET_BLOCKING_OF_NON_TEMPORARY_EVENTS
+		TASK_LEAVE_ANY_VEHICLE(NULL, standStillTime, ECF_RESUME_IF_INTERRUPTED | ECF_DONT_CLOSE_DOOR | ECF_DONT_DEFAULT_WARP_IF_DOOR_BLOCKED);
+
+		if (ped == target && shouldReact)	//Driver
+		{
+			// Add some dynamism by randomly reacting to the player
+			TASK_LOOK_AT_ENTITY(NULL, GetPlayerPed(), -1, SLF_FAST_TURN_RATE, SLF_LOOKAT_VERY_HIGH);
+			TASK_HANDS_UP(NULL, handsUpTime, GetPlayerPed(), -1, HANDS_UP_NOTHING);
+			TASK_REACT_AND_FLEE_PED(NULL, GetPlayerPed());
+		}
+		else
+			TASK_SMART_FLEE_PED(NULL, GetPlayerPed(), 75.0f, -1, false, false);
+
+		TASK_WANDER_STANDARD(NULL, 40000.0f, 1);
+		CLOSE_SEQUENCE_TASK(sequence);
+		TASK_PERFORM_SEQUENCE(ped, sequence);
+		CLEAR_SEQUENCE_TASK(&sequence);
+
+		if (ped == target)
+			jackedPeds.emplace(target);	// Remember jacked driver
+	}
+	return;
+}
+
 int DisableScenariosCount = 0;
 int DisableScenarioGroupsCount = 0;
 void DisableScenarios()
@@ -1574,6 +1693,7 @@ void RegisterPlayerOptions()
 	REGISTER_OPTION(playerOptionsManager, DisablePlayerPainAudio, nAudio, VER_UNK, true);
 
 	//////////////////////////////////////////Peds/////////////////////////////////////////
+	REGISTER_OPTION(playerOptionsManager, DynamicCarJackingReactions, nPeds, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableScenarios, nPeds, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableWorldPopulation, nPeds, VER_UNK, true);
 
@@ -1583,7 +1703,7 @@ void RegisterPlayerOptions()
 }
 
 bool hasRegisteredPlayerOptions = false;
-void UpdatePlayerOptions()
+void UpdatePlayerOptions()	
 {
 	if (!hasRegisteredPlayerOptions)
 	{

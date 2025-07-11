@@ -9,7 +9,7 @@
 
 //Compatibility with player disarm
 int NMReactionTime = 0;
-const int GetNMReactionTime() { return NMReactionTime; }
+int GetNMReactionTime() { return NMReactionTime; }
 
 namespace
 {
@@ -99,6 +99,7 @@ void DisarmPedWhenShot(const Ped ped)
 inline void DisablePedOnlyDamagedByPlayer(const Ped ped)
 {
 	SET_ENTITY_ONLY_DAMAGED_BY_PLAYER(ped, false);
+	SET_ENTITY_ONLY_DAMAGED_BY_RELATIONSHIP_GROUP(ped, false, Joaat("PLAYER"));
 	return;
 }
 
@@ -138,7 +139,7 @@ void EnablePlayerNMReactionsWhenShot(const Ped shooter)
 	case WEAPONGROUP_MELEE: case WEAPONGROUP_THROWN: case WEAPONGROUP_FIREEXTINGUISHER:
 	case WEAPONGROUP_PETROLCAN: case WEAPONGROUP_LOUDHAILER: case WEAPONGROUP_DIGISCANNER:
 	case WEAPONGROUP_NIGHTVISION: case WEAPONGROUP_PARACHUTE: case WEAPONGROUP_JETPACK:
-	case WEAPONGROUP_METALDETECTOR:
+	case WEAPONGROUP_METALDETECTOR: case WEAPONGROUP_STUNGUN:
 		return; break;
 	}
 
@@ -155,7 +156,7 @@ void EnablePlayerNMReactionsWhenShot(const Ped shooter)
 	const bool isPedAiming = IS_PED_SHOOTING(ped) || IsPlayerAiming();
 	const bool isPedCrouching = GetIsPlayerCrouching();
 
-	const Vector3 impulseNorm = Normalize(Vector3{ hitLoc.x - shotStartLoc.x, hitLoc.y - shotStartLoc.y, hitLoc.z - shotStartLoc.z });
+	const Vector3 impulseNorm = Vector3{ hitLoc.x - shotStartLoc.x, hitLoc.y - shotStartLoc.y, hitLoc.z - shotStartLoc.z }.Normalize();
 	const int partIndex = GetNMPartIndexFromBoneTag(boneTag);
 	//const Vector3 partIndexLoc = GET_PED_BONE_COORDS(ped, GetBoneTagFromNMPartIndex(partIndex), 0.0f, 0.0f, 0.0f);
 
@@ -166,18 +167,11 @@ void EnablePlayerNMReactionsWhenShot(const Ped shooter)
 	if (Ini::DontDropWeapon)
 		NMReactionTime = reactTime;	//Store for compatibility with player disarm
 
-	if (wpGroup == WEAPONGROUP_STUNGUN)
-	{
-		SET_PED_TO_RAGDOLL(ped, minShotReactTime, 4500, TASK_NM_SCRIPT, true, true, false);
-		GIVE_PLAYER_RAGDOLL_CONTROL(GetPlayer(), true);
-		TaskNMElectrocute(ped);
-	}
-	else
-	{
-		SET_PED_TO_RAGDOLL(ped, minShotReactTime, reactTime, TASK_NM_SCRIPT, true, true, false);
-		GIVE_PLAYER_RAGDOLL_CONTROL(GetPlayer(), true);
-		TaskNMShot(ped, weapon, partIndex, hitLoc, impulseNorm, isPedAiming, isPedCrouching);
-	}
+	SET_PED_TO_RAGDOLL(ped, minShotReactTime, reactTime, TASK_NM_SCRIPT, true, true, false);
+	GIVE_PLAYER_RAGDOLL_CONTROL(GetPlayer(), true);
+	TaskNMShot(ped, weapon, partIndex, hitLoc, impulseNorm, isPedAiming, isPedCrouching);
+	// TaskNMElectrocute is handled by the game, no need to call it here
+
 	/*
 	char arr[1024];
 	snprintf(arr, 1024, "Part %d; HitLoc %f, %f, %f; Impulse %f, %f, %f;", partIndex, hitLoc.x, hitLoc.y, hitLoc.z, impulseNorm.x, impulseNorm.y, impulseNorm.z);

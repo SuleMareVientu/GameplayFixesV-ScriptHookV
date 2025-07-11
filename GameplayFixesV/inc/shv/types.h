@@ -7,6 +7,7 @@
 #pragma once
 
 #include <windows.h>
+#include <math.h>
 
 typedef DWORD Void;
 typedef DWORD Any;
@@ -38,17 +39,130 @@ typedef int ScrHandle;
 #pragma pack(push, 1)
 typedef struct Vector3
 {
-	float x;
-	DWORD _paddingx;
-	float y;
-	DWORD _paddingy;
-	float z;
-	DWORD _paddingz;
+    // Align to 8 bytes because these floats should be a "scrValue" union (with size "unsigned long long")
+    alignas(8) float x;
+    alignas(8) float y;
+    alignas(8) float z;
 
-	constexpr Vector3(float X, float Y, float Z) : x(X), y(Y), z(Z), _paddingx(0), _paddingy(0), _paddingz(0) {}
-	bool operator==(Vector3& v) const { return (v.x == x && v.y == y && v.z == z); }
-	bool operator!=(Vector3& v) const { return (v.x != x || v.y != y || v.z != z); }
-	Vector3 operator-() const { return Vector3(-x, -y, -z); }
-	Vector3 operator*(const float f) const { return Vector3(f*x, f*y, f*z); }
+    // Constructors
+    constexpr Vector3() : x(0.0f), y(0.0f), z(0.0f) {}
+    constexpr Vector3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
+    constexpr Vector3(const Vector3& v) : x(v.x), y(v.y), z(v.z) {}
+
+    // Assignment operator
+    constexpr Vector3& operator=(const Vector3& v) {
+        if (this != &v)
+        {
+            x = v.x;
+            y = v.y;
+            z = v.z;
+        }
+        return *this;
+    }
+
+    // Vector Addition (Vector + Vector)
+    constexpr Vector3 operator+(const Vector3& v) const {
+        return Vector3(x + v.x, y + v.y, z + v.z);
+    }
+
+    // Vector Subtraction (Vector - Vector)
+    constexpr Vector3 operator-(const Vector3& v) const {
+        return Vector3(x - v.x, y - v.y, z - v.z);
+    }
+
+    // Scalar Multiplication (Vector * float)
+    constexpr Vector3 operator*(float f) const {
+        return Vector3(x * f, y * f, z * f);
+    }
+
+    // Scalar Division (Vector / float)
+    constexpr Vector3 operator/(float f) const {
+        if (f != 0.0f)
+            return Vector3(x / f, y / f, z / f);
+
+        return Vector3();
+    }
+
+    // Unary Negation (-Vector)
+    constexpr Vector3 operator-() const {
+        return Vector3(-x, -y, -z);
+    }
+
+    // Vector Addition Assignment (Vector += Vector)
+    constexpr Vector3& operator+=(const Vector3& v) {
+        x += v.x;
+        y += v.y;
+        z += v.z;
+        return *this;
+    }
+
+    // Vector Subtraction Assignment (Vector -= Vector)
+    constexpr Vector3& operator-=(const Vector3& v) {
+        x -= v.x;
+        y -= v.y;
+        z -= v.z;
+        return *this;
+    }
+
+    // Scalar Multiplication Assignment (Vector *= float)
+    constexpr Vector3& operator*=(float f) {
+        x *= f;
+        y *= f;
+        z *= f;
+        return *this;
+    }
+
+    // Scalar Division Assignment (Vector /= float)
+    constexpr Vector3& operator/=(float f) {
+        if (f != 0.0f) {
+            x /= f;
+            y /= f;
+            z /= f;
+        }
+        return *this;
+    }
+
+    // Equality (Vector == Vector)
+    constexpr bool operator==(const Vector3& v) const {
+        return (v.x == x && v.y == y && v.z == z);
+    }
+
+    // Inequality (Vector != Vector)
+    constexpr bool operator!=(const Vector3& v) const {
+        return !(*this == v);
+    }
+
+    // Dot Product (Vector . Vector)
+    constexpr float Dot(const Vector3& v) const {
+        return x * v.x + y * v.y + z * v.z;
+    }
+
+    // Cross Product (Vector x Vector)
+    constexpr Vector3 Cross(const Vector3& v) const {
+        return Vector3(
+            y * v.z - z * v.y,
+            z * v.x - x * v.z,
+            x * v.y - y * v.x
+        );
+    }
+
+    // Magnitude/Length of the vector
+    float Length() const {
+        return static_cast<float>(sqrt(x * x + y * y + z * z));
+    }
+
+    // Squared Magnitude/Length
+    float LengthSq() const {
+        return x * x + y * y + z * z;
+    }
+
+    // Normalization (returns a new normalized vector)
+    Vector3 Normalize() const {
+        const float len = Length();
+        if (len > 0.0f) {
+            return *this / len;
+        }
+        return Vector3();
+    }
 } Vector3;
 #pragma pack(pop)
