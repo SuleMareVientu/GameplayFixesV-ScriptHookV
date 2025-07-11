@@ -67,6 +67,7 @@ bool DisableWheelsAutoCenterOnCarExit = true;
 bool KeepCarHydraulicsPosition = true;
 bool EnableBrakeLightsOnStoppedVehicle = true;
 bool EnableHeliWaterPhysics = true;
+bool DynamicallyCleanVehicles = true;
 bool DisableRagdollOnVehicleRoof = true;
 float MaxVehicleSpeed = 90.0f;
 bool DisableDragOutCar = false;
@@ -196,6 +197,7 @@ void ReadINI()
 	Ini::KeepCarHydraulicsPosition = GET_INI_BOOL(ini, playerGroup, KeepCarHydraulicsPosition);
 	Ini::DisableWheelsAutoCenterOnCarExit = GET_INI_BOOL(ini, playerGroup, DisableWheelsAutoCenterOnCarExit);
 	Ini::EnableHeliWaterPhysics = GET_INI_BOOL(ini, playerGroup, EnableHeliWaterPhysics);
+	Ini::DynamicallyCleanVehicles = GET_INI_BOOL(ini, playerGroup, DynamicallyCleanVehicles);
 	Ini::DisableRagdollOnVehicleRoof = GET_INI_BOOL(ini, playerGroup, DisableRagdollOnVehicleRoof);
 	Ini::MaxVehicleSpeed = GET_INI_FLOAT(ini, playerGroup, MaxVehicleSpeed);
 	Ini::DisableFlyThroughWindscreen = GET_INI_BOOL(ini, playerGroup, DisableFlyThroughWindscreen);

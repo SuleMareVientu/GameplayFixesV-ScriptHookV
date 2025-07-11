@@ -55,6 +55,7 @@ extern bool DisableWheelsAutoCenterOnCarExit;
 extern bool KeepCarHydraulicsPosition;
 extern bool EnableBrakeLightsOnStoppedVehicle;
 extern bool EnableHeliWaterPhysics;
+extern bool DynamicallyCleanVehicles;
 extern bool DisableRagdollOnVehicleRoof;
 extern float MaxVehicleSpeed;
 extern bool DisableDragOutCar;

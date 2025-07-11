@@ -1029,6 +1029,60 @@ void EnableHeliWaterPhysics()
 	return;
 }
 
+void DynamicallyCleanVehicles()
+{
+	constexpr int nearbyVehsSize = 17;	// GET_PED_NEARBY_VEHICLES wont return more than 16 vehicles. It includes the player vehicle
+	scrValue nearbyVehs[nearbyVehsSize];
+	nearbyVehs[0].Int = nearbyVehsSize; // First value has to be initialized as the size of the array, and it will stay that way
+	const int count = GET_PED_NEARBY_VEHICLES(GetPlayerPed(), reinterpret_cast<Any*>(nearbyVehs));
+	for (int i = 1; i <= count; ++i)	// Start at index 1, since index 0 is the size of the array. The "i <= count" is NOT an error
+	{
+		const Hash model = GET_ENTITY_MODEL(nearbyVehs[i].Uns);
+		if (IS_THIS_MODEL_A_BOAT(model) || IS_THIS_MODEL_A_PLANE(model) || IS_THIS_MODEL_A_HELI(model) ||
+			IS_THIS_MODEL_A_TRAIN(model))
+			continue;
+
+		constexpr float maxSpeed = 100.0f;
+		const float speed = std::clamp(GET_ENTITY_SPEED(nearbyVehs[i].Uns) * 3.6f, 0.0f, maxSpeed);
+
+		constexpr float cleanRatePerSecond = 0.005555555f; // 0.0085f is around 2min (one in-game hour) to clean a vehicle with max dirt level
+		const float speedMult = 1.0f + (speed / maxSpeed);
+
+		// Rain level: 0.0f -> 1.0f
+		const float rain = GET_RAIN_LEVEL();
+		if (rain > 0.001f)
+		{
+			const float rainMult = 1.0f + rain;
+			const float rateDirt = cleanRatePerSecond * speedMult * rainMult * GET_FRAME_TIME();	// In scale 0.0f -> 1.0f
+			const float rateDecals = rateDirt / 2.0f;	// Clean decals at half the rate of dirt
+
+			// There's no way to check for decals, so always wash them
+			WASH_DECALS_FROM_VEHICLE(nearbyVehs[i].Uns, rateDecals);
+
+			// Dirt level: 0.0f -> 15.0f
+			const float dirt = GET_VEHICLE_DIRT_LEVEL(nearbyVehs[i].Uns) / 15.0f;
+			if (dirt > 0.0f)
+			{
+				const float newDirtLevel = (dirt - rateDirt) * 15.0f;
+				SET_VEHICLE_DIRT_LEVEL(nearbyVehs[i].Uns, newDirtLevel);
+			}
+		}
+
+		if (GET_ENTITY_SUBMERGED_LEVEL(nearbyVehs[i].Uns) > 0.25f)
+		{
+			const float rate = cleanRatePerSecond * (speedMult * 20.0f) * GET_FRAME_TIME();	// Speedup
+			WASH_DECALS_FROM_VEHICLE(nearbyVehs[i].Uns, rate);
+			const float dirt = GET_VEHICLE_DIRT_LEVEL(nearbyVehs[i].Uns) / 15.0f;
+			if (dirt > 0.0f)
+			{
+				const float newDirtLevel = (dirt - rate) * 15.0f;
+				SET_VEHICLE_DIRT_LEVEL(nearbyVehs[i].Uns, newDirtLevel);
+			}
+		}
+	}
+	return;
+}
+
 void DisableRagdollOnVehicleRoof()
 {
 	//Velocity Unit -> Km/h
@@ -1473,8 +1527,8 @@ void DynamicCarJackingReactions()
 
 	const Hash playerVehModel = GET_ENTITY_MODEL(GetVehiclePedIsUsing(GetPlayerPed()));
 	if (IS_THIS_MODEL_A_CAR(playerVehModel) || IS_THIS_MODEL_A_QUADBIKE(playerVehModel) ||
-		IS_THIS_MODEL_A_BOAT(playerVehModel) || IS_THIS_MODEL_A_JETSKI(playerVehModel) ||
-		IS_THIS_MODEL_A_PLANE(playerVehModel) || IS_THIS_MODEL_A_HELI(playerVehModel))
+		IS_THIS_MODEL_A_BOAT(playerVehModel) || IS_THIS_MODEL_A_PLANE(playerVehModel) ||
+		IS_THIS_MODEL_A_HELI(playerVehModel))
 		return;
 
 	Entity target = NULL;
@@ -1495,7 +1549,7 @@ void DynamicCarJackingReactions()
 	const Hash vehModel = GET_ENTITY_MODEL(GetVehiclePedIsUsing(target));
 	if (!DOES_ENTITY_EXIST(veh) ||
 		(!IS_THIS_MODEL_A_CAR(vehModel) && !IS_THIS_MODEL_A_BIKE(vehModel) &&
-			!IS_THIS_MODEL_A_QUADBIKE(vehModel) && !IS_THIS_MODEL_A_BICYCLE(vehModel)) ||
+		!IS_THIS_MODEL_A_QUADBIKE(vehModel) && !IS_THIS_MODEL_A_BICYCLE(vehModel)) ||
 		GET_PED_IN_VEHICLE_SEAT(veh, VS_DRIVER, false) != target ||
 		!HAS_ENTITY_CLEAR_LOS_TO_ENTITY_IN_FRONT(target, GetPlayerPed())) // We want to do the LOS check at the end of everything to avoid wasting resources
 		return;
@@ -1650,6 +1704,7 @@ void RegisterPlayerOptions()
 	REGISTER_OPTION(playerOptionsManager, KeepCarHydraulicsPosition, nVehicle, VER_1_0_2372_0_STEAM, true);
 	REGISTER_OPTION(playerOptionsManager, EnableBrakeLightsOnStoppedVehicle, nVehicle, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, EnableHeliWaterPhysics, nVehicle, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DynamicallyCleanVehicles, nVehicle, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableRagdollOnVehicleRoof, nVehicle, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableDragOutCar, nVehicle, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableFlyThroughWindscreen, nVehicle, VER_UNK, true);
