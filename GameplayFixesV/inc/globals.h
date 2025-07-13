@@ -875,6 +875,45 @@ typedef struct {
 constexpr TextStyle defaultTextStyle = { FONT_STANDARD, 0.35f, 0.35f, RGBA{255, 255, 255, 255}, DROPSTYLE_NONE, false, 0.0f, 1.0f };
 #pragma endregion
 
+#pragma region Shapetest
+enum eShapetestStatus {
+	SHAPETEST_STATUS_NONEXISTENT = 0,	// Shapetest requests are discarded if they are ignored for a frame or as soon as the results are returned
+	SHAPETEST_STATUS_RESULTS_NOTREADY,	// Not ready yet; try again next frame
+	SHAPETEST_STATUS_RESULTS_READY		// The result is ready and the results have been returned to you. The shapetest request has also just been destroyed
+};
+
+enum eShapetestTypes {
+	SHAPETEST_INVALID = 0,
+	SHAPETEST_LOSPROBE,
+	//SHAPETEST_SPHERE,
+	SHAPETEST_BOUND,
+	SHAPETEST_BOUNDINGBOX,
+	SHAPETEST_BOX,
+	SHAPETEST_CAPSULE
+
+};
+
+enum eShapetestFlags {
+	SCRIPT_INCLUDE_MOVER = 1,
+	SCRIPT_INCLUDE_VEHICLE = 2,
+	SCRIPT_INCLUDE_PED = 4,
+	SCRIPT_INCLUDE_RAGDOLL = 8,
+	SCRIPT_INCLUDE_OBJECT = 16,
+	SCRIPT_INCLUDE_PICKUP = 32,
+	SCRIPT_INCLUDE_GLASS = 64,
+	SCRIPT_INCLUDE_RIVER = 128,
+	SCRIPT_INCLUDE_FOLIAGE = 256,
+	SCRIPT_INCLUDE_ALL = 511
+};
+
+enum eShapetestOptions {
+	SCRIPT_SHAPETEST_OPTION_IGNORE_GLASS = 1,
+	SCRIPT_SHAPETEST_OPTION_IGNORE_SEE_THROUGH = 2,
+	SCRIPT_SHAPETEST_OPTION_IGNORE_NO_COLLISION = 4,
+	SCRIPT_SHAPETEST_OPTION_DEFAULT = SCRIPT_SHAPETEST_OPTION_IGNORE_GLASS | SCRIPT_SHAPETEST_OPTION_IGNORE_SEE_THROUGH | SCRIPT_SHAPETEST_OPTION_IGNORE_NO_COLLISION
+};
+#pragma endregion
+
 #pragma region Misc Enums
 enum eEulerRotOrder {
 	EULER_XYZ = 0,

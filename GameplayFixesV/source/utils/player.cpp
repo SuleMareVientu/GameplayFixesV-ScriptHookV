@@ -1028,19 +1028,82 @@ void EnableHeliWaterPhysics()
 	return;
 }
 
+int rainShapetestHandle = NULL;
 void DynamicallyCleanVehicles()
 {
+	auto WashRain = [](const Vehicle veh, const float cleanRatePerSecond, const float speedMult)
+		{
+			// Rain level: 0.0f -> 1.0f
+			const float rain = GET_RAIN_LEVEL();
+			if (rain <= 0.001f)
+				return;
+
+			const float rainMult = 1.0f + rain;
+			const float rateDirt = cleanRatePerSecond * speedMult * rainMult * GET_FRAME_TIME();	// In scale 0.0f -> 1.0f
+			const float rateDecals = rateDirt / 2.0f;	// Clean decals at half the rate of dirt
+
+			// There's no way to check for decals, so always wash them
+			WASH_DECALS_FROM_VEHICLE(veh, rateDecals);
+
+			// Dirt level: 0.0f -> 15.0f
+			const float dirt = GET_VEHICLE_DIRT_LEVEL(veh) / 15.0f;
+			if (dirt > 0.0f)
+			{
+				const float newDirtLevel = (dirt - rateDirt) * 15.0f;
+				SET_VEHICLE_DIRT_LEVEL(veh, newDirtLevel);
+			}
+			return;
+		};
+
+	auto WashSubmerged = [](const Vehicle veh, const float cleanRatePerSecond, const float speedMult)
+		{
+			if (GET_ENTITY_SUBMERGED_LEVEL(veh) <= 0.25f)
+				return;
+
+			const float rate = cleanRatePerSecond * (speedMult * 20.0f) * GET_FRAME_TIME();	// Speedup
+			WASH_DECALS_FROM_VEHICLE(veh, rate);
+			const float dirt = GET_VEHICLE_DIRT_LEVEL(veh) / 15.0f;
+			if (dirt > 0.0f)
+			{
+				const float newDirtLevel = (dirt - rate) * 15.0f;
+				SET_VEHICLE_DIRT_LEVEL(veh, newDirtLevel);
+			}
+			return;
+		};
+
 	constexpr int nearbyVehsSize = 17;	// GET_PED_NEARBY_VEHICLES wont return more than 16 vehicles. It includes the player vehicle
 	scrValue nearbyVehs[nearbyVehsSize];
 	nearbyVehs[0].Int = nearbyVehsSize; // First value has to be initialized as the size of the array, and it will stay that way
 	const int count = GET_PED_NEARBY_VEHICLES(GetPlayerPed(), reinterpret_cast<Any*>(nearbyVehs));
+	const Vehicle playerVeh = GetVehiclePedIsUsing(GetPlayerPed());
 	for (int i = 1; i <= count; ++i)	// Start at index 1, since index 0 is the size of the array. The "i <= count" is NOT an error
 	{
 		const Hash model = GET_ENTITY_MODEL(nearbyVehs[i].Uns);
-		if (GET_INTERIOR_FROM_ENTITY(nearbyVehs[i].Uns) ||
-			IS_THIS_MODEL_A_BOAT(model) || IS_THIS_MODEL_A_PLANE(model) ||
+		if (IS_THIS_MODEL_A_BOAT(model) || IS_THIS_MODEL_A_PLANE(model) ||
 			IS_THIS_MODEL_A_HELI(model) || IS_THIS_MODEL_A_TRAIN(model))
 			continue;
+
+		bool shouldSkipRain = false;
+		if (GET_INTERIOR_FROM_ENTITY(nearbyVehs[i].Uns))
+			shouldSkipRain = true;
+		else if (playerVeh == nearbyVehs[i].Uns && GET_RAIN_LEVEL() > 0.001f)
+		{
+			if (rainShapetestHandle != NULL)
+			{
+				bool hit = false; Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
+				if (GET_SHAPE_TEST_RESULT(rainShapetestHandle, &hit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
+				{
+					shouldSkipRain = hit;
+					const Vector3 loc = GET_ENTITY_COORDS(nearbyVehs[i].Uns, false);
+					rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, NULL, SCRIPT_SHAPETEST_OPTION_DEFAULT);
+				}
+			}
+			else
+			{
+				const Vector3 loc = GET_ENTITY_COORDS(nearbyVehs[i].Uns, false);
+				rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, NULL, SCRIPT_SHAPETEST_OPTION_DEFAULT);
+			}
+		}
 
 		constexpr float maxSpeed = 100.0f;
 		const float speed = std::clamp(GET_ENTITY_SPEED(nearbyVehs[i].Uns) * 3.6f, 0.0f, maxSpeed);
@@ -1048,37 +1111,10 @@ void DynamicallyCleanVehicles()
 		constexpr float cleanRatePerSecond = 0.005555555f; // 0.0085f is around 2min (one in-game hour) to clean a vehicle with max dirt level
 		const float speedMult = 1.0f + (speed / maxSpeed);
 
-		// Rain level: 0.0f -> 1.0f
-		const float rain = GET_RAIN_LEVEL();
-		if (rain > 0.001f)
-		{
-			const float rainMult = 1.0f + rain;
-			const float rateDirt = cleanRatePerSecond * speedMult * rainMult * GET_FRAME_TIME();	// In scale 0.0f -> 1.0f
-			const float rateDecals = rateDirt / 2.0f;	// Clean decals at half the rate of dirt
+		if (!shouldSkipRain)
+			WashRain(nearbyVehs[i].Uns, cleanRatePerSecond, speedMult);
 
-			// There's no way to check for decals, so always wash them
-			WASH_DECALS_FROM_VEHICLE(nearbyVehs[i].Uns, rateDecals);
-
-			// Dirt level: 0.0f -> 15.0f
-			const float dirt = GET_VEHICLE_DIRT_LEVEL(nearbyVehs[i].Uns) / 15.0f;
-			if (dirt > 0.0f)
-			{
-				const float newDirtLevel = (dirt - rateDirt) * 15.0f;
-				SET_VEHICLE_DIRT_LEVEL(nearbyVehs[i].Uns, newDirtLevel);
-			}
-		}
-
-		if (GET_ENTITY_SUBMERGED_LEVEL(nearbyVehs[i].Uns) > 0.25f)
-		{
-			const float rate = cleanRatePerSecond * (speedMult * 20.0f) * GET_FRAME_TIME();	// Speedup
-			WASH_DECALS_FROM_VEHICLE(nearbyVehs[i].Uns, rate);
-			const float dirt = GET_VEHICLE_DIRT_LEVEL(nearbyVehs[i].Uns) / 15.0f;
-			if (dirt > 0.0f)
-			{
-				const float newDirtLevel = (dirt - rate) * 15.0f;
-				SET_VEHICLE_DIRT_LEVEL(nearbyVehs[i].Uns, newDirtLevel);
-			}
-		}
+		WashSubmerged(nearbyVehs[i].Uns, cleanRatePerSecond, speedMult);
 	}
 	return;
 }
