@@ -17,7 +17,7 @@ extern bool EnableLogging;
 //Player Settings
 extern bool EnableCrouching;
 extern bool FriendlyFire;
-extern bool EnableStealthForAllPeds;
+extern bool EnablePlayerActionsForAllPeds;
 extern bool DisableActionMode;
 extern bool DisarmPlayerWhenShot;
 extern int DisarmPlayerChance;

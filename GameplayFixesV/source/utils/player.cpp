@@ -95,23 +95,26 @@ void EnableCrouching()
 		else
 		{
 			timerCrouch.Reset();
-			stealthState = GET_PED_STEALTH_MOVEMENT(GetPlayerPed());
-			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), false, NULL);	// Fixes bug when crouching near objects where the player would not be able to stand up
+			if (GET_PED_STEALTH_MOVEMENT(GetPlayerPed()))
+			{
+				stealthState = true;
+				SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), false, NULL);	// Fixes bug when crouching near objects where the player would not be able to stand up
+			}
 		}
 	}
 	else if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_DUCK) && Between(timerCrouch.Get(), 0, crouchHold) && stealthState)
 	{
 		stealthState = false;
 		// Enable stealth mode if control is released early and ensure compatibility with non-story peds
-		switch (GET_ENTITY_MODEL(GetPlayerPed()))
+		switch (GET_PED_TYPE(GetPlayerPed()))
 		{
-		case FranklinPed:
-		case MichaelPed:
-		case TrevorPed:
+		case PEDTYPE_PLAYER1:			// Michael
+		case PEDTYPE_PLAYER2:			// Franklin
+		case PEDTYPE_PLAYER_UNUSED:		// Trevor
 			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, NULL);
 			break;
 		default:
-			if (Ini::EnableStealthForAllPeds)
+			if (Ini::EnablePlayerActionsForAllPeds)
 				SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
 			break;
 		}
@@ -147,6 +150,16 @@ void EnableCrouching()
 				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), 0.25f);
 			else
 				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_RUN);
+		}
+	}
+
+	// Ensure action compatibility with non-story peds. THIS MUST BE AT THE BOTTOM
+	if (Ini::EnablePlayerActionsForAllPeds && IsPedMainProtagonist(GetPlayerPed()) && !GetIsPlayerCrouching())
+	{
+		if (!GET_PED_STEALTH_MOVEMENT(GetPlayerPed()) && !stealthState)
+		{
+			if (IS_PED_IN_MELEE_COMBAT(GetPlayerPed()) || COUNT_PEDS_IN_COMBAT_WITH_TARGET(GetPlayerPed()) > 0 || IS_PED_SHOOTING(GetPlayerPed()))
+				SET_PED_USING_ACTION_MODE(GetPlayerPed(), true, 10000, "DEFAULT_ACTION");
 		}
 	}
 	return;
@@ -193,23 +206,23 @@ void FriendlyFire()
 	return;
 }
 
-void EnableStealthForAllPeds()
+void EnablePlayerActionsForAllPeds()
 {
-	if (!IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_DUCK) ||
-		Ini::EnableCrouching)	// Don't enable stealth if crouching is enabled, since it will be handled in EnableCrouching()
+	if (Ini::EnableCrouching || !IS_PED_HUMAN(GetPlayerPed()) || DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())))
 		return;
 
-	switch (GET_ENTITY_MODEL(GetPlayerPed()))
+	switch (GET_PED_TYPE(GetPlayerPed()))
 	{
-	case FranklinPed:
-	case MichaelPed:
-	case TrevorPed:
+	case PEDTYPE_PLAYER1:			// Michael
+	case PEDTYPE_PLAYER2:			// Franklin
+	case PEDTYPE_PLAYER_UNUSED:		// Trevor
 		return;
 	default:
-		if (IS_PED_HUMAN(GetPlayerPed()) && GET_PED_STEALTH_MOVEMENT(GetPlayerPed())) // Not an error, GET_PED_STEALTH_MOVEMENT needs to return true here
+		// Action mode has to be activated before stealth mode
+		if (GET_PED_STEALTH_MOVEMENT(GetPlayerPed()))
 			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
-
-		return;
+		else if (IS_PED_IN_MELEE_COMBAT(GetPlayerPed()) || COUNT_PEDS_IN_COMBAT_WITH_TARGET(GetPlayerPed()) > 0 || IS_PED_SHOOTING(GetPlayerPed()))
+			SET_PED_USING_ACTION_MODE(GetPlayerPed(), true, 10000, "DEFAULT_ACTION");
 	}
 	return;
 }
@@ -1038,8 +1051,9 @@ void DynamicallyCleanVehicles()
 	for (int i = 1; i <= count; ++i)	// Start at index 1, since index 0 is the size of the array. The "i <= count" is NOT an error
 	{
 		const Hash model = GET_ENTITY_MODEL(nearbyVehs[i].Uns);
-		if (IS_THIS_MODEL_A_BOAT(model) || IS_THIS_MODEL_A_PLANE(model) || IS_THIS_MODEL_A_HELI(model) ||
-			IS_THIS_MODEL_A_TRAIN(model))
+		if (GET_INTERIOR_FROM_ENTITY(nearbyVehs[i].Uns) ||
+			IS_THIS_MODEL_A_BOAT(model) || IS_THIS_MODEL_A_PLANE(model) ||
+			IS_THIS_MODEL_A_HELI(model) || IS_THIS_MODEL_A_TRAIN(model))
 			continue;
 
 		constexpr float maxSpeed = 100.0f;
@@ -1174,13 +1188,13 @@ void DisablePauseMenuPostFX()
 
 	ADD_TCMODIFIER_OVERRIDE("hud_def_blur", "default");
 	ADD_TCMODIFIER_OVERRIDE("bloommid", "default");
-	switch (GET_ENTITY_MODEL(GetPlayerPed()))
+	switch (GET_PED_TYPE(GetPlayerPed()))
 	{
-	case FranklinPed:
-		ADD_TCMODIFIER_OVERRIDE("hud_def_Franklin", "default"); break;
-	case MichaelPed:
+	case PEDTYPE_PLAYER1:			// Michael
 		ADD_TCMODIFIER_OVERRIDE("hud_def_Michael", "default"); break;
-	case TrevorPed:
+	case PEDTYPE_PLAYER2:			// Franklin
+		ADD_TCMODIFIER_OVERRIDE("hud_def_Franklin", "default"); break;
+	case PEDTYPE_PLAYER_UNUSED:		// Trevor
 		ADD_TCMODIFIER_OVERRIDE("hud_def_Trevor", "default"); break;
 	default:
 		ADD_TCMODIFIER_OVERRIDE("hud_def_desat_Neutral", "default"); break;
@@ -1560,7 +1574,7 @@ void DynamicCarJackingReactions()
 		return;
 	}
 
-	constexpr float dist = 10.0f;
+	constexpr float dist = 12.5f;
 	const Vector3 loc = GetPlayerCoords();
 	const Vector3 targetLoc = GET_ENTITY_COORDS(target, true);
 	if (VDIST2(loc.x, loc.y, loc.z, targetLoc.x, targetLoc.y, targetLoc.z) > (dist * dist))
@@ -1675,7 +1689,7 @@ void RegisterPlayerOptions()
 
 	REGISTER_OPTION(playerOptionsManager, EnableCrouching, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, FriendlyFire, nGeneral, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, EnableStealthForAllPeds, nGeneral, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, EnablePlayerActionsForAllPeds, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableActionMode, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisarmPlayerWhenShot, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DropPlayerWeaponWhenRagdolling, nGeneral, VER_UNK, true);

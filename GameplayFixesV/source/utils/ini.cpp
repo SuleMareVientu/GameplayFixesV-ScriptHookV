@@ -29,7 +29,7 @@ bool EnableLogging = false;
 //Player Settings
 bool EnableCrouching = true;
 bool FriendlyFire = true;
-bool EnableStealthForAllPeds = true;
+bool EnablePlayerActionsForAllPeds = true;
 bool DisableActionMode = false;
 bool DisarmPlayerWhenShot = true;
 int DisarmPlayerChance = 100;
@@ -157,7 +157,7 @@ void ReadINI()
 	//////////////////////////////////////Player//////////////////////////////////////////
 	Ini::EnableCrouching = GET_INI_BOOL(ini, playerGroup, EnableCrouching);
 	Ini::FriendlyFire = GET_INI_BOOL(ini, playerGroup, FriendlyFire);
-	Ini::EnableStealthForAllPeds = GET_INI_BOOL(ini, playerGroup, EnableStealthForAllPeds);
+	Ini::EnablePlayerActionsForAllPeds = GET_INI_BOOL(ini, playerGroup, EnablePlayerActionsForAllPeds);
 	Ini::DisableActionMode = GET_INI_BOOL(ini, playerGroup, DisableActionMode);
 	Ini::DisarmPlayerWhenShot = GET_INI_BOOL(ini, playerGroup, DisarmPlayerWhenShot);
 	Ini::DisarmPlayerChance = GET_INI_INT(ini, playerGroup, DisarmPlayerChance);

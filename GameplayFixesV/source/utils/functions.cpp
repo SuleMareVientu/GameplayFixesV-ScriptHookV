@@ -1102,6 +1102,18 @@ void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool 
 #pragma endregion
 
 #pragma region Misc
+bool IsPedMainProtagonist(const Ped ped)
+{
+	switch (GET_PED_TYPE(ped))
+	{
+	case PEDTYPE_PLAYER1:			// Michael
+	case PEDTYPE_PLAYER2:			// Franklin
+	case PEDTYPE_PLAYER_UNUSED:		// Trevor
+		return false;
+	}
+	return true;
+}
+
 bool IsPedACop(const Ped ped)
 {
 	/*

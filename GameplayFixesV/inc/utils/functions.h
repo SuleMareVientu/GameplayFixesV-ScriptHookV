@@ -226,6 +226,7 @@ void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool 
 #pragma endregion
 
 #pragma region Misc
+bool IsPedMainProtagonist(const Ped ped);
 bool IsPedACop(const Ped ped);
 bool IsPlayerAiming();
 bool IsPlayerInsideSafehouse();
