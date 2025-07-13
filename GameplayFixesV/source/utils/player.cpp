@@ -106,18 +106,10 @@ void EnableCrouching()
 	{
 		stealthState = false;
 		// Enable stealth mode if control is released early and ensure compatibility with non-story peds
-		switch (GET_PED_TYPE(GetPlayerPed()))
-		{
-		case PEDTYPE_PLAYER1:			// Michael
-		case PEDTYPE_PLAYER2:			// Franklin
-		case PEDTYPE_PLAYER_UNUSED:		// Trevor
+		if (IsPedMainProtagonist(GetPlayerPed()))
 			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, NULL);
-			break;
-		default:
-			if (Ini::EnablePlayerActionsForAllPeds)
-				SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
-			break;
-		}
+		else if (Ini::EnablePlayerActionsForAllPeds)
+			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
 	}
 	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_DUCK) && timerCrouch.Get() > crouchHold)
 	{
@@ -154,7 +146,7 @@ void EnableCrouching()
 	}
 
 	// Ensure action compatibility with non-story peds. THIS MUST BE AT THE BOTTOM
-	if (Ini::EnablePlayerActionsForAllPeds && IsPedMainProtagonist(GetPlayerPed()) && !GetIsPlayerCrouching())
+	if (Ini::EnablePlayerActionsForAllPeds && !IsPedMainProtagonist(GetPlayerPed()) && !GetIsPlayerCrouching())
 	{
 		if (!GET_PED_STEALTH_MOVEMENT(GetPlayerPed()) && !stealthState)
 		{
@@ -211,14 +203,8 @@ void EnablePlayerActionsForAllPeds()
 	if (Ini::EnableCrouching || !IS_PED_HUMAN(GetPlayerPed()) || DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())))
 		return;
 
-	switch (GET_PED_TYPE(GetPlayerPed()))
+	if (!IsPedMainProtagonist(GetPlayerPed()))
 	{
-	case PEDTYPE_PLAYER1:			// Michael
-	case PEDTYPE_PLAYER2:			// Franklin
-	case PEDTYPE_PLAYER_UNUSED:		// Trevor
-		return;
-	default:
-		// Action mode has to be activated before stealth mode
 		if (GET_PED_STEALTH_MOVEMENT(GetPlayerPed()))
 			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
 		else if (IS_PED_IN_MELEE_COMBAT(GetPlayerPed()) || COUNT_PEDS_IN_COMBAT_WITH_TARGET(GetPlayerPed()) > 0 || IS_PED_SHOOTING(GetPlayerPed()))

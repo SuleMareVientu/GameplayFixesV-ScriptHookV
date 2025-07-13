@@ -1109,9 +1109,9 @@ bool IsPedMainProtagonist(const Ped ped)
 	case PEDTYPE_PLAYER1:			// Michael
 	case PEDTYPE_PLAYER2:			// Franklin
 	case PEDTYPE_PLAYER_UNUSED:		// Trevor
-		return false;
+		return true;
 	}
-	return true;
+	return false;
 }
 
 bool IsPedACop(const Ped ped)
