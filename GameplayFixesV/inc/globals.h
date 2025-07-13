@@ -681,6 +681,28 @@ enum eCombatAttribute {
 	CA_BLOCK_FIRE_FOR_VEHICLE_PASSENGER_MOUNTED_GUNS = 90
 };
 
+enum eFiringPatternHash {
+	FIRING_PATTERN_BURST_FIRE = -687903391,
+	FIRING_PATTERN_BURST_FIRE_DRIVEBY = -753768974,
+	FIRING_PATTERN_FULL_AUTO = -957453492,
+	FIRING_PATTERN_SINGLE_SHOT = 1566631136,
+	FIRING_PATTERN_DELAY_FIRE_BY_ONE_SEC = 2055493265,
+	FIRING_PATTERN_BURST_FIRE_HELI = -1857128337,
+	FIRING_PATTERN_SHORT_BURSTS = 445831135,
+	FIRING_PATTERN_BURST_FIRE_MICRO = 1122960381,
+	FIRING_PATTERN_SLOW_FIRE_TANK = -490063247,
+	FIRING_PATTERN_TAMPA_MORTAR = -1842093953
+};
+
+enum eFiringType {
+	FIRING_TYPE_DEFAULT = 0,								// Some of these don't translate to firing patterns so we'll just not use those ones
+	FIRING_TYPE_1_BURST = FIRING_TYPE_DEFAULT,     			// Uses FIRING_TYPE_DEFAULT as it's no longer a valid type
+	FIRING_TYPE_1_THEN_AIM = FIRING_PATTERN_SINGLE_SHOT,    // Fire 1 bullet then aim for the duration
+	FIRING_TYPE_RANDOM_BURSTS = FIRING_PATTERN_BURST_FIRE,  // Fire random bursts for the time, can change the frequency using SET_PED_SHOOT_RATE
+	FIRING_TYPE_CLIP = FIRING_TYPE_DEFAULT,        			// Uses FIRING_TYPE_DEFAULT as it's no longer a valid type
+	FIRING_TYPE_CONTINUOUS = FIRING_PATTERN_FULL_AUTO       // Fires at the maximum rate for the duration, reloading if the clips empty
+};
+
 /*
 static const std::unordered_map<unsigned int, unsigned int> wpPickupMap = {
 	{Joaat("W_SG_BULLPUPSHOTGUN"), Joaat("PICKUP_WEAPON_BULLPUPSHOTGUN")},

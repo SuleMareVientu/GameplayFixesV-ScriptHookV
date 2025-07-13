@@ -109,6 +109,7 @@ extern bool DisarmIncludeLeftHand;
 extern bool DisablePedOnlyDamagedByPlayer;
 extern bool DisableDeadPedsJumpOutOfVehicle;
 extern bool DynamicCarJackingReactions;
+extern bool EnableShootingJackedPeds;
 extern bool DisableScenarios;
 extern bool DisableWorldPopulation;
 }

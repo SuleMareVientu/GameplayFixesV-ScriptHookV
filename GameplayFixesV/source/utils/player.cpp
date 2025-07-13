@@ -1646,6 +1646,25 @@ void DynamicCarJackingReactions()
 	return;
 }
 
+void EnableShootingJackedPeds()
+{
+	const Vehicle veh = GetVehiclePedIsEntering(GetPlayerPed());
+	if (!DOES_ENTITY_EXIST(veh))
+		return;
+
+	const int seat = GET_SEAT_PED_IS_TRYING_TO_ENTER(GetPlayerPed());
+	const Ped target = GET_PED_IN_VEHICLE_SEAT(veh, seat, false);
+	if (!DOES_ENTITY_EXIST(target) || IS_PED_DEAD_OR_DYING(target, true))
+		return;
+
+	Hash weapon = NULL;
+	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_ATTACK) && GET_CURRENT_PED_WEAPON(GetPlayerPed(), &weapon, false))
+	{
+		const Vector3 loc = GET_WORLD_POSITION_OF_ENTITY_BONE(target, GET_PED_BONE_INDEX(target, BONETAG_HEAD));
+		SET_PED_SHOOTS_AT_COORD(GetPlayerPed(), loc.x, loc.y, loc.z, true);
+	}
+}
+
 int DisableScenariosCount = 0;
 int DisableScenarioGroupsCount = 0;
 void DisableScenarios()
@@ -1785,6 +1804,7 @@ void RegisterPlayerOptions()
 
 	//////////////////////////////////////////Peds/////////////////////////////////////////
 	REGISTER_OPTION(playerOptionsManager, DynamicCarJackingReactions, nPeds, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, EnableShootingJackedPeds, nPeds, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableScenarios, nPeds, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableWorldPopulation, nPeds, VER_UNK, true);
 
