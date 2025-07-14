@@ -215,6 +215,55 @@ void EnablePlayerActionsForAllPeds()
 
 inline void DisableActionMode() { EnablePedResetFlag(GetPlayerPed(), PRF_DisableActionMode); return; }
 
+int lastPlayerArmor = 0;
+void LocationalDamage()
+{
+	int armor = GET_PED_ARMOUR(GetPlayerPed());
+
+	if (!HAS_PED_BEEN_DAMAGED_BY_WEAPON(GetPlayerPed(), NULL, GENERALWEAPON_TYPE_ANYWEAPON))
+	{
+		lastPlayerArmor = armor;
+		return;
+	}
+
+	ClearEntityLastWeaponDamage(GetPlayerPed());
+
+	int bone = NULL;
+	if (!GET_PED_LAST_DAMAGE_BONE(GetPlayerPed(), &bone))
+	{
+		lastPlayerArmor = armor;
+		return;
+	}
+
+	ClearPedLastDamageBone(GetPlayerPed());
+
+	switch (GetGeneralDamageFromBoneTag(bone))
+	{
+	case DZ_HEAD:
+		if (Ini::DeadlyPlayerHeadshots)
+		{
+			APPLY_DAMAGE_TO_PED(GetPlayerPed(), 100000, true, NULL);
+			//EXPLODE_PED_HEAD(GetPlayerPed(), Joaat("WEAPON_SNIPERRIFLE"));
+		}
+		break;
+	case DZ_UPPER_BODY:
+	case DZ_LOWER_BODY:
+	{
+		const int armorDm = lastPlayerArmor - armor;
+		if (armorDm > 0)
+		{
+			SET_PED_ARMOUR(GetPlayerPed(), lastPlayerArmor);
+			SET_ENTITY_HEALTH(GetPlayerPed(), (GET_ENTITY_HEALTH(GetPlayerPed()) - armorDm), NULL);
+		}
+		break;
+	}
+	default:
+		lastPlayerArmor = armor;
+		break;
+	}
+	return;
+}
+
 void DisarmPlayerWhenShot()
 {
 	RestorePlayerRetrievedWeapon(Ini::AutoEquipDroppedWeapon);
@@ -1029,6 +1078,7 @@ void EnableHeliWaterPhysics()
 }
 
 int rainShapetestHandle = NULL;
+bool rainShapetestLastRes = false;
 void DynamicallyCleanVehicles()
 {
 	auto WashRain = [](const Vehicle veh, const float cleanRatePerSecond, const float speedMult)
@@ -1093,7 +1143,7 @@ void DynamicallyCleanVehicles()
 				bool hit = false; Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
 				if (GET_SHAPE_TEST_RESULT(rainShapetestHandle, &hit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 				{
-					shouldSkipRain = hit;
+					rainShapetestLastRes = hit;
 					const Vector3 loc = GET_ENTITY_COORDS(nearbyVehs[i].Uns, false);
 					rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, NULL, SCRIPT_SHAPETEST_OPTION_DEFAULT);
 				}
@@ -1111,7 +1161,7 @@ void DynamicallyCleanVehicles()
 		constexpr float cleanRatePerSecond = 0.005555555f; // 0.0085f is around 2min (one in-game hour) to clean a vehicle with max dirt level
 		const float speedMult = 1.0f + (speed / maxSpeed);
 
-		if (!shouldSkipRain)
+		if (!shouldSkipRain && !rainShapetestLastRes)
 			WashRain(nearbyVehs[i].Uns, cleanRatePerSecond, speedMult);
 
 		WashSubmerged(nearbyVehs[i].Uns, cleanRatePerSecond, speedMult);
@@ -1732,6 +1782,7 @@ void RegisterPlayerOptions()
 	REGISTER_OPTION(playerOptionsManager, FriendlyFire, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, EnablePlayerActionsForAllPeds, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableActionMode, nGeneral, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, LocationalDamage, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisarmPlayerWhenShot, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DropPlayerWeaponWhenRagdolling, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DynamicallyCleanWoundsAndDirt, nGeneral, VER_UNK, true);

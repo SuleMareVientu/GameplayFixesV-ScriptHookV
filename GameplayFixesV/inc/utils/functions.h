@@ -234,6 +234,15 @@ void SetDispatchServices(bool toggle);
 bool GetFakeWanted();
 void SetFakeWanted(Player player, bool toggle);
 inline int GetNumberOfScriptInstances(const char* name) { return (GET_NUMBER_OF_THREADS_RUNNING_THE_SCRIPT_WITH_THIS_HASH(Joaat(name))); }
+
+enum eDamageZone {
+	DZ_HEAD = 0,
+	DZ_UPPER_BODY = 1,
+	DZ_LOWER_BODY = 2,
+	DZ_ARMOR = 3
+};
+
+int GetGeneralDamageFromBoneTag(const int boneTag);
 int GetNMPartIndexFromBoneTag(const int boneTag);
 int GetBoneTagFromNMPartIndex(const int partIndex);
 #pragma endregion

@@ -109,13 +109,35 @@ inline void DisableDeadPedsJumpOutOfVehicle(const Ped ped)
 	return;
 }
 
+void DeadlyNPCsHeadshots(const Ped ped)
+{
+	if (!HAS_PED_BEEN_DAMAGED_BY_WEAPON(ped, NULL, GENERALWEAPON_TYPE_ANYWEAPON) || IS_PED_FALLING(ped) ||
+		HAS_ENTITY_BEEN_DAMAGED_BY_ENTITY(ped, GetPlayerPed(), true))
+		return;
+
+	ClearEntityLastWeaponDamage(ped);
+
+	int bone = NULL;
+	if (!GET_PED_LAST_DAMAGE_BONE(ped, &bone))
+		return;
+
+	ClearPedLastDamageBone(ped);
+
+	if (GetGeneralDamageFromBoneTag(bone) == DZ_HEAD)
+	{
+		APPLY_DAMAGE_TO_PED(ped, 100000, true, NULL);
+		//EXPLODE_PED_HEAD(ped, Joaat("WEAPON_SNIPERRIFLE"));
+	}
+	return;
+}
+
 void EnablePlayerNMReactionsWhenShot(const Ped shooter)
 {
 	const Ped ped = GetPlayerPed();
 	//SET_ENTITY_HEALTH(ped, GET_ENTITY_MAX_HEALTH(ped), 0);
 	
-	if (IS_PED_RAGDOLL(ped) || !HasEntityBeenDamagedByWeaponThisFrame(ped, NULL, GENERALWEAPON_TYPE_ANYWEAPON) ||
-		!HAS_ENTITY_BEEN_DAMAGED_BY_ENTITY(ped, shooter, true))
+	if (!HAS_ENTITY_BEEN_DAMAGED_BY_ENTITY(ped, shooter, true) || 
+		IS_PED_RAGDOLL(ped) || !HasEntityBeenDamagedByWeaponThisFrame(ped, NULL, GENERALWEAPON_TYPE_ANYWEAPON))
 		return;
 
 	ClearEntityLastDamageEntity(ped);
@@ -197,6 +219,7 @@ void RegisterPedOptions()
 	REGISTER_OPTION(pedOptionsManager, DisarmPedWhenShot, &currentPed);
 	REGISTER_OPTION(pedOptionsManager, DisablePedOnlyDamagedByPlayer, &currentPed);
 	REGISTER_OPTION(pedOptionsManager, DisableDeadPedsJumpOutOfVehicle, &currentPed);
+	REGISTER_OPTION(pedOptionsManager, DeadlyNPCsHeadshots, &currentPed);
 	
 	// Player
 	if (GetFoundNMFunctions())

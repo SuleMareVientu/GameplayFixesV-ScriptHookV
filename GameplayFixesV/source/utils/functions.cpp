@@ -1231,6 +1231,64 @@ void SetFakeWanted(Player player, bool toggle)
 	return;
 }
 
+// head -> 0, upper body -> 1, lower body -> 2, armor -> 3
+int GetGeneralDamageFromBoneTag(const int boneTag)
+{
+	int zone = -1;
+	if (boneTag < 0)
+		return zone;
+
+	switch (boneTag)
+	{
+	case BONETAG_ROOT:
+	case BONETAG_PELVIS:
+	case BONETAG_SPINE:
+	case BONETAG_SPINE1:
+	case BONETAG_SPINE2:
+	case BONETAG_SPINE3:
+	case BONETAG_R_CLAVICLE:
+	case BONETAG_L_CLAVICLE:
+		zone = DZ_ARMOR; break;
+
+	case BONETAG_NECK:
+	case BONETAG_HEAD:
+		zone = DZ_HEAD; break;
+
+	case BONETAG_R_UPPERARM:
+	case BONETAG_R_FOREARM:
+	case BONETAG_L_UPPERARM:
+	case BONETAG_L_FOREARM:
+	case BONETAG_R_HAND: case BONETAG_PH_R_HAND:
+	case BONETAG_L_HAND: case BONETAG_PH_L_HAND:
+	case BONETAG_R_FINGER0: case BONETAG_R_FINGER01: case BONETAG_R_FINGER02:
+	case BONETAG_R_FINGER1: case BONETAG_R_FINGER11: case BONETAG_R_FINGER12:
+	case BONETAG_R_FINGER2: case BONETAG_R_FINGER21: case BONETAG_R_FINGER22:
+	case BONETAG_R_FINGER3: case BONETAG_R_FINGER31: case BONETAG_R_FINGER32:
+	case BONETAG_R_FINGER4: case BONETAG_R_FINGER41: case BONETAG_R_FINGER42:
+	case BONETAG_L_FINGER0: case BONETAG_L_FINGER01: case BONETAG_L_FINGER02:
+	case BONETAG_L_FINGER1: case BONETAG_L_FINGER11: case BONETAG_L_FINGER12:
+	case BONETAG_L_FINGER2: case BONETAG_L_FINGER21: case BONETAG_L_FINGER22:
+	case BONETAG_L_FINGER3: case BONETAG_L_FINGER31: case BONETAG_L_FINGER32:
+	case BONETAG_L_FINGER4: case BONETAG_L_FINGER41: case BONETAG_L_FINGER42:
+		zone = DZ_UPPER_BODY; break;
+
+	case BONETAG_L_THIGH:
+	case BONETAG_L_CALF:
+	case BONETAG_L_FOOT:
+	case BONETAG_L_TOE:
+	case BONETAG_R_THIGH:
+	case BONETAG_R_CALF:
+	case BONETAG_R_FOOT:
+	case BONETAG_R_TOE:
+		zone = DZ_LOWER_BODY; break;
+
+	default:
+		zone = DZ_ARMOR; break;
+	}
+
+	return zone;
+}
+
 int GetNMPartIndexFromBoneTag(const int boneTag)
 {
 	int partIndex = -1;
