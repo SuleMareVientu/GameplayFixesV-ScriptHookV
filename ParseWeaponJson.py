@@ -12,7 +12,7 @@ try:
 
     listkeys = ["Name", "Category", "AmmoType", "DamageType", "Components"]
     listkeystints = ["Index"]
-    listkeyscomponents = ["Name"]
+    listkeyscomponents = ["Name", "AttachBone"]
     listkeysliveries = ["Name"]
     
     updated_data = [] 

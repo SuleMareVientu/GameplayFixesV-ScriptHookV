@@ -35,7 +35,6 @@
     <ClInclude Include="inc\script.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h" />
     <ClInclude Include="inc\libs\json.hpp">
       <Filter>inc\libs</Filter>
     </ClInclude>

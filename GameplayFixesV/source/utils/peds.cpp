@@ -175,7 +175,7 @@ void EnablePlayerNMReactionsWhenShot(const Ped shooter)
 	else
 		shotStartLoc = GET_PED_BONE_COORDS(shooter, BONETAG_PH_R_HAND, 0.0f, 0.0f, 0.0f);
 
-	const bool isPedAiming = IS_PED_SHOOTING(ped) || IsPlayerAiming();
+	const bool isPedAiming = IsPlayerAiming(true, true);
 	const bool isPedCrouching = GetIsPlayerCrouching();
 
 	const Vector3 impulseNorm = Vector3{ hitLoc.x - shotStartLoc.x, hitLoc.y - shotStartLoc.y, hitLoc.z - shotStartLoc.z }.Normalize();

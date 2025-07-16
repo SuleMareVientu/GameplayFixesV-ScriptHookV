@@ -42,7 +42,6 @@
     <ClInclude Include="inc\utils\nm.h" />
     <ClInclude Include="inc\utils\player.h" />
     <ClInclude Include="inc\utils\peds.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="res\resource.h" />
   </ItemGroup>
   <ItemGroup>

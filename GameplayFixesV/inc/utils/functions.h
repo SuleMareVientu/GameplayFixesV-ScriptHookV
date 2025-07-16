@@ -158,6 +158,7 @@ void ClearLastDamages();
 
 bool HasEntityBeenDamagedByWeaponThisFrame(Ped ped, Hash weaponHash, int weaponType = 0);
 //bool HasEntityBeenDamagedByAnyPedThisFrame(Ped ped);
+bool DoesPedWeaponHaveComponentType(const Ped ped, const Hash weaponHash, const Hash attachPart, const bool findAll = true);
 bool CanDisarmPed(Ped ped, bool includeLeftHand);
 int GetWeaponBlipSprite(const Hash weaponHash);
 bool ShouldWeaponSpawnPickupWhenDropped(const Hash weaponHash, const bool checkWeaponType);
@@ -228,12 +229,14 @@ void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool 
 #pragma region Misc
 bool IsPedMainProtagonist(const Ped ped);
 bool IsPedACop(const Ped ped);
-bool IsPlayerAiming();
+bool IsFirstPersonActive();
+bool IsPlayerAiming(bool includeAimGunTask, bool includeShooting);
 bool IsPlayerInsideSafehouse();
 void SetDispatchServices(bool toggle);
 bool GetFakeWanted();
 void SetFakeWanted(Player player, bool toggle);
 inline int GetNumberOfScriptInstances(const char* name) { return (GET_NUMBER_OF_THREADS_RUNNING_THE_SCRIPT_WITH_THIS_HASH(Joaat(name))); }
+Hash GetCharacterStatHash(const char* statName);
 
 enum eDamageZone {
 	DZ_HEAD = 0,

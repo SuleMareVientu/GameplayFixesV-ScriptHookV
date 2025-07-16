@@ -191,6 +191,11 @@ void from_json(const nlohmann::json& j, WpComponentJson& c) {
 		c.Name = j.value("Name", "");
 	else
 		c.Name = "UNK";
+
+	if (j.contains("AttachBone") && j["AttachBone"].is_string())
+		c.Bone = Joaat(j.value("AttachBone", "").c_str());
+	else
+		c.Bone = Joaat("UNK");
 }
 
 void from_json(const nlohmann::json& j, WpLiveryJson& c) {
@@ -474,6 +479,97 @@ bool HasEntityBeenDamagedByAnyPedThisFrame(Ped ped)
 	return false;
 }
 */
+
+bool DoesPedWeaponHaveComponentType(const Ped ped, const Hash weaponHash, const Hash attachPart, const bool findAll)
+{
+	while (!LoadWeaponJson()) {}
+
+	const auto it = std::find(weaponInfo.begin(), weaponInfo.end(), weaponHash);
+	if (it == weaponInfo.end() || it->Components.empty())
+		return false;
+
+	LOOP(i, it->Components.size())
+	{
+		const Hash componentHash = Joaat(it->Components[i].Name.c_str());
+		if (componentHash == Joaat("UNK"))
+			continue;
+
+		const Hash bone = it->Components[i].Bone;
+		if (bone == Joaat("UNK"))
+			continue;
+
+		bool found = false;
+		if (findAll)
+		{
+			switch (attachPart)
+			{
+			case WAP_Clip:
+				switch (bone)
+				{
+				case WAP_Clip:
+				case WAP_Clip_2:
+					found = true; break;
+				}
+				break;
+			case WAP_Flsh:
+				switch (bone)
+				{
+				case WAP_Flsh:
+				case WAP_Flsh_2:
+					found = true; break;
+				}
+				break;
+			case WAP_FlshLasr:
+				switch (bone)
+				{
+				case WAP_FlshLasr:
+				case WAP_FlshLasr_2:
+				case WAP_FlshLasr_3:
+					found = true; break;
+				}
+				break;
+			case WAP_Supp:
+				switch (bone)
+				{
+				case WAP_Supp:
+				case WAP_Supp_2:
+				case WAP_Supp_3:
+					found = true; break;
+				}
+				break;
+			case WAP_Grip:
+				switch (bone)
+				{
+				case WAP_Grip:
+				case WAP_Grip_2:
+				case WAP_Grip_3:
+					found = true; break;
+				}
+				break;
+			case WAP_Scop:
+				switch (bone)
+				{
+				case WAP_Scop:
+				case WAP_Scop_2:
+				case WAP_Scop_3:
+					found = true; break;
+				}
+				break;
+			default:
+				if (attachPart == bone)
+					found = true;
+				break;
+			}
+		}
+		else if (attachPart == bone)
+			found = true;
+
+		if (found && HAS_PED_GOT_WEAPON_COMPONENT(ped, weaponHash, componentHash))
+			return true;
+	}
+
+	return false;
+}
 
 //Inspired by jedijosh920 implementation of "Disarm"
 bool CanDisarmPed(Ped ped, bool includeLeftHand)
@@ -1133,10 +1229,23 @@ bool IsPedACop(const Ped ped)
 	return (type == PEDTYPE_COP || type == PEDTYPE_SWAT || type == PEDTYPE_ARMY);
 }
 
-bool IsPlayerAiming()
+bool IsFirstPersonActive()
+{
+	if ((!IS_FOLLOW_PED_CAM_ACTIVE() && !IS_FOLLOW_VEHICLE_CAM_ACTIVE()) &&
+		(GET_FOLLOW_PED_CAM_VIEW_MODE() == CAM_VIEW_MODE_FIRST_PERSON || GET_FOLLOW_VEHICLE_CAM_VIEW_MODE() == CAM_VIEW_MODE_FIRST_PERSON))
+		return true;
+
+	return false;
+}
+
+bool IsPlayerAiming(bool includeAimGunTask, bool includeShooting)
 {
 	if (IS_PLAYER_FREE_AIMING(GET_PLAYER_INDEX()) || IS_PED_AIMING_FROM_COVER(GetPlayerPed() ||
 		GET_PED_CONFIG_FLAG(GetPlayerPed(), PCF_IsAimingGun, false) || GET_PED_RESET_FLAG(GetPlayerPed(), PRF_IsAiming)))
+		return true;
+	else if (includeAimGunTask && GET_PED_RESET_FLAG(GetPlayerPed(), PRF_HasGunTaskWithAimingState))	// When shooting without aiming
+		return true;
+	else if (includeShooting && IS_PED_SHOOTING(GetPlayerPed()))
 		return true;
 
 	return false;
@@ -1229,6 +1338,37 @@ void SetFakeWanted(Player player, bool toggle)
 		break;
 	}
 	return;
+}
+
+Hash GetCharacterStatHash(const char* statName)
+{
+	if (statName == nullptr || strlen(statName) == 0)
+		return NULL;
+
+	switch (GET_PED_TYPE(GetPlayerPed()))
+	{
+	case PEDTYPE_PLAYER1:			// Michael
+	{
+		std::string strStatName = "SP0_" + std::string(statName);
+		return Joaat(strStatName.c_str()); break;
+	}
+	case PEDTYPE_PLAYER2:			// Franklin
+	{
+		std::string strStatName = "SP1_" + std::string(statName);
+		return Joaat(strStatName.c_str()); break;
+	}
+	case PEDTYPE_PLAYER_UNUSED:		// Trevor
+	{
+		std::string strStatName = "SP2_" + std::string(statName);
+		return Joaat(strStatName.c_str()); break;
+	}
+	default:	// return Franklin as default
+	{
+		std::string strStatName = "SP1_" + std::string(statName);
+		return Joaat(strStatName.c_str()); break;
+	}
+	}
+	return NULL;
 }
 
 // head -> 0, upper body -> 1, lower body -> 2, armor -> 3

@@ -134,34 +134,44 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_KNIFE_VARMOD_XM3"
+                "Name": "COMPONENT_KNIFE_VARMOD_XM3",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNIFE_VARMOD_XM3_01"
+                "Name": "COMPONENT_KNIFE_VARMOD_XM3_01",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNIFE_VARMOD_XM3_02"
+                "Name": "COMPONENT_KNIFE_VARMOD_XM3_02",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNIFE_VARMOD_XM3_03"
+                "Name": "COMPONENT_KNIFE_VARMOD_XM3_03",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNIFE_VARMOD_XM3_04"
+                "Name": "COMPONENT_KNIFE_VARMOD_XM3_04",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNIFE_VARMOD_XM3_05"
+                "Name": "COMPONENT_KNIFE_VARMOD_XM3_05",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNIFE_VARMOD_XM3_06"
+                "Name": "COMPONENT_KNIFE_VARMOD_XM3_06",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNIFE_VARMOD_XM3_07"
+                "Name": "COMPONENT_KNIFE_VARMOD_XM3_07",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNIFE_VARMOD_XM3_08"
+                "Name": "COMPONENT_KNIFE_VARMOD_XM3_08",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNIFE_VARMOD_XM3_09"
+                "Name": "COMPONENT_KNIFE_VARMOD_XM3_09",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -267,34 +277,44 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_BAT_VARMOD_XM3"
+                "Name": "COMPONENT_BAT_VARMOD_XM3",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_BAT_VARMOD_XM3_01"
+                "Name": "COMPONENT_BAT_VARMOD_XM3_01",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_BAT_VARMOD_XM3_02"
+                "Name": "COMPONENT_BAT_VARMOD_XM3_02",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_BAT_VARMOD_XM3_03"
+                "Name": "COMPONENT_BAT_VARMOD_XM3_03",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_BAT_VARMOD_XM3_04"
+                "Name": "COMPONENT_BAT_VARMOD_XM3_04",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_BAT_VARMOD_XM3_05"
+                "Name": "COMPONENT_BAT_VARMOD_XM3_05",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_BAT_VARMOD_XM3_06"
+                "Name": "COMPONENT_BAT_VARMOD_XM3_06",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_BAT_VARMOD_XM3_07"
+                "Name": "COMPONENT_BAT_VARMOD_XM3_07",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_BAT_VARMOD_XM3_08"
+                "Name": "COMPONENT_BAT_VARMOD_XM3_08",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_BAT_VARMOD_XM3_09"
+                "Name": "COMPONENT_BAT_VARMOD_XM3_09",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -400,22 +420,28 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_PISTOL_CLIP_01"
+                "Name": "COMPONENT_PISTOL_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_PISTOL_CLIP_02"
+                "Name": "COMPONENT_PISTOL_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_PI_FLSH"
+                "Name": "COMPONENT_AT_PI_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_PI_SUPP_02"
+                "Name": "COMPONENT_AT_PI_SUPP_02",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_PISTOL_VARMOD_LUXE"
+                "Name": "COMPONENT_PISTOL_VARMOD_LUXE",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE"
+                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE",
+                "AttachBone": "gun_gripr"
             }
         ],
         "Liveries": []
@@ -453,22 +479,28 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_COMBATPISTOL_CLIP_01"
+                "Name": "COMPONENT_COMBATPISTOL_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_COMBATPISTOL_CLIP_02"
+                "Name": "COMPONENT_COMBATPISTOL_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_PI_FLSH"
+                "Name": "COMPONENT_AT_PI_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_PI_SUPP"
+                "Name": "COMPONENT_AT_PI_SUPP",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_COMBATPISTOL_VARMOD_LOWRIDER"
+                "Name": "COMPONENT_COMBATPISTOL_VARMOD_LOWRIDER",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_COMBATPISTOL_VARMOD_XMAS23"
+                "Name": "COMPONENT_COMBATPISTOL_VARMOD_XMAS23",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -506,22 +538,28 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_APPISTOL_CLIP_01"
+                "Name": "COMPONENT_APPISTOL_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_APPISTOL_CLIP_02"
+                "Name": "COMPONENT_APPISTOL_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_PI_FLSH"
+                "Name": "COMPONENT_AT_PI_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_PI_SUPP"
+                "Name": "COMPONENT_AT_PI_SUPP",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_APPISTOL_VARMOD_LUXE"
+                "Name": "COMPONENT_APPISTOL_VARMOD_LUXE",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_APPISTOL_VARMOD_SECURITY"
+                "Name": "COMPONENT_APPISTOL_VARMOD_SECURITY",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -559,19 +597,24 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_PISTOL50_CLIP_01"
+                "Name": "COMPONENT_PISTOL50_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_PISTOL50_CLIP_02"
+                "Name": "COMPONENT_PISTOL50_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_PI_FLSH"
+                "Name": "COMPONENT_AT_PI_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP_02"
+                "Name": "COMPONENT_AT_AR_SUPP_02",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_PISTOL50_VARMOD_LUXE"
+                "Name": "COMPONENT_PISTOL50_VARMOD_LUXE",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -609,31 +652,40 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_MICROSMG_CLIP_01"
+                "Name": "COMPONENT_MICROSMG_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_MICROSMG_CLIP_02"
+                "Name": "COMPONENT_MICROSMG_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_PI_FLSH"
+                "Name": "COMPONENT_AT_PI_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MACRO"
+                "Name": "COMPONENT_AT_SCOPE_MACRO",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP_02"
+                "Name": "COMPONENT_AT_AR_SUPP_02",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_MICROSMG_VARMOD_LUXE"
+                "Name": "COMPONENT_MICROSMG_VARMOD_LUXE",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_MICROSMG_VARMOD_SECURITY"
+                "Name": "COMPONENT_MICROSMG_VARMOD_SECURITY",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_MICROSMG_VARMOD_XM3"
+                "Name": "COMPONENT_MICROSMG_VARMOD_XM3",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_MICROSMG_VARMOD_FRN"
+                "Name": "COMPONENT_MICROSMG_VARMOD_FRN",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -671,28 +723,36 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_SMG_CLIP_01"
+                "Name": "COMPONENT_SMG_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SMG_CLIP_02"
+                "Name": "COMPONENT_SMG_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SMG_CLIP_03"
+                "Name": "COMPONENT_SMG_CLIP_03",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MACRO_02"
+                "Name": "COMPONENT_AT_SCOPE_MACRO_02",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_PI_SUPP"
+                "Name": "COMPONENT_AT_PI_SUPP",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_SMG_VARMOD_LUXE"
+                "Name": "COMPONENT_SMG_VARMOD_LUXE",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE"
+                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE",
+                "AttachBone": "gun_gripr"
             }
         ],
         "Liveries": []
@@ -730,22 +790,28 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_ASSAULTSMG_CLIP_01"
+                "Name": "COMPONENT_ASSAULTSMG_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_ASSAULTSMG_CLIP_02"
+                "Name": "COMPONENT_ASSAULTSMG_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MACRO"
+                "Name": "COMPONENT_AT_SCOPE_MACRO",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP_02"
+                "Name": "COMPONENT_AT_AR_SUPP_02",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_ASSAULTSMG_VARMOD_LOWRIDER"
+                "Name": "COMPONENT_ASSAULTSMG_VARMOD_LOWRIDER",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -783,31 +849,40 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_ASSAULTRIFLE_CLIP_01"
+                "Name": "COMPONENT_ASSAULTRIFLE_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_ASSAULTRIFLE_CLIP_02"
+                "Name": "COMPONENT_ASSAULTRIFLE_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_ASSAULTRIFLE_CLIP_03"
+                "Name": "COMPONENT_ASSAULTRIFLE_CLIP_03",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MACRO"
+                "Name": "COMPONENT_AT_SCOPE_MACRO",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP_02"
+                "Name": "COMPONENT_AT_AR_SUPP_02",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip"
             },
             {
-                "Name": "COMPONENT_ASSAULTRIFLE_VARMOD_LUXE"
+                "Name": "COMPONENT_ASSAULTRIFLE_VARMOD_LUXE",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE"
+                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE",
+                "AttachBone": "gun_gripr"
             }
         ],
         "Liveries": []
@@ -845,37 +920,48 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_CARBINERIFLE_CLIP_01"
+                "Name": "COMPONENT_CARBINERIFLE_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_CARBINERIFLE_CLIP_02"
+                "Name": "COMPONENT_CARBINERIFLE_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_CARBINERIFLE_CLIP_03"
+                "Name": "COMPONENT_CARBINERIFLE_CLIP_03",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_RAILCOVER_01"
+                "Name": "COMPONENT_AT_RAILCOVER_01",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MEDIUM"
+                "Name": "COMPONENT_AT_SCOPE_MEDIUM",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP"
+                "Name": "COMPONENT_AT_AR_SUPP",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip"
             },
             {
-                "Name": "COMPONENT_CARBINERIFLE_VARMOD_LUXE"
+                "Name": "COMPONENT_CARBINERIFLE_VARMOD_LUXE",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_CARBINERIFLE_VARMOD_MICH"
+                "Name": "COMPONENT_CARBINERIFLE_VARMOD_MICH",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE"
+                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE",
+                "AttachBone": "gun_gripr"
             }
         ],
         "Liveries": []
@@ -913,22 +999,28 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_ADVANCEDRIFLE_CLIP_01"
+                "Name": "COMPONENT_ADVANCEDRIFLE_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_ADVANCEDRIFLE_CLIP_02"
+                "Name": "COMPONENT_ADVANCEDRIFLE_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_SMALL"
+                "Name": "COMPONENT_AT_SCOPE_SMALL",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP"
+                "Name": "COMPONENT_AT_AR_SUPP",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_ADVANCEDRIFLE_VARMOD_LUXE"
+                "Name": "COMPONENT_ADVANCEDRIFLE_VARMOD_LUXE",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -966,16 +1058,20 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_MG_CLIP_01"
+                "Name": "COMPONENT_MG_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_MG_CLIP_02"
+                "Name": "COMPONENT_MG_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_SMALL_02"
+                "Name": "COMPONENT_AT_SCOPE_SMALL_02",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_MG_VARMOD_LOWRIDER"
+                "Name": "COMPONENT_MG_VARMOD_LOWRIDER",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -1013,22 +1109,28 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_COMBATMG_CLIP_01"
+                "Name": "COMPONENT_COMBATMG_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_COMBATMG_CLIP_02"
+                "Name": "COMPONENT_COMBATMG_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MEDIUM"
+                "Name": "COMPONENT_AT_SCOPE_MEDIUM",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip"
             },
             {
-                "Name": "COMPONENT_COMBATMG_VARMOD_LOWRIDER"
+                "Name": "COMPONENT_COMBATMG_VARMOD_LOWRIDER",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE"
+                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE",
+                "AttachBone": "gun_gripr"
             }
         ],
         "Liveries": []
@@ -1066,25 +1168,32 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_PUMPSHOTGUN_CLIP_01"
+                "Name": "COMPONENT_PUMPSHOTGUN_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_SR_SUPP"
+                "Name": "COMPONENT_AT_SR_SUPP",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_PUMPSHOTGUN_VARMOD_LOWRIDER"
+                "Name": "COMPONENT_PUMPSHOTGUN_VARMOD_LOWRIDER",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE"
+                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE",
+                "AttachBone": "gun_gripr"
             },
             {
-                "Name": "COMPONENT_PUMPSHOTGUN_VARMOD_SECURITY"
+                "Name": "COMPONENT_PUMPSHOTGUN_VARMOD_SECURITY",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_PUMPSHOTGUN_VARMOD_XM3"
+                "Name": "COMPONENT_PUMPSHOTGUN_VARMOD_XM3",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -1122,10 +1231,12 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_SAWNOFFSHOTGUN_CLIP_01"
+                "Name": "COMPONENT_SAWNOFFSHOTGUN_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SAWNOFFSHOTGUN_VARMOD_LUXE"
+                "Name": "COMPONENT_SAWNOFFSHOTGUN_VARMOD_LUXE",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -1163,19 +1274,24 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_ASSAULTSHOTGUN_CLIP_01"
+                "Name": "COMPONENT_ASSAULTSHOTGUN_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_ASSAULTSHOTGUN_CLIP_02"
+                "Name": "COMPONENT_ASSAULTSHOTGUN_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP"
+                "Name": "COMPONENT_AT_AR_SUPP",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip"
             }
         ],
         "Liveries": []
@@ -1213,16 +1329,20 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_BULLPUPSHOTGUN_CLIP_01"
+                "Name": "COMPONENT_BULLPUPSHOTGUN_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP_02"
+                "Name": "COMPONENT_AT_AR_SUPP_02",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip"
             }
         ],
         "Liveries": []
@@ -1294,19 +1414,24 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_SNIPERRIFLE_CLIP_01"
+                "Name": "COMPONENT_SNIPERRIFLE_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP_02"
+                "Name": "COMPONENT_AT_AR_SUPP_02",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_LARGE"
+                "Name": "COMPONENT_AT_SCOPE_LARGE",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MAX"
+                "Name": "COMPONENT_AT_SCOPE_MAX",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_SNIPERRIFLE_VARMOD_LUXE"
+                "Name": "COMPONENT_SNIPERRIFLE_VARMOD_LUXE",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -1344,19 +1469,24 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_HEAVYSNIPER_CLIP_01"
+                "Name": "COMPONENT_HEAVYSNIPER_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_LARGE"
+                "Name": "COMPONENT_AT_SCOPE_LARGE",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MAX"
+                "Name": "COMPONENT_AT_SCOPE_MAX",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE"
+                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE",
+                "AttachBone": "gun_gripr"
             },
             {
-                "Name": "COMPONENT_HEAVYSNIPER_VARMOD_XMAS23"
+                "Name": "COMPONENT_HEAVYSNIPER_VARMOD_XMAS23",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -1428,16 +1558,20 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_GRENADELAUNCHER_CLIP_01"
+                "Name": "COMPONENT_GRENADELAUNCHER_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_SMALL"
+                "Name": "COMPONENT_AT_SCOPE_SMALL",
+                "AttachBone": "WAPScop_2"
             }
         ],
         "Liveries": []
@@ -1475,13 +1609,16 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_SMALL"
+                "Name": "COMPONENT_AT_SCOPE_SMALL",
+                "AttachBone": "WAPScop"
             }
         ],
         "Liveries": []
@@ -1519,10 +1656,12 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_RPG_CLIP_01"
+                "Name": "COMPONENT_RPG_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_RPG_VARMOD_TVR"
+                "Name": "COMPONENT_RPG_VARMOD_TVR",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -1560,7 +1699,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_RPG_CLIP_01"
+                "Name": "COMPONENT_RPG_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -1598,7 +1738,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_RPG_CLIP_01"
+                "Name": "COMPONENT_RPG_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -1636,7 +1777,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_RPG_CLIP_01"
+                "Name": "COMPONENT_RPG_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -1674,7 +1816,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_MINIGUN_CLIP_01"
+                "Name": "COMPONENT_MINIGUN_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -2052,7 +2195,8 @@
         ],
         "Components": [
             {
-                "Name": "POLICE_TORCH_FLASHLIGHT"
+                "Name": "POLICE_TORCH_FLASHLIGHT",
+                "AttachBone": "Torch_Bulb"
             }
         ],
         "Liveries": []
@@ -2600,7 +2744,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_RPG_CLIP_01"
+                "Name": "COMPONENT_RPG_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -3624,16 +3769,20 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_SNSPISTOL_CLIP_01"
+                "Name": "COMPONENT_SNSPISTOL_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SNSPISTOL_CLIP_02"
+                "Name": "COMPONENT_SNSPISTOL_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SNSPISTOL_VARMOD_LOWRIDER"
+                "Name": "COMPONENT_SNSPISTOL_VARMOD_LOWRIDER",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE"
+                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE",
+                "AttachBone": "gun_gripr"
             }
         ],
         "Liveries": []
@@ -3671,19 +3820,24 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_HEAVYPISTOL_CLIP_01"
+                "Name": "COMPONENT_HEAVYPISTOL_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_HEAVYPISTOL_CLIP_02"
+                "Name": "COMPONENT_HEAVYPISTOL_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_PI_FLSH"
+                "Name": "COMPONENT_AT_PI_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_PI_SUPP"
+                "Name": "COMPONENT_AT_PI_SUPP",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_HEAVYPISTOL_VARMOD_LUXE"
+                "Name": "COMPONENT_HEAVYPISTOL_VARMOD_LUXE",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -3721,28 +3875,36 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_BULLPUPRIFLE_CLIP_01"
+                "Name": "COMPONENT_BULLPUPRIFLE_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_BULLPUPRIFLE_CLIP_02"
+                "Name": "COMPONENT_BULLPUPRIFLE_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_SMALL"
+                "Name": "COMPONENT_AT_SCOPE_SMALL",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP"
+                "Name": "COMPONENT_AT_AR_SUPP",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip"
             },
             {
-                "Name": "COMPONENT_BULLPUPRIFLE_VARMOD_LOW"
+                "Name": "COMPONENT_BULLPUPRIFLE_VARMOD_LOW",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE"
+                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE",
+                "AttachBone": "gun_gripr"
             }
         ],
         "Liveries": []
@@ -3780,34 +3942,44 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_SPECIALCARBINE_CLIP_01"
+                "Name": "COMPONENT_SPECIALCARBINE_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SPECIALCARBINE_CLIP_02"
+                "Name": "COMPONENT_SPECIALCARBINE_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SPECIALCARBINE_CLIP_03"
+                "Name": "COMPONENT_SPECIALCARBINE_CLIP_03",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MEDIUM"
+                "Name": "COMPONENT_AT_SCOPE_MEDIUM",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP_02"
+                "Name": "COMPONENT_AT_AR_SUPP_02",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip"
             },
             {
-                "Name": "COMPONENT_SPECIALCARBINE_VARMOD_LOWRIDER"
+                "Name": "COMPONENT_SPECIALCARBINE_VARMOD_LOWRIDER",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_SPECIALCARBINE_VARMOD_XMAS23"
+                "Name": "COMPONENT_SPECIALCARBINE_VARMOD_XMAS23",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE"
+                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE",
+                "AttachBone": "gun_gripr"
             }
         ],
         "Liveries": []
@@ -3920,34 +4092,44 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_SNSPISTOL_MK2_CLIP_01"
+                "Name": "COMPONENT_SNSPISTOL_MK2_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SNSPISTOL_MK2_CLIP_02"
+                "Name": "COMPONENT_SNSPISTOL_MK2_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SNSPISTOL_MK2_CLIP_TRACER"
+                "Name": "COMPONENT_SNSPISTOL_MK2_CLIP_TRACER",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SNSPISTOL_MK2_CLIP_INCENDIARY"
+                "Name": "COMPONENT_SNSPISTOL_MK2_CLIP_INCENDIARY",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SNSPISTOL_MK2_CLIP_HOLLOWPOINT"
+                "Name": "COMPONENT_SNSPISTOL_MK2_CLIP_HOLLOWPOINT",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SNSPISTOL_MK2_CLIP_FMJ"
+                "Name": "COMPONENT_SNSPISTOL_MK2_CLIP_FMJ",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_PI_FLSH_03"
+                "Name": "COMPONENT_AT_PI_FLSH_03",
+                "AttachBone": "WAPFlshLasr_2"
             },
             {
-                "Name": "COMPONENT_AT_PI_RAIL_02"
+                "Name": "COMPONENT_AT_PI_RAIL_02",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_PI_SUPP_02"
+                "Name": "COMPONENT_AT_PI_SUPP_02",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_PI_COMP_02"
+                "Name": "COMPONENT_AT_PI_COMP_02",
+                "AttachBone": "WAPSupp_2"
             }
         ],
         "Liveries": [
@@ -4127,67 +4309,88 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_MARKSMANRIFLE_MK2_CLIP_01"
+                "Name": "COMPONENT_MARKSMANRIFLE_MK2_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_MARKSMANRIFLE_MK2_CLIP_02"
+                "Name": "COMPONENT_MARKSMANRIFLE_MK2_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_MARKSMANRIFLE_MK2_CLIP_ARMORPIERCING"
+                "Name": "COMPONENT_MARKSMANRIFLE_MK2_CLIP_ARMORPIERCING",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_MARKSMANRIFLE_MK2_CLIP_FMJ"
+                "Name": "COMPONENT_MARKSMANRIFLE_MK2_CLIP_FMJ",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_MARKSMANRIFLE_MK2_CLIP_INCENDIARY"
+                "Name": "COMPONENT_MARKSMANRIFLE_MK2_CLIP_INCENDIARY",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_MARKSMANRIFLE_MK2_CLIP_TRACER"
+                "Name": "COMPONENT_MARKSMANRIFLE_MK2_CLIP_TRACER",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_SIGHTS"
+                "Name": "COMPONENT_AT_SIGHTS",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MEDIUM_MK2"
+                "Name": "COMPONENT_AT_SCOPE_MEDIUM_MK2",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_LARGE_FIXED_ZOOM_MK2"
+                "Name": "COMPONENT_AT_SCOPE_LARGE_FIXED_ZOOM_MK2",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP"
+                "Name": "COMPONENT_AT_AR_SUPP",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_01"
+                "Name": "COMPONENT_AT_MUZZLE_01",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_02"
+                "Name": "COMPONENT_AT_MUZZLE_02",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_03"
+                "Name": "COMPONENT_AT_MUZZLE_03",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_04"
+                "Name": "COMPONENT_AT_MUZZLE_04",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_05"
+                "Name": "COMPONENT_AT_MUZZLE_05",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_06"
+                "Name": "COMPONENT_AT_MUZZLE_06",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_07"
+                "Name": "COMPONENT_AT_MUZZLE_07",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP_02"
+                "Name": "COMPONENT_AT_AR_AFGRIP_02",
+                "AttachBone": "WAPGrip_2"
             },
             {
-                "Name": "COMPONENT_AT_MRFL_BARREL_01"
+                "Name": "COMPONENT_AT_MRFL_BARREL_01",
+                "AttachBone": "WAPBarrel"
             },
             {
-                "Name": "COMPONENT_AT_MRFL_BARREL_02"
+                "Name": "COMPONENT_AT_MRFL_BARREL_02",
+                "AttachBone": "WAPBarrel"
             }
         ],
         "Liveries": [
@@ -4334,37 +4537,48 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_PUMPSHOTGUN_MK2_CLIP_01"
+                "Name": "COMPONENT_PUMPSHOTGUN_MK2_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_PUMPSHOTGUN_MK2_CLIP_ARMORPIERCING"
+                "Name": "COMPONENT_PUMPSHOTGUN_MK2_CLIP_ARMORPIERCING",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_PUMPSHOTGUN_MK2_CLIP_EXPLOSIVE"
+                "Name": "COMPONENT_PUMPSHOTGUN_MK2_CLIP_EXPLOSIVE",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_PUMPSHOTGUN_MK2_CLIP_HOLLOWPOINT"
+                "Name": "COMPONENT_PUMPSHOTGUN_MK2_CLIP_HOLLOWPOINT",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_PUMPSHOTGUN_MK2_CLIP_INCENDIARY"
+                "Name": "COMPONENT_PUMPSHOTGUN_MK2_CLIP_INCENDIARY",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_SIGHTS"
+                "Name": "COMPONENT_AT_SIGHTS",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MACRO_MK2"
+                "Name": "COMPONENT_AT_SCOPE_MACRO_MK2",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_SMALL_MK2"
+                "Name": "COMPONENT_AT_SCOPE_SMALL_MK2",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr_2"
             },
             {
-                "Name": "COMPONENT_AT_SR_SUPP_03"
+                "Name": "COMPONENT_AT_SR_SUPP_03",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_08"
+                "Name": "COMPONENT_AT_MUZZLE_08",
+                "AttachBone": "WAPSupp"
             }
         ],
         "Liveries": [
@@ -4511,67 +4725,88 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_BULLPUPRIFLE_MK2_CLIP_01"
+                "Name": "COMPONENT_BULLPUPRIFLE_MK2_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_BULLPUPRIFLE_MK2_CLIP_02"
+                "Name": "COMPONENT_BULLPUPRIFLE_MK2_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_BULLPUPRIFLE_MK2_CLIP_TRACER"
+                "Name": "COMPONENT_BULLPUPRIFLE_MK2_CLIP_TRACER",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_BULLPUPRIFLE_MK2_CLIP_INCENDIARY"
+                "Name": "COMPONENT_BULLPUPRIFLE_MK2_CLIP_INCENDIARY",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_BULLPUPRIFLE_MK2_CLIP_ARMORPIERCING"
+                "Name": "COMPONENT_BULLPUPRIFLE_MK2_CLIP_ARMORPIERCING",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_BULLPUPRIFLE_MK2_CLIP_FMJ"
+                "Name": "COMPONENT_BULLPUPRIFLE_MK2_CLIP_FMJ",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_SIGHTS"
+                "Name": "COMPONENT_AT_SIGHTS",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MACRO_02_MK2"
+                "Name": "COMPONENT_AT_SCOPE_MACRO_02_MK2",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_SMALL_MK2"
+                "Name": "COMPONENT_AT_SCOPE_SMALL_MK2",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_BP_BARREL_01"
+                "Name": "COMPONENT_AT_BP_BARREL_01",
+                "AttachBone": "WAPBarrel"
             },
             {
-                "Name": "COMPONENT_AT_BP_BARREL_02"
+                "Name": "COMPONENT_AT_BP_BARREL_02",
+                "AttachBone": "WAPBarrel"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP"
+                "Name": "COMPONENT_AT_AR_SUPP",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_01"
+                "Name": "COMPONENT_AT_MUZZLE_01",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_02"
+                "Name": "COMPONENT_AT_MUZZLE_02",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_03"
+                "Name": "COMPONENT_AT_MUZZLE_03",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_04"
+                "Name": "COMPONENT_AT_MUZZLE_04",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_05"
+                "Name": "COMPONENT_AT_MUZZLE_05",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_06"
+                "Name": "COMPONENT_AT_MUZZLE_06",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_07"
+                "Name": "COMPONENT_AT_MUZZLE_07",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP_02"
+                "Name": "COMPONENT_AT_AR_AFGRIP_02",
+                "AttachBone": "WAPGrip"
             }
         ],
         "Liveries": [
@@ -4718,67 +4953,88 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_SPECIALCARBINE_MK2_CLIP_01"
+                "Name": "COMPONENT_SPECIALCARBINE_MK2_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SPECIALCARBINE_MK2_CLIP_02"
+                "Name": "COMPONENT_SPECIALCARBINE_MK2_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SPECIALCARBINE_MK2_CLIP_TRACER"
+                "Name": "COMPONENT_SPECIALCARBINE_MK2_CLIP_TRACER",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SPECIALCARBINE_MK2_CLIP_INCENDIARY"
+                "Name": "COMPONENT_SPECIALCARBINE_MK2_CLIP_INCENDIARY",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SPECIALCARBINE_MK2_CLIP_ARMORPIERCING"
+                "Name": "COMPONENT_SPECIALCARBINE_MK2_CLIP_ARMORPIERCING",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SPECIALCARBINE_MK2_CLIP_FMJ"
+                "Name": "COMPONENT_SPECIALCARBINE_MK2_CLIP_FMJ",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr_2"
             },
             {
-                "Name": "COMPONENT_AT_SIGHTS"
+                "Name": "COMPONENT_AT_SIGHTS",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MACRO_MK2"
+                "Name": "COMPONENT_AT_SCOPE_MACRO_MK2",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MEDIUM_MK2"
+                "Name": "COMPONENT_AT_SCOPE_MEDIUM_MK2",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP_02"
+                "Name": "COMPONENT_AT_AR_SUPP_02",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_01"
+                "Name": "COMPONENT_AT_MUZZLE_01",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_02"
+                "Name": "COMPONENT_AT_MUZZLE_02",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_03"
+                "Name": "COMPONENT_AT_MUZZLE_03",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_04"
+                "Name": "COMPONENT_AT_MUZZLE_04",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_05"
+                "Name": "COMPONENT_AT_MUZZLE_05",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_06"
+                "Name": "COMPONENT_AT_MUZZLE_06",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_07"
+                "Name": "COMPONENT_AT_MUZZLE_07",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP_02"
+                "Name": "COMPONENT_AT_AR_AFGRIP_02",
+                "AttachBone": "WAPGrip_2"
             },
             {
-                "Name": "COMPONENT_AT_SC_BARREL_01"
+                "Name": "COMPONENT_AT_SC_BARREL_01",
+                "AttachBone": "WAPBarrel"
             },
             {
-                "Name": "COMPONENT_AT_SC_BARREL_02"
+                "Name": "COMPONENT_AT_SC_BARREL_02",
+                "AttachBone": "WAPBarrel"
             }
         ],
         "Liveries": [
@@ -4986,10 +5242,12 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_PISTOLXM3_CLIP_01"
+                "Name": "COMPONENT_PISTOLXM3_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_PISTOLXM3_SUPP"
+                "Name": "COMPONENT_PISTOLXM3_SUPP",
+                "AttachBone": "WAPSupp_2"
             }
         ],
         "Liveries": []
@@ -5027,7 +5285,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_RAILGUNXM3_CLIP_01"
+                "Name": "COMPONENT_RAILGUNXM3_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -5174,31 +5433,40 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_REVOLVER_MK2_CLIP_01"
+                "Name": "COMPONENT_REVOLVER_MK2_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_REVOLVER_MK2_CLIP_FMJ"
+                "Name": "COMPONENT_REVOLVER_MK2_CLIP_FMJ",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_REVOLVER_MK2_CLIP_HOLLOWPOINT"
+                "Name": "COMPONENT_REVOLVER_MK2_CLIP_HOLLOWPOINT",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_REVOLVER_MK2_CLIP_INCENDIARY"
+                "Name": "COMPONENT_REVOLVER_MK2_CLIP_INCENDIARY",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_REVOLVER_MK2_CLIP_TRACER"
+                "Name": "COMPONENT_REVOLVER_MK2_CLIP_TRACER",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_SIGHTS"
+                "Name": "COMPONENT_AT_SIGHTS",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MACRO_MK2"
+                "Name": "COMPONENT_AT_SCOPE_MACRO_MK2",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_PI_FLSH"
+                "Name": "COMPONENT_AT_PI_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_PI_COMP_03"
+                "Name": "COMPONENT_AT_PI_COMP_03",
+                "AttachBone": "WAPSupp"
             }
         ],
         "Liveries": [
@@ -5267,7 +5535,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_RAYPISTOL_VARMOD_XMAS18"
+                "Name": "COMPONENT_RAYPISTOL_VARMOD_XMAS18",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -5333,7 +5602,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_MINIGUN_CLIP_01"
+                "Name": "COMPONENT_MINIGUN_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -5350,7 +5620,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_DOUBLEACTION_CLIP_01"
+                "Name": "COMPONENT_DOUBLEACTION_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -5422,7 +5693,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_HOMINGLAUNCHER_CLIP_01"
+                "Name": "COMPONENT_HOMINGLAUNCHER_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -5460,10 +5732,12 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_GUSENBERG_CLIP_01"
+                "Name": "COMPONENT_GUSENBERG_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_GUSENBERG_CLIP_02"
+                "Name": "COMPONENT_GUSENBERG_CLIP_02",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -5535,13 +5809,16 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_VINTAGEPISTOL_CLIP_01"
+                "Name": "COMPONENT_VINTAGEPISTOL_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_VINTAGEPISTOL_CLIP_02"
+                "Name": "COMPONENT_VINTAGEPISTOL_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_PI_SUPP"
+                "Name": "COMPONENT_AT_PI_SUPP",
+                "AttachBone": "WAPSupp_2"
             }
         ],
         "Liveries": []
@@ -5579,7 +5856,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_FIREWORK_CLIP_01"
+                "Name": "COMPONENT_FIREWORK_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -5617,7 +5895,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_MUSKET_CLIP_01"
+                "Name": "COMPONENT_MUSKET_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -5689,7 +5968,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_RAILGUN_CLIP_01"
+                "Name": "COMPONENT_RAILGUN_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -5727,28 +6007,36 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_MARKSMANRIFLE_CLIP_01"
+                "Name": "COMPONENT_MARKSMANRIFLE_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_MARKSMANRIFLE_CLIP_02"
+                "Name": "COMPONENT_MARKSMANRIFLE_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_LARGE_FIXED_ZOOM"
+                "Name": "COMPONENT_AT_SCOPE_LARGE_FIXED_ZOOM",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP"
+                "Name": "COMPONENT_AT_AR_SUPP",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip_2"
             },
             {
-                "Name": "COMPONENT_MARKSMANRIFLE_VARMOD_LUXE"
+                "Name": "COMPONENT_MARKSMANRIFLE_VARMOD_LUXE",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE"
+                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE",
+                "AttachBone": "gun_gripr"
             }
         ],
         "Liveries": []
@@ -5786,22 +6074,28 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_HEAVYSHOTGUN_CLIP_01"
+                "Name": "COMPONENT_HEAVYSHOTGUN_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_HEAVYSHOTGUN_CLIP_02"
+                "Name": "COMPONENT_HEAVYSHOTGUN_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_HEAVYSHOTGUN_CLIP_03"
+                "Name": "COMPONENT_HEAVYSHOTGUN_CLIP_03",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP_02"
+                "Name": "COMPONENT_AT_AR_SUPP_02",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip_2"
             }
         ],
         "Liveries": []
@@ -5839,22 +6133,28 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_MILITARYRIFLE_CLIP_01"
+                "Name": "COMPONENT_MILITARYRIFLE_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_MILITARYRIFLE_CLIP_02"
+                "Name": "COMPONENT_MILITARYRIFLE_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr_2"
             },
             {
-                "Name": "COMPONENT_MILITARYRIFLE_SIGHT_01"
+                "Name": "COMPONENT_MILITARYRIFLE_SIGHT_01",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_SMALL"
+                "Name": "COMPONENT_AT_SCOPE_SMALL",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP"
+                "Name": "COMPONENT_AT_AR_SUPP",
+                "AttachBone": "WAPSupp_2"
             }
         ],
         "Liveries": []
@@ -5892,13 +6192,16 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_CERAMICPISTOL_CLIP_01"
+                "Name": "COMPONENT_CERAMICPISTOL_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_CERAMICPISTOL_CLIP_02"
+                "Name": "COMPONENT_CERAMICPISTOL_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_CERAMICPISTOL_SUPP"
+                "Name": "COMPONENT_CERAMICPISTOL_SUPP",
+                "AttachBone": "WAPSupp_2"
             }
         ],
         "Liveries": []
@@ -5936,13 +6239,16 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_COMBATSHOTGUN_CLIP_01"
+                "Name": "COMPONENT_COMBATSHOTGUN_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP"
+                "Name": "COMPONENT_AT_AR_SUPP",
+                "AttachBone": "WAPSupp"
             }
         ],
         "Liveries": []
@@ -6129,7 +6435,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_NAVYREVOLVER_CLIP_01"
+                "Name": "COMPONENT_NAVYREVOLVER_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -6167,7 +6474,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_GADGETPISTOL_CLIP_01"
+                "Name": "COMPONENT_GADGETPISTOL_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -6307,7 +6615,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_FLAREGUN_CLIP_01"
+                "Name": "COMPONENT_FLAREGUN_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -6379,34 +6688,44 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_KNUCKLE_VARMOD_BASE"
+                "Name": "COMPONENT_KNUCKLE_VARMOD_BASE",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNUCKLE_VARMOD_PIMP"
+                "Name": "COMPONENT_KNUCKLE_VARMOD_PIMP",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNUCKLE_VARMOD_BALLAS"
+                "Name": "COMPONENT_KNUCKLE_VARMOD_BALLAS",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNUCKLE_VARMOD_DOLLAR"
+                "Name": "COMPONENT_KNUCKLE_VARMOD_DOLLAR",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNUCKLE_VARMOD_DIAMOND"
+                "Name": "COMPONENT_KNUCKLE_VARMOD_DIAMOND",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNUCKLE_VARMOD_HATE"
+                "Name": "COMPONENT_KNUCKLE_VARMOD_HATE",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNUCKLE_VARMOD_LOVE"
+                "Name": "COMPONENT_KNUCKLE_VARMOD_LOVE",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNUCKLE_VARMOD_PLAYER"
+                "Name": "COMPONENT_KNUCKLE_VARMOD_PLAYER",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNUCKLE_VARMOD_KING"
+                "Name": "COMPONENT_KNUCKLE_VARMOD_KING",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_KNUCKLE_VARMOD_VAGOS"
+                "Name": "COMPONENT_KNUCKLE_VARMOD_VAGOS",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -6444,7 +6763,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_MARKSMANPISTOL_CLIP_01"
+                "Name": "COMPONENT_MARKSMANPISTOL_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -6482,22 +6802,28 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_COMBATPDW_CLIP_01"
+                "Name": "COMPONENT_COMBATPDW_CLIP_01",
+                "AttachBone": "WAPClip_2"
             },
             {
-                "Name": "COMPONENT_COMBATPDW_CLIP_02"
+                "Name": "COMPONENT_COMBATPDW_CLIP_02",
+                "AttachBone": "WAPClip_2"
             },
             {
-                "Name": "COMPONENT_COMBATPDW_CLIP_03"
+                "Name": "COMPONENT_COMBATPDW_CLIP_03",
+                "AttachBone": "WAPClip_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_SMALL"
+                "Name": "COMPONENT_AT_SCOPE_SMALL",
+                "AttachBone": "WAPScop_2"
             }
         ],
         "Liveries": []
@@ -6535,7 +6861,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_DBSHOTGUN_CLIP_01"
+                "Name": "COMPONENT_DBSHOTGUN_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -6607,16 +6934,20 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_MACHINEPISTOL_CLIP_01"
+                "Name": "COMPONENT_MACHINEPISTOL_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_MACHINEPISTOL_CLIP_02"
+                "Name": "COMPONENT_MACHINEPISTOL_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_MACHINEPISTOL_CLIP_03"
+                "Name": "COMPONENT_MACHINEPISTOL_CLIP_03",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_PI_SUPP"
+                "Name": "COMPONENT_AT_PI_SUPP",
+                "AttachBone": "WAPSupp"
             }
         ],
         "Liveries": []
@@ -6654,13 +6985,16 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_COMPACTRIFLE_CLIP_01"
+                "Name": "COMPONENT_COMPACTRIFLE_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_COMPACTRIFLE_CLIP_02"
+                "Name": "COMPONENT_COMPACTRIFLE_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_COMPACTRIFLE_CLIP_03"
+                "Name": "COMPONENT_COMPACTRIFLE_CLIP_03",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -6698,7 +7032,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_FLASHLIGHT_LIGHT"
+                "Name": "COMPONENT_FLASHLIGHT_LIGHT",
+                "AttachBone": "WAPFlsh"
             }
         ],
         "Liveries": []
@@ -6804,16 +7139,20 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_REVOLVER_CLIP_01"
+                "Name": "COMPONENT_REVOLVER_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_REVOLVER_VARMOD_BOSS"
+                "Name": "COMPONENT_REVOLVER_VARMOD_BOSS",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_REVOLVER_VARMOD_GOON"
+                "Name": "COMPONENT_REVOLVER_VARMOD_GOON",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE"
+                "Name": "COMPONENT_GUNRUN_MK2_UPGRADE",
+                "AttachBone": "gun_gripr"
             }
         ],
         "Liveries": []
@@ -6851,13 +7190,16 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_SWITCHBLADE_VARMOD_BASE"
+                "Name": "COMPONENT_SWITCHBLADE_VARMOD_BASE",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_SWITCHBLADE_VARMOD_VAR1"
+                "Name": "COMPONENT_SWITCHBLADE_VARMOD_VAR1",
+                "AttachBone": "gun_root"
             },
             {
-                "Name": "COMPONENT_SWITCHBLADE_VARMOD_VAR2"
+                "Name": "COMPONENT_SWITCHBLADE_VARMOD_VAR2",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -7031,7 +7373,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_AUTOSHOTGUN_CLIP_01"
+                "Name": "COMPONENT_AUTOSHOTGUN_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -7069,7 +7412,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_COMPACTLAUNCHER_CLIP_01"
+                "Name": "COMPONENT_COMPACTLAUNCHER_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -7107,10 +7451,12 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_MINISMG_CLIP_01"
+                "Name": "COMPONENT_MINISMG_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_MINISMG_CLIP_02"
+                "Name": "COMPONENT_MINISMG_CLIP_02",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -7359,67 +7705,88 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_CARBINERIFLE_MK2_CLIP_01"
+                "Name": "COMPONENT_CARBINERIFLE_MK2_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_CARBINERIFLE_MK2_CLIP_02"
+                "Name": "COMPONENT_CARBINERIFLE_MK2_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_CARBINERIFLE_MK2_CLIP_ARMORPIERCING"
+                "Name": "COMPONENT_CARBINERIFLE_MK2_CLIP_ARMORPIERCING",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_CARBINERIFLE_MK2_CLIP_FMJ"
+                "Name": "COMPONENT_CARBINERIFLE_MK2_CLIP_FMJ",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_CARBINERIFLE_MK2_CLIP_INCENDIARY"
+                "Name": "COMPONENT_CARBINERIFLE_MK2_CLIP_INCENDIARY",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_CARBINERIFLE_MK2_CLIP_TRACER"
+                "Name": "COMPONENT_CARBINERIFLE_MK2_CLIP_TRACER",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_SIGHTS"
+                "Name": "COMPONENT_AT_SIGHTS",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MACRO_MK2"
+                "Name": "COMPONENT_AT_SCOPE_MACRO_MK2",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MEDIUM_MK2"
+                "Name": "COMPONENT_AT_SCOPE_MEDIUM_MK2",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP"
+                "Name": "COMPONENT_AT_AR_SUPP",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_01"
+                "Name": "COMPONENT_AT_MUZZLE_01",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_02"
+                "Name": "COMPONENT_AT_MUZZLE_02",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_03"
+                "Name": "COMPONENT_AT_MUZZLE_03",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_04"
+                "Name": "COMPONENT_AT_MUZZLE_04",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_05"
+                "Name": "COMPONENT_AT_MUZZLE_05",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_06"
+                "Name": "COMPONENT_AT_MUZZLE_06",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_07"
+                "Name": "COMPONENT_AT_MUZZLE_07",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP_02"
+                "Name": "COMPONENT_AT_AR_AFGRIP_02",
+                "AttachBone": "WAPGrip_2"
             },
             {
-                "Name": "COMPONENT_AT_CR_BARREL_01"
+                "Name": "COMPONENT_AT_CR_BARREL_01",
+                "AttachBone": "WAPBarrel"
             },
             {
-                "Name": "COMPONENT_AT_CR_BARREL_02"
+                "Name": "COMPONENT_AT_CR_BARREL_02",
+                "AttachBone": "WAPBarrel"
             }
         ],
         "Liveries": [
@@ -7566,67 +7933,88 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_ASSAULTRIFLE_MK2_CLIP_01"
+                "Name": "COMPONENT_ASSAULTRIFLE_MK2_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_ASSAULTRIFLE_MK2_CLIP_02"
+                "Name": "COMPONENT_ASSAULTRIFLE_MK2_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_ASSAULTRIFLE_MK2_CLIP_ARMORPIERCING"
+                "Name": "COMPONENT_ASSAULTRIFLE_MK2_CLIP_ARMORPIERCING",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_ASSAULTRIFLE_MK2_CLIP_FMJ"
+                "Name": "COMPONENT_ASSAULTRIFLE_MK2_CLIP_FMJ",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_ASSAULTRIFLE_MK2_CLIP_INCENDIARY"
+                "Name": "COMPONENT_ASSAULTRIFLE_MK2_CLIP_INCENDIARY",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_ASSAULTRIFLE_MK2_CLIP_TRACER"
+                "Name": "COMPONENT_ASSAULTRIFLE_MK2_CLIP_TRACER",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr_2"
             },
             {
-                "Name": "COMPONENT_AT_SIGHTS"
+                "Name": "COMPONENT_AT_SIGHTS",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MACRO_MK2"
+                "Name": "COMPONENT_AT_SCOPE_MACRO_MK2",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MEDIUM_MK2"
+                "Name": "COMPONENT_AT_SCOPE_MEDIUM_MK2",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP_02"
+                "Name": "COMPONENT_AT_AR_SUPP_02",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_01"
+                "Name": "COMPONENT_AT_MUZZLE_01",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_02"
+                "Name": "COMPONENT_AT_MUZZLE_02",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_03"
+                "Name": "COMPONENT_AT_MUZZLE_03",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_04"
+                "Name": "COMPONENT_AT_MUZZLE_04",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_05"
+                "Name": "COMPONENT_AT_MUZZLE_05",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_06"
+                "Name": "COMPONENT_AT_MUZZLE_06",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_07"
+                "Name": "COMPONENT_AT_MUZZLE_07",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP_02"
+                "Name": "COMPONENT_AT_AR_AFGRIP_02",
+                "AttachBone": "WAPGrip"
             },
             {
-                "Name": "COMPONENT_AT_AR_BARREL_01"
+                "Name": "COMPONENT_AT_AR_BARREL_01",
+                "AttachBone": "WAPBarrel"
             },
             {
-                "Name": "COMPONENT_AT_AR_BARREL_02"
+                "Name": "COMPONENT_AT_AR_BARREL_02",
+                "AttachBone": "WAPBarrel"
             }
         ],
         "Liveries": [
@@ -7773,61 +8161,80 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_COMBATMG_MK2_CLIP_01"
+                "Name": "COMPONENT_COMBATMG_MK2_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_COMBATMG_MK2_CLIP_02"
+                "Name": "COMPONENT_COMBATMG_MK2_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_COMBATMG_MK2_CLIP_ARMORPIERCING"
+                "Name": "COMPONENT_COMBATMG_MK2_CLIP_ARMORPIERCING",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_COMBATMG_MK2_CLIP_FMJ"
+                "Name": "COMPONENT_COMBATMG_MK2_CLIP_FMJ",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_COMBATMG_MK2_CLIP_INCENDIARY"
+                "Name": "COMPONENT_COMBATMG_MK2_CLIP_INCENDIARY",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_COMBATMG_MK2_CLIP_TRACER"
+                "Name": "COMPONENT_COMBATMG_MK2_CLIP_TRACER",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_SIGHTS"
+                "Name": "COMPONENT_AT_SIGHTS",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_SMALL_MK2"
+                "Name": "COMPONENT_AT_SCOPE_SMALL_MK2",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MEDIUM_MK2"
+                "Name": "COMPONENT_AT_SCOPE_MEDIUM_MK2",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_01"
+                "Name": "COMPONENT_AT_MUZZLE_01",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_02"
+                "Name": "COMPONENT_AT_MUZZLE_02",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_03"
+                "Name": "COMPONENT_AT_MUZZLE_03",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_04"
+                "Name": "COMPONENT_AT_MUZZLE_04",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_05"
+                "Name": "COMPONENT_AT_MUZZLE_05",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_06"
+                "Name": "COMPONENT_AT_MUZZLE_06",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_07"
+                "Name": "COMPONENT_AT_MUZZLE_07",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP_02"
+                "Name": "COMPONENT_AT_AR_AFGRIP_02",
+                "AttachBone": "WAPGrip_2"
             },
             {
-                "Name": "COMPONENT_AT_MG_BARREL_01"
+                "Name": "COMPONENT_AT_MG_BARREL_01",
+                "AttachBone": "WAPBarrel"
             },
             {
-                "Name": "COMPONENT_AT_MG_BARREL_02"
+                "Name": "COMPONENT_AT_MG_BARREL_02",
+                "AttachBone": "WAPBarrel"
             }
         ],
         "Liveries": [
@@ -7974,64 +8381,84 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_SMG_MK2_CLIP_01"
+                "Name": "COMPONENT_SMG_MK2_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SMG_MK2_CLIP_02"
+                "Name": "COMPONENT_SMG_MK2_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SMG_MK2_CLIP_FMJ"
+                "Name": "COMPONENT_SMG_MK2_CLIP_FMJ",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SMG_MK2_CLIP_HOLLOWPOINT"
+                "Name": "COMPONENT_SMG_MK2_CLIP_HOLLOWPOINT",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SMG_MK2_CLIP_INCENDIARY"
+                "Name": "COMPONENT_SMG_MK2_CLIP_INCENDIARY",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_SMG_MK2_CLIP_TRACER"
+                "Name": "COMPONENT_SMG_MK2_CLIP_TRACER",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr_2"
             },
             {
-                "Name": "COMPONENT_AT_SIGHTS_SMG"
+                "Name": "COMPONENT_AT_SIGHTS_SMG",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MACRO_02_SMG_MK2"
+                "Name": "COMPONENT_AT_SCOPE_MACRO_02_SMG_MK2",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_SMALL_SMG_MK2"
+                "Name": "COMPONENT_AT_SCOPE_SMALL_SMG_MK2",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_PI_SUPP"
+                "Name": "COMPONENT_AT_PI_SUPP",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_01"
+                "Name": "COMPONENT_AT_MUZZLE_01",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_02"
+                "Name": "COMPONENT_AT_MUZZLE_02",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_03"
+                "Name": "COMPONENT_AT_MUZZLE_03",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_04"
+                "Name": "COMPONENT_AT_MUZZLE_04",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_05"
+                "Name": "COMPONENT_AT_MUZZLE_05",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_06"
+                "Name": "COMPONENT_AT_MUZZLE_06",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_07"
+                "Name": "COMPONENT_AT_MUZZLE_07",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_SB_BARREL_01"
+                "Name": "COMPONENT_AT_SB_BARREL_01",
+                "AttachBone": "WAPBarrel"
             },
             {
-                "Name": "COMPONENT_AT_SB_BARREL_02"
+                "Name": "COMPONENT_AT_SB_BARREL_02",
+                "AttachBone": "WAPBarrel"
             }
         ],
         "Liveries": [
@@ -8178,40 +8605,52 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_PISTOL_MK2_CLIP_01"
+                "Name": "COMPONENT_PISTOL_MK2_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_PISTOL_MK2_CLIP_02"
+                "Name": "COMPONENT_PISTOL_MK2_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_PISTOL_MK2_CLIP_FMJ"
+                "Name": "COMPONENT_PISTOL_MK2_CLIP_FMJ",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_PISTOL_MK2_CLIP_HOLLOWPOINT"
+                "Name": "COMPONENT_PISTOL_MK2_CLIP_HOLLOWPOINT",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_PISTOL_MK2_CLIP_INCENDIARY"
+                "Name": "COMPONENT_PISTOL_MK2_CLIP_INCENDIARY",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_PISTOL_MK2_CLIP_TRACER"
+                "Name": "COMPONENT_PISTOL_MK2_CLIP_TRACER",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_PI_RAIL"
+                "Name": "COMPONENT_AT_PI_RAIL",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_PI_FLSH_02"
+                "Name": "COMPONENT_AT_PI_FLSH_02",
+                "AttachBone": "WAPFlshLasr"
             },
             {
-                "Name": "COMPONENT_AT_PI_SUPP_02"
+                "Name": "COMPONENT_AT_PI_SUPP_02",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_PI_COMP"
+                "Name": "COMPONENT_AT_PI_COMP",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_PISTOL_MK2_VARMOD_XM3_SLIDE"
+                "Name": "COMPONENT_PISTOL_MK2_VARMOD_XM3_SLIDE",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_PISTOL_MK2_VARMOD_XM3"
+                "Name": "COMPONENT_PISTOL_MK2_VARMOD_XM3",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": [
@@ -8391,49 +8830,64 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_HEAVYSNIPER_MK2_CLIP_01"
+                "Name": "COMPONENT_HEAVYSNIPER_MK2_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_HEAVYSNIPER_MK2_CLIP_02"
+                "Name": "COMPONENT_HEAVYSNIPER_MK2_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_HEAVYSNIPER_MK2_CLIP_ARMORPIERCING"
+                "Name": "COMPONENT_HEAVYSNIPER_MK2_CLIP_ARMORPIERCING",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_HEAVYSNIPER_MK2_CLIP_EXPLOSIVE"
+                "Name": "COMPONENT_HEAVYSNIPER_MK2_CLIP_EXPLOSIVE",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_HEAVYSNIPER_MK2_CLIP_FMJ"
+                "Name": "COMPONENT_HEAVYSNIPER_MK2_CLIP_FMJ",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_HEAVYSNIPER_MK2_CLIP_INCENDIARY"
+                "Name": "COMPONENT_HEAVYSNIPER_MK2_CLIP_INCENDIARY",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_LARGE_MK2"
+                "Name": "COMPONENT_AT_SCOPE_LARGE_MK2",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MAX"
+                "Name": "COMPONENT_AT_SCOPE_MAX",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_NV"
+                "Name": "COMPONENT_AT_SCOPE_NV",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_THERMAL"
+                "Name": "COMPONENT_AT_SCOPE_THERMAL",
+                "AttachBone": "WAPScop"
             },
             {
-                "Name": "COMPONENT_AT_SR_SUPP_03"
+                "Name": "COMPONENT_AT_SR_SUPP_03",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_08"
+                "Name": "COMPONENT_AT_MUZZLE_08",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_MUZZLE_09"
+                "Name": "COMPONENT_AT_MUZZLE_09",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_SR_BARREL_01"
+                "Name": "COMPONENT_AT_SR_BARREL_01",
+                "AttachBone": "WAPBarrel"
             },
             {
-                "Name": "COMPONENT_AT_SR_BARREL_02"
+                "Name": "COMPONENT_AT_SR_BARREL_02",
+                "AttachBone": "WAPBarrel"
             }
         ],
         "Liveries": [
@@ -8573,19 +9027,24 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_TACTICALRIFLE_CLIP_01"
+                "Name": "COMPONENT_TACTICALRIFLE_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_TACTICALRIFLE_CLIP_02"
+                "Name": "COMPONENT_TACTICALRIFLE_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH_REH"
+                "Name": "COMPONENT_AT_AR_FLSH_REH",
+                "AttachBone": "WAPFlsh_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP_02"
+                "Name": "COMPONENT_AT_AR_SUPP_02",
+                "AttachBone": "WAPSupp_2"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip_2"
             }
         ],
         "Liveries": []
@@ -8623,7 +9082,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_PRECISIONRIFLE_CLIP_01"
+                "Name": "COMPONENT_PRECISIONRIFLE_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -8661,25 +9121,32 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_HEAVYRIFLE_CLIP_01"
+                "Name": "COMPONENT_HEAVYRIFLE_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_HEAVYRIFLE_CLIP_02"
+                "Name": "COMPONENT_HEAVYRIFLE_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_HEAVYRIFLE_SIGHT_01"
+                "Name": "COMPONENT_HEAVYRIFLE_SIGHT_01",
+                "AttachBone": "WAPScop_3"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MEDIUM"
+                "Name": "COMPONENT_AT_SCOPE_MEDIUM",
+                "AttachBone": "WAPScop_3"
             },
             {
-                "Name": "COMPONENT_AT_AR_FLSH"
+                "Name": "COMPONENT_AT_AR_FLSH",
+                "AttachBone": "WAPFlshLasr_3"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP"
+                "Name": "COMPONENT_AT_AR_SUPP",
+                "AttachBone": "WAPSupp_3"
             },
             {
-                "Name": "COMPONENT_AT_AR_AFGRIP"
+                "Name": "COMPONENT_AT_AR_AFGRIP",
+                "AttachBone": "WAPGrip_3"
             }
         ],
         "Liveries": [
@@ -8755,7 +9222,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_EMPLAUNCHER_CLIP_01"
+                "Name": "COMPONENT_EMPLAUNCHER_CLIP_01",
+                "AttachBone": "WAPClip"
             }
         ],
         "Liveries": []
@@ -8793,7 +9261,8 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_STUNGUN_VARMOD_BAIL"
+                "Name": "COMPONENT_STUNGUN_VARMOD_BAIL",
+                "AttachBone": "gun_root"
             }
         ],
         "Liveries": []
@@ -8831,16 +9300,20 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_TECPISTOL_CLIP_01"
+                "Name": "COMPONENT_TECPISTOL_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_TECPISTOL_CLIP_02"
+                "Name": "COMPONENT_TECPISTOL_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP_02"
+                "Name": "COMPONENT_AT_AR_SUPP_02",
+                "AttachBone": "WAPSupp"
             },
             {
-                "Name": "COMPONENT_AT_SCOPE_MACRO"
+                "Name": "COMPONENT_AT_SCOPE_MACRO",
+                "AttachBone": "WAPScop_2"
             }
         ],
         "Liveries": []
@@ -8946,13 +9419,16 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_BATTLERIFLE_CLIP_01"
+                "Name": "COMPONENT_BATTLERIFLE_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_BATTLERIFLE_CLIP_02"
+                "Name": "COMPONENT_BATTLERIFLE_CLIP_02",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_AT_AR_SUPP"
+                "Name": "COMPONENT_AT_AR_SUPP",
+                "AttachBone": "WAPSupp_3"
             }
         ],
         "Liveries": []
@@ -9003,13 +9479,16 @@
         ],
         "Components": [
             {
-                "Name": "COMPONENT_STRICKLER_CLIP_01"
+                "Name": "COMPONENT_STRICKLER_CLIP_01",
+                "AttachBone": "WAPClip"
             },
             {
-                "Name": "COMPONENT_STRICKLER_SIGHT"
+                "Name": "COMPONENT_STRICKLER_SIGHT",
+                "AttachBone": "WAPScop_2"
             },
             {
-                "Name": "COMPONENT_STRICKLER_FLSH"
+                "Name": "COMPONENT_STRICKLER_FLSH",
+                "AttachBone": "WAPFlshLasr_3"
             }
         ],
         "Liveries": []

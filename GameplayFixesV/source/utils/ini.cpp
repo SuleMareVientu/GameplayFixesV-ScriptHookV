@@ -7,6 +7,12 @@
 #include "utils\functions.h"
 #include "globals.h"
 
+//std
+#include <vector>
+#include <string>
+#include <sstream>
+#include <limits>
+
 static constexpr char* inputGroup = "Input";
 static constexpr char* memoryGroup = "Memory";
 static constexpr char* playerGroup = "Player";
@@ -28,11 +34,19 @@ bool HookGameFunctions = true;
 bool EnableLogging = false;
 //Player Settings
 bool EnableCrouching = true;
-bool FriendlyFire = true;
 bool EnablePlayerActionsForAllPeds = true;
 bool DisableActionMode = false;
+bool DynamicallyCleanWoundsAndDirt = true;
+bool SprintInsideInteriors = true;
+bool SilentWanted = false;
+//Player Weapons
+bool FriendlyFire = true;
 bool LocationalDamage = true;
 bool DeadlyPlayerHeadshots = false;
+bool EnableWeaponRecoil = false;
+bool EnableRecoilInVehicles = true;
+float WeaponRecoilGlobalMultiplier = 1.0f;
+std::vector<float> WeaponRecoilMultipliers;
 bool DisarmPlayerWhenShot = true;
 int DisarmPlayerChance = 100;
 bool DropPlayerWeaponWhenRagdolling = true;
@@ -45,20 +59,7 @@ int MinimumRagdollTime = 450;
 int MaximumRagdollTime = 1500;
 bool ShouldRagdollInCover = false;
 bool DontDropWeapon = true;
-bool DynamicallyCleanWoundsAndDirt = true;
-bool SprintInsideInteriors = true;
 bool AllowWeaponsInsideSafeHouse = false;
-bool SilentWanted = false;
-//Player Controls
-bool DisableAssistedMovement = true;
-bool ToggleFPSWalking = true;
-int DisableCameraAutoCenter = NULL;
-bool CamFollowVehicleDuringHandbrake = false;
-int CamFollowVehDelay = 250;
-bool DisableFirstPersonView = false;
-bool DisableIdleCamera = false;
-bool DisableRecording = false;
-bool DisableMobilePhone = false;
 //Player Vehicle
 bool DisableCarMidAirAndRollControl = true;
 bool DisableForcedCarExplosionOnImpact = true;
@@ -80,6 +81,16 @@ bool DisableVehicleJitter = true;
 bool DisableAirVehicleTurbulence = false;
 int DisableAutoEquipHelmets = NULL;
 bool DisableStuntJumps = false;
+//Player Controls
+bool DisableAssistedMovement = true;
+bool ToggleFPSWalking = true;
+int DisableCameraAutoCenter = NULL;
+bool CamFollowVehicleDuringHandbrake = false;
+int CamFollowVehDelay = 250;
+bool DisableFirstPersonView = false;
+bool DisableIdleCamera = false;
+bool DisableRecording = false;
+bool DisableMobilePhone = false;
 //HUD
 bool AllowGameExecutionOnPauseMenu = false;
 bool DisablePauseMenuPostFX = false;
@@ -160,11 +171,22 @@ void ReadINI()
 
 	//////////////////////////////////////Player//////////////////////////////////////////
 	Ini::EnableCrouching = GET_INI_BOOL(ini, playerGroup, EnableCrouching);
-	Ini::FriendlyFire = GET_INI_BOOL(ini, playerGroup, FriendlyFire);
 	Ini::EnablePlayerActionsForAllPeds = GET_INI_BOOL(ini, playerGroup, EnablePlayerActionsForAllPeds);
 	Ini::DisableActionMode = GET_INI_BOOL(ini, playerGroup, DisableActionMode);
+	Ini::DynamicallyCleanWoundsAndDirt = GET_INI_BOOL(ini, playerGroup, DynamicallyCleanWoundsAndDirt);
+	Ini::SprintInsideInteriors = GET_INI_BOOL(ini, playerGroup, SprintInsideInteriors);
+	Ini::SilentWanted = GET_INI_BOOL(ini, playerGroup, SilentWanted);
+
+
+	////////////////////////////////////Player Weapons////////////////////////////////////
+	Ini::FriendlyFire = GET_INI_BOOL(ini, playerGroup, FriendlyFire);
 	Ini::LocationalDamage = GET_INI_BOOL(ini, playerGroup, LocationalDamage);
 	Ini::DeadlyPlayerHeadshots = GET_INI_BOOL(ini, playerGroup, DeadlyPlayerHeadshots);
+	Ini::EnableWeaponRecoil = GET_INI_BOOL(ini, playerGroup, EnableWeaponRecoil);
+	Ini::EnableRecoilInVehicles = GET_INI_BOOL(ini, playerGroup, EnableRecoilInVehicles);
+	Ini::WeaponRecoilGlobalMultiplier = GET_INI_FLOAT(ini, playerGroup, WeaponRecoilGlobalMultiplier);
+	Ini::WeaponRecoilMultipliers = ParseFloats(ini.GetValue(playerGroup, "WeaponRecoilMultipliers", 
+		"1.0, 1.0, 1.5, 1.5, 4.0, 1.5, 3.0, 0.33, 1.0, 1.5, 1.5, 0.75, 0.75, 0.75, 0.5, 0.5"));
 	Ini::DisarmPlayerWhenShot = GET_INI_BOOL(ini, playerGroup, DisarmPlayerWhenShot);
 	Ini::DisarmPlayerChance = GET_INI_INT(ini, playerGroup, DisarmPlayerChance);
 	Ini::DropPlayerWeaponWhenRagdolling = GET_INI_BOOL(ini, playerGroup, DropPlayerWeaponWhenRagdolling);
@@ -177,21 +199,7 @@ void ReadINI()
 	Ini::MaximumRagdollTime = GET_INI_INT(ini, playerGroup, MaximumRagdollTime);
 	Ini::ShouldRagdollInCover = GET_INI_BOOL(ini, playerGroup, ShouldRagdollInCover);
 	Ini::DontDropWeapon = GET_INI_BOOL(ini, playerGroup, DontDropWeapon);
-	Ini::DynamicallyCleanWoundsAndDirt = GET_INI_BOOL(ini, playerGroup, DynamicallyCleanWoundsAndDirt);
-	Ini::SprintInsideInteriors = GET_INI_BOOL(ini, playerGroup, SprintInsideInteriors);
 	Ini::AllowWeaponsInsideSafeHouse = GET_INI_BOOL(ini, playerGroup, AllowWeaponsInsideSafeHouse);
-	Ini::SilentWanted = GET_INI_BOOL(ini, playerGroup, SilentWanted);
-
-	//////////////////////////////////////Player Controls//////////////////////////////////
-	Ini::DisableAssistedMovement = GET_INI_BOOL(ini, playerGroup, DisableAssistedMovement);
-	Ini::ToggleFPSWalking = GET_INI_BOOL(ini, playerGroup, ToggleFPSWalking);
-	Ini::DisableCameraAutoCenter = GET_INI_INT(ini, playerGroup, DisableCameraAutoCenter);
-	Ini::CamFollowVehicleDuringHandbrake = GET_INI_BOOL(ini, playerGroup, CamFollowVehicleDuringHandbrake);
-	Ini::CamFollowVehDelay = GET_INI_INT(ini, playerGroup, CamFollowVehDelay);
-	Ini::DisableFirstPersonView = GET_INI_BOOL(ini, playerGroup, DisableFirstPersonView);
-	Ini::DisableIdleCamera = GET_INI_BOOL(ini, playerGroup, DisableIdleCamera);
-	Ini::DisableRecording = GET_INI_BOOL(ini, playerGroup, DisableRecording);
-	Ini::DisableMobilePhone = GET_INI_BOOL(ini, playerGroup, DisableMobilePhone);
 
 	//////////////////////////////////////Player Vehicle///////////////////////////////////
 	Ini::DisableCarMidAirAndRollControl = GET_INI_BOOL(ini, playerGroup, DisableCarMidAirAndRollControl);
@@ -214,6 +222,17 @@ void ReadINI()
 	Ini::DisableVehicleJitter = GET_INI_BOOL(ini, playerGroup, DisableVehicleJitter);
 	Ini::DisableAirVehicleTurbulence = GET_INI_BOOL(ini, playerGroup, DisableAirVehicleTurbulence);
 	Ini::DisableAutoEquipHelmets = GET_INI_INT(ini, playerGroup, DisableAutoEquipHelmets);
+
+	//////////////////////////////////////Player Controls//////////////////////////////////
+	Ini::DisableAssistedMovement = GET_INI_BOOL(ini, playerGroup, DisableAssistedMovement);
+	Ini::ToggleFPSWalking = GET_INI_BOOL(ini, playerGroup, ToggleFPSWalking);
+	Ini::DisableCameraAutoCenter = GET_INI_INT(ini, playerGroup, DisableCameraAutoCenter);
+	Ini::CamFollowVehicleDuringHandbrake = GET_INI_BOOL(ini, playerGroup, CamFollowVehicleDuringHandbrake);
+	Ini::CamFollowVehDelay = GET_INI_INT(ini, playerGroup, CamFollowVehDelay);
+	Ini::DisableFirstPersonView = GET_INI_BOOL(ini, playerGroup, DisableFirstPersonView);
+	Ini::DisableIdleCamera = GET_INI_BOOL(ini, playerGroup, DisableIdleCamera);
+	Ini::DisableRecording = GET_INI_BOOL(ini, playerGroup, DisableRecording);
+	Ini::DisableMobilePhone = GET_INI_BOOL(ini, playerGroup, DisableMobilePhone);
 
 	//////////////////////////////////////HUD//////////////////////////////////////////////
 	Ini::AllowGameExecutionOnPauseMenu = GET_INI_BOOL(ini, HUDGroup, AllowGameExecutionOnPauseMenu);
@@ -285,4 +304,19 @@ void WriteINIResource(HINSTANCE hInstance, int resourceID, const char* path)
 		fflush(f.get());
 	}
 	return;
+}
+
+std::vector<float> ParseFloats(const std::string& s)
+{
+	std::vector<float> floatArray;
+	std::stringstream ss(s);
+	std::string segment;
+
+	while (std::getline(ss, segment, ',')) {
+		std::stringstream segment_ss(segment);
+		float f;
+		if (segment_ss >> f)
+			floatArray.push_back(f);
+	}
+	return floatArray;
 }

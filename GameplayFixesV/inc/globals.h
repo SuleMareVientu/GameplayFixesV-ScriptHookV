@@ -85,6 +85,7 @@ struct WpTintJson {
 
 struct WpComponentJson {
 	std::string Name = "UNK";
+	Hash Bone = Joaat("UNK");
 };
 
 struct WpLiveryJson {
@@ -205,7 +206,7 @@ enum ePedFlag {
 	PRF_ExpandPedCapsuleFromSkeleton = 129,			// Set the ped capsule radius based on skeleton
 	PRF_ShootFromGround = 140,
 	PRF_IsEnteringOrExitingVehicle = 152,			// TASK_ENTER_VEHICLE or TASK_EXIT_VEHICLE
-	PRD_HasGunTaskWithAimingState = 154,			// Ped is running TASK_GUN and task's state is State_Aim
+	PRF_HasGunTaskWithAimingState = 154,			// Ped is running TASK_GUN and task's state is State_Aim
 	PRF_MakeHeadInvisible = 166,					// If set, scale the head of the ped to 0.001
 	PRF_IsExitingVehicle = 199,						// TASK_EXIT_VEHICLE
 	PRF_DisableActionMode = 200,					// Disable combat anims for ped.
@@ -587,6 +588,114 @@ enum eWeaponGroup {
 	WEAPONGROUP_PARACHUTE = 0x19B9968F,			//GROUP_PARACHUTE
 	WEAPONGROUP_JETPACK = 0x8B16BE36,			//GROUP_JETPACK
 	WEAPONGROUP_METALDETECTOR = 0xE0154937		//GROUP_METALDETECTOR
+};
+
+enum eAmmoType {
+	AMMOTYPE_INVALID = 0,
+
+	AMMOTYPE_PISTOL = Joaat("AMMO_PISTOL"),												//1950175060
+	AMMOTYPE_SMG = Joaat("AMMO_SMG"),													//1820140472
+	AMMOTYPE_RIFLE = Joaat("AMMO_RIFLE"),												//218444191
+	AMMOTYPE_MG = Joaat("AMMO_MG"),														//1788949567
+	AMMOTYPE_SHOTGUN = Joaat("AMMO_SHOTGUN"),											//-1878508229
+	AMMOTYPE_RUBBERGUN = Joaat("AMMO_RUBBERGUN"),										//-1866678455
+	AMMOTYPE_STUNGUN = Joaat("AMMO_STUNGUN"),											//-1339118112
+	AMMOTYPE_SNIPER = Joaat("AMMO_SNIPER"),												//1285032059
+	AMMOTYPE_REMOTE = Joaat("AMMO_SNIPER_REMOTE"),										//-19235536
+	AMMOTYPE_FIRE_EXTINGUISHER = Joaat("AMMO_FIREEXTINGUISHER"),						//1359393852
+	AMMOTYPE_PETROL_CAN = Joaat("AMMO_PETROLCAN"),										//-899475295
+	AMMOTYPE_MINIGUN = Joaat("AMMO_MINIGUN"),											//-1614428030
+	AMMOTYPE_GRENADE_LAUNCHER = Joaat("AMMO_GRENADELAUNCHER"),							//1003267566
+	AMMOTYPE_GRENADE_LAUNCHER_SMOKE = Joaat("AMMO_GRENADELAUNCHER_SMOKE"),				//826266432
+	AMMOTYPE_RPG = Joaat("AMMO_RPG"),													//1742569970
+	AMMOTYPE_GRENADE = Joaat("AMMO_GRENADE"),											//1003688881
+	AMMOTYPE_STICKY_BOMB = Joaat("AMMO_STICKYBOMB"),									//1411692055
+	AMMOTYPE_SMOKE_GRENADE = Joaat("AMMO_SMOKEGRENADE"),								//-435287898
+	AMMOTYPE_BZ_GAS = Joaat("AMMO_BZGAS"),												//-1686864220
+	AMMOTYPE_FLARE = Joaat("AMMO_FLARE"),												//1808594799
+	AMMOTYPE_MOLOTOV = Joaat("AMMO_MOLOTOV"),											//1446246869
+	AMMOTYPE_TANK = Joaat("AMMO_TANK"),													//-1474608608
+	AMMOTYPE_SPACE_ROCKET = Joaat("AMMO_SPACE_ROCKET"),									//527765612
+	AMMOTYPE_PLAYER_LASER = Joaat("AMMO_PLAYER_LASER"),									//-165357558
+	AMMOTYPE_ENEMY_LASER = Joaat("AMMO_ENEMY_LASER"),									//-1372674932
+
+	AMMOTYPE_DLC_PROGRAMMABLE_AR = Joaat("AMMO_PROGRAMMABLEAR"),						//-873900901
+	AMMOTYPE_DLC_HARPOON = Joaat("AMMO_HARPOON"),										//-1366951173
+	AMMOTYPE_DLC_FLAREGUN = Joaat("AMMO_FLAREGUN"),										//1173416293
+	AMMOTYPE_DLC_FIREWORK = Joaat("AMMO_FIREWORK"),										//-1356599793
+	AMMOTYPE_DLC_AMRIFLE = Joaat("AMMO_AMRIFLE"),										//572875586
+	AMMOTYPE_DLC_CROSSBOW = Joaat("AMMO_CROSSBOW"),										//-1628563450
+	AMMOTYPE_DLC_HOMINGLAUNCHER = Joaat("AMMO_HOMINGLAUNCHER"),							//-1726673363
+	AMMOTYPE_DLC_PROXMINE = Joaat("AMMO_PROXMINE"),										//-1356724057
+	AMMOTYPE_DLC_SNOWBALL = Joaat("AMMO_SNOWBALL"),										//-2112339603
+
+	//NG-Only Ammo Types
+	AMMOTYPE_DLC_RAILGUN = Joaat("AMMO_RAILGUN"),										//2034517757
+	AMMOTYPE_DLC_PIPEBOMB = Joaat("AMMO_PIPEBOMB"),										//357983224
+	AMMOTYPE_DLC_BZGAS_MK2 = Joaat("AMMO_BZGAS_MK2"),									//-190476753
+	AMMOTYPE_DLC_BEANBAG = Joaat("AMMO_BEANBAG"),										//1528506929
+	AMMOTYPE_DLC_FLASHGRENADE = Joaat("AMMO_FLASHGRENADE"),								//-1713098100
+	AMMOTYPE_DLC_STUNGRENADE = Joaat("AMMO_STUNGRENADE"),								//1715622329
+
+	//Special Ammo Types
+	AMMOTYPE_DLC_MG_ARMORPIERCING = Joaat("AMMO_MG_ARMORPIERCING"),						//784861712
+	AMMOTYPE_DLC_MG_FMJ = Joaat("AMMO_MG_FMJ"),											//234717365
+	AMMOTYPE_DLC_MG_INCENDIARY = Joaat("AMMO_MG_INCENDIARY"),							//1461941360
+	AMMOTYPE_DLC_MG_TRACER = Joaat("AMMO_MG_TRACER"),									//1226421483
+	AMMOTYPE_DLC_PISTOL_FMJ = Joaat("AMMO_PISTOL_FMJ"),									//-1132792829
+	AMMOTYPE_DLC_PISTOL_HOLLOWPOINT = Joaat("AMMO_PISTOL_HOLLOWPOINT"),					//-836519658
+	AMMOTYPE_DLC_PISTOL_INCENDIARY = Joaat("AMMO_PISTOL_INCENDIARY"),					//-1416716039
+	AMMOTYPE_DLC_PISTOL_TRACER = Joaat("AMMO_PISTOL_TRACER"),							//-1193480661
+	AMMOTYPE_DLC_RIFLE_ARMORPIERCING = Joaat("AMMO_RIFLE_ARMORPIERCING"),				//423744068
+	AMMOTYPE_DLC_RIFLE_FMJ = Joaat("AMMO_RIFLE_FMJ"),									//1586900444
+	AMMOTYPE_DLC_RIFLE_INCENDIARY = Joaat("AMMO_RIFLE_INCENDIARY"),						//-1829688883
+	AMMOTYPE_DLC_RIFLE_TRACER = Joaat("AMMO_RIFLE_TRACER"),								//-1340502689
+	AMMOTYPE_DLC_SMG_FMJ = Joaat("AMMO_SMG_FMJ"),										//758230489
+	AMMOTYPE_DLC_SMG_HOLLOWPOINT = Joaat("AMMO_SMG_HOLLOWPOINT"),						//670318226
+	AMMOTYPE_DLC_SMG_INCENDIARY = Joaat("AMMO_SMG_INCENDIARY"),							//-332892697
+	AMMOTYPE_DLC_SMG_TRACER = Joaat("AMMO_SMG_TRACER"),									//1569785553
+	AMMOTYPE_DLC_SNIPER_ARMORPIERCING = Joaat("AMMO_SNIPER_ARMORPIERCING"),				//-1497580119
+	AMMOTYPE_DLC_SNIPER_EXPLOSIVE = Joaat("AMMO_SNIPER_EXPLOSIVE"),						//-1378784071
+	AMMOTYPE_DLC_SNIPER_FMJ = Joaat("AMMO_SNIPER_FMJ"),									//-168704490
+	AMMOTYPE_DLC_SNIPER_INCENDIARY = Joaat("AMMO_SNIPER_INCENDIARY"),					//796697766
+	AMMOTYPE_DLC_SNIPER_TRACER = Joaat("AMMO_SNIPER_TRACER"),							//1184011213
+	AMMOTYPE_DLC_SHOTGUN_ARMORPIERCING = Joaat("AMMO_SHOTGUN_ARMORPIERCING"),			//1923327840
+	AMMOTYPE_DLC_SHOTGUN_EXPLOSIVE = Joaat("AMMO_SHOTGUN_EXPLOSIVE"),					//-309302955
+	AMMOTYPE_DLC_SHOTGUN_HOLLOWPOINT = Joaat("AMMO_SHOTGUN_HOLLOWPOINT"),				//2089185906
+	AMMOTYPE_DLC_SHOTGUN_INCENDIARY = Joaat("AMMO_SHOTGUN_INCENDIARY"),					//-609429612
+
+	AMMOTYPE_DLC_RAYPISTOL = Joaat("AMMO_RAYPISTOL"),									//-1526023308
+	AMMOTYPE_DLC_HAZARDCAN = Joaat("AMMO_HAZARDCAN"),									//1618528319
+	AMMOTYPE_DLC_STUNGUNCNC = Joaat("AMMO_STUNGUNCNC"),									//-1408480069
+	AMMOTYPE_DLC_SMG_RUBBER = Joaat("AMMO_SMG_RUBBER"),									//-986319330
+
+	AMMOTYPE_DLC_EMPLAUNCHER = Joaat("AMMO_EMPLAUNCHER"),								//-237025091
+	AMMOTYPE_DLC_FERTILIZERCAN = Joaat("AMMO_FERTILIZERCAN"),							//1963932634
+
+	AMMOTYPE_ALL = Joaat("AMMOTYPE_ALL")												//-32260324
+};
+
+enum eWeaponAttachPart {
+	WAP_Root = Joaat("gun_root"),
+	WAP_Gripr = Joaat("gun_gripr"),	// MK2
+	WAP_Clip = Joaat("WAPClip"),
+	WAP_Clip_2 = Joaat("WAPClip_2"),
+	WAP_Flsh = Joaat("WAPFlsh"),
+	WAP_Flsh_2 = Joaat("WAPFlsh_2"),
+	WAP_FlshLasr = Joaat("WAPFlshLasr"),
+	WAP_FlshLasr_2 = Joaat("WAPFlshLasr_2"),
+	WAP_FlshLasr_3 = Joaat("WAPFlshLasr_3"),
+	WAP_Supp = Joaat("WAPSupp"),
+	WAP_Supp_2 = Joaat("WAPSupp_2"),
+	WAP_Supp_3 = Joaat("WAPSupp_3"),
+	WAP_Grip = Joaat("WAPGrip"),
+	WAP_Grip_2 = Joaat("WAPGrip_2"),
+	WAP_Grip_3 = Joaat("WAPGrip_3"),
+	WAP_Scop = Joaat("WAPScop"),
+	WAP_Scop_2 = Joaat("WAPScop_2"),
+	WAP_Scop_3 = Joaat("WAPScop_3"),
+	WAP_Barrel = Joaat("WAPBarrel"),
+	WAP_Torch_Bulb = Joaat("Torch_Bulb"),
 };
 
 enum eWeaponCheckFlags {
@@ -999,7 +1108,7 @@ enum eDispatchType {
 	DT_ASSASSINS
 };
 
-enum AudioSpecialEffectMode
+enum eAudioSpecialEffectMode
 {
 	AUDIO_SPECIAL_EFFECT_MODE_NORMAL,
 	AUDIO_SPECIAL_EFFECT_MODE_UNDERWATER,
@@ -1011,6 +1120,21 @@ enum AudioSpecialEffectMode
 	AUDIO_SPECIAL_EFFECT_MODE_DRUNK_STAGE03,
 	NUM_AUDIO_SPECIAL_EFFECT_MODE
 };
+
+// General info about stats (unknown modder)
+// Any stat that has characterStat="true" in spstatsetup has SP{0,1,2}_ infront of its name(like SP0_TOTAL_CASH. All other stats are as they appear in the file
+// Likewise for mp stats(not that you should be messing with them), but all other with CharacterStat = "true" has MP{ 0,1,2,3,4 }_ infront of them
+// SP0 = Michael, SP1 = Franklin, SP2 = Trevor
+
+// Ability Stats:
+// Type = int. Min = 0, Max = 100.
+// STAMINA			
+// STRENGTH
+// LUNG_CAPACITY
+// WHEELIE_ABILITY
+// FLYING_ABILITY
+// SHOOTING_ABILITY
+// STEALTH_ABILITY
 #pragma endregion
 
 #pragma region Const Arrays

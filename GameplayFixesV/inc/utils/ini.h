@@ -1,6 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <string>
+#include <vector>
 
 namespace Ini
 {
@@ -16,11 +17,19 @@ extern bool HookGameFunctions;
 extern bool EnableLogging;
 //Player Settings
 extern bool EnableCrouching;
-extern bool FriendlyFire;
 extern bool EnablePlayerActionsForAllPeds;
 extern bool DisableActionMode;
+extern bool DynamicallyCleanWoundsAndDirt;
+extern bool SprintInsideInteriors;
+extern bool SilentWanted;
+//Player Weapons
+extern bool FriendlyFire;
 extern bool LocationalDamage;
 extern bool DeadlyPlayerHeadshots;
+extern bool EnableWeaponRecoil;
+extern bool EnableRecoilInVehicles;
+extern float WeaponRecoilGlobalMultiplier;
+extern std::vector<float> WeaponRecoilMultipliers;
 extern bool DisarmPlayerWhenShot;
 extern int DisarmPlayerChance;
 extern bool DropPlayerWeaponWhenRagdolling;
@@ -33,20 +42,7 @@ extern int MinimumRagdollTime;
 extern int MaximumRagdollTime;
 extern bool ShouldRagdollInCover;
 extern bool DontDropWeapon;
-extern bool DynamicallyCleanWoundsAndDirt;
-extern bool SprintInsideInteriors;
 extern bool AllowWeaponsInsideSafeHouse;
-extern bool SilentWanted;
-//Player Controls
-extern bool DisableAssistedMovement;
-extern int DisableCameraAutoCenter;
-extern bool ToggleFPSWalking;
-extern bool CamFollowVehicleDuringHandbrake;
-extern int CamFollowVehDelay;
-extern bool DisableFirstPersonView;
-extern bool DisableIdleCamera;
-extern bool DisableRecording;
-extern bool DisableMobilePhone;
 //Player Vehicle
 extern bool DisableCarMidAirAndRollControl;
 extern bool DisableForcedCarExplosionOnImpact;
@@ -68,6 +64,16 @@ extern bool DisableVehicleJitter;
 extern bool DisableAirVehicleTurbulence;
 extern int DisableAutoEquipHelmets;
 extern bool DisableStuntJumps;
+//Player Controls
+extern bool DisableAssistedMovement;
+extern int DisableCameraAutoCenter;
+extern bool ToggleFPSWalking;
+extern bool CamFollowVehicleDuringHandbrake;
+extern int CamFollowVehDelay;
+extern bool DisableFirstPersonView;
+extern bool DisableIdleCamera;
+extern bool DisableRecording;
+extern bool DisableMobilePhone;
 //HUD
 extern bool AllowGameExecutionOnPauseMenu;
 extern bool DisablePauseMenuPostFX;
@@ -119,3 +125,4 @@ extern bool DisableWorldPopulation;
 
 void ReadINI();
 void WriteINIResource(HINSTANCE hInstance, int resourceID, const char* path);
+std::vector<float> ParseFloats(const std::string& s);

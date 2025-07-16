@@ -138,7 +138,7 @@ void EnableCrouching()
 			SET_PLAYER_NOISE_MULTIPLIER(GetPlayer(), 0.0f);
 			DISABLE_ON_FOOT_FIRST_PERSON_VIEW_THIS_UPDATE();
 
-			if (IsPlayerAiming())
+			if (IsPlayerAiming(true, true) || IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_ATTACK) || IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_ATTACK2))
 				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), 0.25f);
 			else
 				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_RUN);
@@ -157,6 +157,96 @@ void EnableCrouching()
 	return;
 }
 
+void EnablePlayerActionsForAllPeds()
+{
+	if (Ini::EnableCrouching || !IS_PED_HUMAN(GetPlayerPed()) || DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())))
+		return;
+
+	if (!IsPedMainProtagonist(GetPlayerPed()))
+	{
+		if (GET_PED_STEALTH_MOVEMENT(GetPlayerPed()))
+			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
+		else if (IS_PED_IN_MELEE_COMBAT(GetPlayerPed()) || COUNT_PEDS_IN_COMBAT_WITH_TARGET(GetPlayerPed()) > 0 || IS_PED_SHOOTING(GetPlayerPed()))
+			SET_PED_USING_ACTION_MODE(GetPlayerPed(), true, 10000, "DEFAULT_ACTION");
+	}
+	return;
+}
+
+inline void DisableActionMode() { EnablePedResetFlag(GetPlayerPed(), PRF_DisableActionMode); return; }
+
+constexpr int timeClearDirtDecal = 120000;	//2min
+Timer timerDirtDecal(timeClearDirtDecal);
+int oldHealthWounds = 0;
+void DynamicallyCleanWoundsAndDirt()
+{
+	if (IS_PLAYER_SWITCH_IN_PROGRESS())
+	{
+		timerDirtDecal.Set(120000);
+		return;
+	}
+
+	const float subLevel = GET_ENTITY_SUBMERGED_LEVEL(GetPlayerPed());
+	if (subLevel >= 0.3f)
+	{
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_RIGHT_LEG);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_LEFT_LEG);
+	}
+
+	if (subLevel >= 0.7f || IS_PED_SWIMMING(GetPlayerPed()))
+	{
+		timerDirtDecal.Reset();
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_TORSO);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_RIGHT_ARM);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_LEFT_ARM);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_MEDALS);
+	}
+
+	if (subLevel > 0.9f)
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_HEAD);
+
+	if (subLevel == 1.0f || IS_PED_SWIMMING_UNDER_WATER(GetPlayerPed()))
+		CLEAR_PED_BLOOD_DAMAGE(GetPlayerPed());
+
+	// Also clean when player picks up a medkit
+	const int health = GET_ENTITY_HEALTH(GetPlayerPed());
+	if (health > oldHealthWounds && health == GET_ENTITY_MAX_HEALTH(GetPlayerPed()))
+	{
+		timerDirtDecal.Reset();
+		CLEAR_PED_BLOOD_DAMAGE(GetPlayerPed());
+	}
+
+	// Dirt ad oldHealth should always be at the bottom
+	oldHealthWounds = health;
+	if (timerDirtDecal.Get() <= timeClearDirtDecal)
+	{
+		if (timerDirtDecal.Get() <= (timeClearDirtDecal / 2))
+			SET_PED_SWEAT(GetPlayerPed(), 0.0f);
+
+		CLEAR_PED_ENV_DIRT(GetPlayerPed());	//Must be called every frame
+		//CLEAR_PED_DAMAGE_DECAL_BY_ZONE(GetPlayerPed(), PDZ_TORSO, "basic_dirt_cloth");
+		//CLEAR_PED_DAMAGE_DECAL_BY_ZONE(GetPlayerPed(), PDZ_TORSO, "basic_dirt_skin");
+	}
+	return;
+}
+
+inline void EnableSprintInsideInteriors() { EnablePedConfigFlag(GetPlayerPed(), PCF_IgnoreInteriorCheckForSprinting); return; }
+
+void SilentWanted()
+{
+	SET_POLICE_RADAR_BLIPS(false);
+	SET_BLOCK_WANTED_FLASH(true);
+	FORCE_OFF_WANTED_STAR_FLASH(true);
+	HIDE_HUD_COMPONENT_THIS_FRAME(HUD_WANTED_STARS);
+
+	SET_AUDIO_FLAG("WantedMusicDisabled", true);
+	SET_AUDIO_FLAG("WantedMusicOnMission", false);
+	IS_PED_IN_ANY_POLICE_VEHICLE(GetPlayerPed()) ? SET_AUDIO_FLAG("PoliceScannerDisabled", false) : SET_AUDIO_FLAG("PoliceScannerDisabled", true);
+	return;
+}
+}	//END nGeneral
+
+namespace nWeapons
+{
 void FriendlyFire()
 {
 	SET_CAN_ATTACK_FRIENDLY(GetPlayerPed(), true, true);	// Sets PCF_CanAttackFriendly, PCF_AllowLockonToFriendlyPlayers
@@ -198,28 +288,10 @@ void FriendlyFire()
 	return;
 }
 
-void EnablePlayerActionsForAllPeds()
-{
-	if (Ini::EnableCrouching || !IS_PED_HUMAN(GetPlayerPed()) || DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())))
-		return;
-
-	if (!IsPedMainProtagonist(GetPlayerPed()))
-	{
-		if (GET_PED_STEALTH_MOVEMENT(GetPlayerPed()))
-			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
-		else if (IS_PED_IN_MELEE_COMBAT(GetPlayerPed()) || COUNT_PEDS_IN_COMBAT_WITH_TARGET(GetPlayerPed()) > 0 || IS_PED_SHOOTING(GetPlayerPed()))
-			SET_PED_USING_ACTION_MODE(GetPlayerPed(), true, 10000, "DEFAULT_ACTION");
-	}
-	return;
-}
-
-inline void DisableActionMode() { EnablePedResetFlag(GetPlayerPed(), PRF_DisableActionMode); return; }
-
 int lastPlayerArmor = 0;
 void LocationalDamage()
 {
 	int armor = GET_PED_ARMOUR(GetPlayerPed());
-
 	if (!HAS_PED_BEEN_DAMAGED_BY_WEAPON(GetPlayerPed(), NULL, GENERALWEAPON_TYPE_ANYWEAPON))
 	{
 		lastPlayerArmor = armor;
@@ -261,6 +333,153 @@ void LocationalDamage()
 		lastPlayerArmor = armor;
 		break;
 	}
+	return;
+}
+
+float last = 0.0f;
+void EnableWeaponRecoil()
+{
+	if (!IS_PED_SHOOTING(GetPlayerPed()) || IsFirstPersonActive())
+		return;
+
+	const bool isInVeh = DOES_ENTITY_EXIST(GetVehiclePedIsIn(GetPlayerPed(), false, false));
+	if (!Ini::EnableRecoilInVehicles && isInVeh)
+		return;
+
+	Hash weapon = NULL;
+	if (!GET_CURRENT_PED_WEAPON(GetPlayerPed(), &weapon, false))
+		return;
+
+	const Entity wpObj = GET_CURRENT_PED_WEAPON_ENTITY_INDEX(GetPlayerPed(), false);
+	const Hash wpGrp = GET_WEAPONTYPE_GROUP(weapon);
+
+	// Check if it's a valid weapon
+	switch (wpGrp)
+	{
+	case WEAPONGROUP_INVALID: case WEAPONGROUP_MELEE: case WEAPONGROUP_THROWN:
+	case WEAPONGROUP_FIREEXTINGUISHER: case WEAPONGROUP_PETROLCAN: case WEAPONGROUP_LOUDHAILER:
+	case WEAPONGROUP_DIGISCANNER: case WEAPONGROUP_NIGHTVISION: case WEAPONGROUP_PARACHUTE:
+	case WEAPONGROUP_JETPACK: case WEAPONGROUP_METALDETECTOR:
+		return; break;
+	}
+
+	float multPistol = 1.0f;
+	float multSMG = multPistol;
+	float multRifle = 1.5f;
+	float multMG = multRifle;
+	float multShotgun = 4.0f;
+	float multSniper = multRifle;
+	float multHeavy = 3.0f;
+	float multMinigun = multSMG * 0.33f;
+
+	float multTwoHanded = 1.0f;
+	float multOneHanded = 1.5f;
+	float multShortGuns = 1.5f;
+	float multLongGuns = 0.75f;
+	float multAimedShot = 0.75f;
+	float multSilenced = 0.75f;
+	float multGrip = 0.5f;
+	float multShootingAbility = 0.5f;	// Max multiplier for shooting ability
+
+	if (Ini::WeaponRecoilMultipliers.size() >= 16)
+	{
+		multPistol = Ini::WeaponRecoilMultipliers[0];
+		multSMG = Ini::WeaponRecoilMultipliers[1];
+		multRifle = Ini::WeaponRecoilMultipliers[2];
+		multMG = Ini::WeaponRecoilMultipliers[3];
+		multShotgun = Ini::WeaponRecoilMultipliers[4];
+		multSniper = Ini::WeaponRecoilMultipliers[5];
+		multHeavy = Ini::WeaponRecoilMultipliers[6];
+		multMinigun = Ini::WeaponRecoilMultipliers[7];
+
+		multTwoHanded = Ini::WeaponRecoilMultipliers[8];
+		multOneHanded = Ini::WeaponRecoilMultipliers[9];
+		multShortGuns = Ini::WeaponRecoilMultipliers[10];
+		multLongGuns = Ini::WeaponRecoilMultipliers[11];
+		multAimedShot = Ini::WeaponRecoilMultipliers[12];
+		multSilenced = Ini::WeaponRecoilMultipliers[13];
+		multGrip = Ini::WeaponRecoilMultipliers[14];
+		multShootingAbility = Ini::WeaponRecoilMultipliers[15];	// Max multiplier for shooting ability
+	}
+
+	float recoilMult = Ini::WeaponRecoilGlobalMultiplier;
+	if (GET_PED_AMMO_TYPE_FROM_WEAPON(GetPlayerPed(), weapon) == AMMOTYPE_MINIGUN)
+		recoilMult *= multMinigun;
+	else
+	{
+		switch (wpGrp)
+		{
+		case WEAPONGROUP_PISTOL: case WEAPONGROUP_RUBBERGUN: case WEAPONGROUP_STUNGUN:
+			recoilMult *= multPistol; break;
+		case WEAPONGROUP_SMG:
+			recoilMult *= multSMG; break;
+		case WEAPONGROUP_RIFLE:
+			recoilMult *= multRifle; break;
+		case WEAPONGROUP_MG:
+			recoilMult *= multMG; break;
+		case WEAPONGROUP_SHOTGUN:
+			recoilMult *= multShotgun; break;
+		case WEAPONGROUP_SNIPER:
+			recoilMult *= multSniper; break;
+		case WEAPONGROUP_HEAVY:
+			recoilMult *= multHeavy; break;
+		}
+	}
+
+	const Vector3 handLoc = GET_PED_BONE_COORDS(GetPlayerPed(), BONETAG_PH_L_HAND, 0.0f, 0.0f, 0.0f);
+	if (std::abs(GET_OFFSET_FROM_ENTITY_GIVEN_WORLD_COORDS(wpObj, handLoc.x, handLoc.y, handLoc.z).y) < 0.4f)	// Check offset for two-handed weapons
+		recoilMult *= multTwoHanded;
+	else
+		recoilMult *= multOneHanded;
+
+	Vector3 min; Vector3 max; GET_MODEL_DIMENSIONS(GET_ENTITY_MODEL(wpObj), &min, &max);
+	const Vector3 dim = max - min;
+	if (dim.x > 0.5f)
+		recoilMult *= multLongGuns;
+	else if (dim.x <= 0.2f)
+		recoilMult *= multShortGuns;
+
+	if (IsPlayerAiming(false, false))
+		recoilMult *= multAimedShot;
+
+	if (IS_PED_CURRENT_WEAPON_SILENCED(GetPlayerPed()))
+		recoilMult *= multSilenced;
+
+	if (DoesPedWeaponHaveComponentType(GetPlayerPed(), weapon, WAP_Grip, true))
+		recoilMult *= multGrip;
+
+	int shootingAbility = 0;
+	if (STAT_GET_INT(GetCharacterStatHash("SHOOTING_ABILITY"), &shootingAbility, -1))
+		recoilMult *= (1.0f - (static_cast<float>(shootingAbility) * 0.01f * multShootingAbility));
+
+	// Relative to RAGE coordinates system - EULER_XYZ
+	// +X is roll right., -Y is pitch UP, Z is yaw, 
+	//Vector3 rot = GET_ENTITY_ROTATION(wpObj, EULER_XYZ);
+
+	/* tilted Recoil
+	float roll = GET_ENTITY_ROLL(wpObj);
+	if (roll > 90.0f)
+		roll = -(roll - 90.0f);
+	else if (roll < -90.0f)
+		roll = -(roll + 90.0f);
+
+	roll = roll / 90.0f;
+	const float tiltedRecoil = recoilMult * roll;
+	recoilMult *= (1.0f - std::abs(roll));
+	const float finalHeading = GET_GAMEPLAY_CAM_RELATIVE_HEADING() + tiltedRecoil;
+	float finalPitch = GET_GAMEPLAY_CAM_RELATIVE_PITCH() + recoilMult;
+	if (IS_FOLLOW_VEHICLE_CAM_ACTIVE() && !isFPS)
+		finalPitch += 2.25f;	// Offset for vehicle cam (don't know why it's like this, but it is)
+
+	recoilMult = static_cast<float>(std::round(recoilMult * 10.0f)) * 0.1f;	// Round to first decimal place
+	tiltedRecoil = static_cast<float>(std::round(tiltedRecoil * 10.0f)) * 0.1f;
+
+	FORCE_CAMERA_RELATIVE_HEADING_AND_PITCH(finalHeading, finalPitch, 0.1f);	// requires VER_1_0_505_2_STEAM
+	*/
+
+	// Add offset for vehicle cam (don't know why it's like this, but it is)
+	const float finalPitch = isInVeh ? (GET_GAMEPLAY_CAM_RELATIVE_PITCH() + recoilMult + 2.75f) : (GET_GAMEPLAY_CAM_RELATIVE_PITCH() + recoilMult);
+	SET_GAMEPLAY_CAM_RELATIVE_PITCH(finalPitch, 0.1f);
 	return;
 }
 
@@ -325,63 +544,6 @@ void DropPlayerWeaponWhenRagdolling()
 	return;
 }
 
-constexpr int timeClearDirtDecal = 120000;	//2min
-Timer timerDirtDecal(timeClearDirtDecal);
-int oldHealthWounds = 0;
-void DynamicallyCleanWoundsAndDirt()
-{
-	if (IS_PLAYER_SWITCH_IN_PROGRESS())
-	{
-		timerDirtDecal.Set(120000);
-		return;
-	}	
-
-	const float subLevel = GET_ENTITY_SUBMERGED_LEVEL(GetPlayerPed());
-	if (subLevel >= 0.3f)
-	{
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_RIGHT_LEG);
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_LEFT_LEG);
-	}
-
-	if (subLevel >= 0.7f || IS_PED_SWIMMING(GetPlayerPed()))
-	{
-		timerDirtDecal.Reset();
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_TORSO);
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_RIGHT_ARM);
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_LEFT_ARM);
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_MEDALS);
-	}
-
-	if (subLevel > 0.9f)
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_HEAD);
-
-	if (subLevel == 1.0f || IS_PED_SWIMMING_UNDER_WATER(GetPlayerPed()))
-		CLEAR_PED_BLOOD_DAMAGE(GetPlayerPed());
-
-	// Also clean when player picks up a medkit
-	const int health = GET_ENTITY_HEALTH(GetPlayerPed());
-	if (health > oldHealthWounds && health == GET_ENTITY_MAX_HEALTH(GetPlayerPed()))
-	{
-		timerDirtDecal.Reset();
-		CLEAR_PED_BLOOD_DAMAGE(GetPlayerPed());
-	}
-
-	// Dirt ad oldHealth should always be at the bottom
-	oldHealthWounds = health;
-	if (timerDirtDecal.Get() <= timeClearDirtDecal)
-	{
-		if (timerDirtDecal.Get() <= (timeClearDirtDecal / 2))
-			SET_PED_SWEAT(GetPlayerPed(), 0.0f);
-
-		CLEAR_PED_ENV_DIRT(GetPlayerPed());	//Must be called every frame
-		//CLEAR_PED_DAMAGE_DECAL_BY_ZONE(GetPlayerPed(), PDZ_TORSO, "basic_dirt_cloth");
-		//CLEAR_PED_DAMAGE_DECAL_BY_ZONE(GetPlayerPed(), PDZ_TORSO, "basic_dirt_skin");
-	}
-	return;
-}
-
-inline void EnableSprintInsideInteriors() { EnablePedConfigFlag(GetPlayerPed(), PCF_IgnoreInteriorCheckForSprinting); return; }
-
 //This approach isn't great, and could cause a lot of issues with the game's story... Too bad
 //MUST BE CALLED EVERY FRAME
 //A different and more aggressive approach would be to terminate these scripts, which are responsible for the family scenes
@@ -445,257 +607,7 @@ void AllowWeaponsInsideSafeHouse()
 	SetFakeWanted(GetPlayer(), true);
 	return;
 }
-
-void SilentWanted()
-{
-	SET_POLICE_RADAR_BLIPS(false);
-	SET_BLOCK_WANTED_FLASH(true);
-	FORCE_OFF_WANTED_STAR_FLASH(true);
-	HIDE_HUD_COMPONENT_THIS_FRAME(HUD_WANTED_STARS);
-
-	SET_AUDIO_FLAG("WantedMusicDisabled", true);
-	SET_AUDIO_FLAG("WantedMusicOnMission", false);
-	IS_PED_IN_ANY_POLICE_VEHICLE(GetPlayerPed()) ? SET_AUDIO_FLAG("PoliceScannerDisabled", false) : SET_AUDIO_FLAG("PoliceScannerDisabled", true);
-	return;
 }
-}	//END nGeneral
-
-/////////////////////////////////////////Player Controls/////////////////////////////////////////
-namespace nControls
-{
-inline void DisableAssistedMovement() { ASSISTED_MOVEMENT_OVERRIDE_LOAD_DISTANCE_THIS_FRAME(NULL); return; }
-
-bool isWalking = false;
-float playerLastMoveBlend = 0.0f;
-Timer timerToggleFPSWalking;
-void ToggleFPSWalking()
-{
-	if (!IS_PED_ON_FOOT(GetPlayerPed()) || !IS_CONTROL_ENABLED(PLAYER_CONTROL, INPUT_SPRINT) ||
-		GET_FOLLOW_PED_CAM_VIEW_MODE() != CAM_VIEW_MODE_FIRST_PERSON)
-	{
-		if (isWalking)
-		{
-			isWalking = false;
-			SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_SPRINT);
-		}
-		return;
-	}
-
-	//Walk Toggle
-	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SPRINT))
-	{
-		timerToggleFPSWalking.Reset();
-		playerLastMoveBlend = GET_PED_DESIRED_MOVE_BLEND_RATIO(GetPlayerPed());
-		SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), playerLastMoveBlend);
-	}
-	else if (timerToggleFPSWalking.Get() < 250)
-	{
-		if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_SPRINT))
-		{
-			if (isWalking)
-			{
-				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_SPRINT);
-				isWalking = false;
-			}
-			else
-			{
-				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_WALK);
-				isWalking = true;
-			}
-		}
-		else
-			SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), playerLastMoveBlend);
-	}
-	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SPRINT))
-	{
-		isWalking = false;
-		SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_SPRINT);
-	}
-	else if (isWalking)
-		SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_WALK);
-	return;
-}
-
-void DisableCameraAutoCenter()
-{
-	switch (Ini::DisableCameraAutoCenter)
-	{
-	case 1:
-		if (IS_PED_ON_FOOT(GetPlayerPed()))
-			SET_FOLLOW_CAM_IGNORE_ATTACH_PARENT_MOVEMENT_THIS_UPDATE();
-		break;
-	case 2:
-		if (GetVehiclePedIsIn(GetPlayerPed(), true, true) != NULL)
-			SET_FOLLOW_CAM_IGNORE_ATTACH_PARENT_MOVEMENT_THIS_UPDATE();
-		break;
-	case 3:
-		SET_FOLLOW_CAM_IGNORE_ATTACH_PARENT_MOVEMENT_THIS_UPDATE();
-		break;
-	}
-	return;
-}
-
-float handbrakeCamHeadingMin = 0.0f;
-float handbrakeCamHeadingMax = 0.0f;
-void SetCamSmoothHeadingLimit()
-{
-	const float frametimeMultiplier = TIMESTEP() * 275.0f;
-	const float heading = GET_GAMEPLAY_CAM_RELATIVE_HEADING();
-	if (heading > 0.0f)
-	{
-		handbrakeCamHeadingMax = heading - frametimeMultiplier;
-		if (handbrakeCamHeadingMax < 0.0f)
-			handbrakeCamHeadingMax = 0.0f;
-
-		handbrakeCamHeadingMin = 0.0f;
-	}
-	else
-	{
-		handbrakeCamHeadingMin = heading + frametimeMultiplier;
-		if (handbrakeCamHeadingMin > 0.0f)
-			handbrakeCamHeadingMin = 0.0f;
-
-		handbrakeCamHeadingMax = 0.0f;
-	}
-	return;
-}
-
-Timer timerVehCamA;
-Timer timerVehCamB;
-void CamFollowVehicleDuringHandbrake()
-{
-	const int timePressed = Ini::CamFollowVehDelay;
-	constexpr int delay = 300;
-
-	const Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
-	if (!DOES_ENTITY_EXIST(veh))
-		return;
-
-	Hash vehModel = GET_ENTITY_MODEL(veh);
-	if (!IS_THIS_MODEL_A_CAR(vehModel) && !(IS_THIS_MODEL_A_BIKE(vehModel) && !IS_THIS_MODEL_A_BICYCLE(vehModel))
-		&& !IS_THIS_MODEL_A_QUADBIKE(vehModel))
-		return;
-
-	if (timePressed > 0)
-	{
-		if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
-			timerVehCamA.Reset();
-		else if (timerVehCamA.Get() > timePressed && IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
-		{
-			SetCamSmoothHeadingLimit();
-			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
-		}
-		else if (timerVehCamA.Get() > timePressed && IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
-		{
-			timerVehCamB.Reset();
-			SetCamSmoothHeadingLimit();
-			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
-		}
-		else if (timerVehCamB.Get() < delay)
-		{
-			SetCamSmoothHeadingLimit();
-			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
-		}
-	}
-	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
-	{
-		SetCamSmoothHeadingLimit();
-		SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
-	}
-	return;
-}
-
-bool wasUsingHoodCam = false;
-void DisableFirstPersonView()
-{
-	if (GET_FOLLOW_PED_CAM_VIEW_MODE() == CAM_VIEW_MODE_FIRST_PERSON)
-		SET_FOLLOW_PED_CAM_VIEW_MODE(CAM_VIEW_MODE_THIRD_PERSON_NEAR);
-
-	if (IS_FOLLOW_VEHICLE_CAM_ACTIVE())
-	{
-		if (GetGameVersion() >= VER_1_0_372_2_STEAM)
-		{
-			const bool isUsingHoodCam = GET_IS_USING_HOOD_CAMERA();	//Requires b372
-			const int vehModel = GET_ENTITY_MODEL(GetVehiclePedIsUsing(GetPlayerPed()));
-			if (IS_THIS_MODEL_A_CAR(vehModel) || (IS_THIS_MODEL_A_BOAT(vehModel) && !IS_THIS_MODEL_A_JETSKI(vehModel)) ||
-				IS_THIS_MODEL_A_PLANE(vehModel) || IS_THIS_MODEL_A_HELI(vehModel))
-			{
-				if (wasUsingHoodCam && isUsingHoodCam)
-					SET_FOLLOW_VEHICLE_CAM_VIEW_MODE(CAM_VIEW_MODE_FIRST_PERSON);
-
-				if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_NEXT_CAMERA))
-				{
-					if (GET_FOLLOW_VEHICLE_CAM_VIEW_MODE() == CAM_VIEW_MODE_THIRD_PERSON_FAR)
-						wasUsingHoodCam = true;
-					else
-						wasUsingHoodCam = false;
-				}
-
-				if (isUsingHoodCam && !GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
-					return;
-			}
-
-			if (GET_FOLLOW_VEHICLE_CAM_VIEW_MODE() == CAM_VIEW_MODE_FIRST_PERSON && !GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
-			{
-				wasUsingHoodCam = false;
-				SET_FOLLOW_VEHICLE_CAM_VIEW_MODE(CAM_VIEW_MODE_THIRD_PERSON_NEAR);
-			}
-		}
-		else
-			SET_FOLLOW_VEHICLE_CAM_VIEW_MODE(CAM_VIEW_MODE_THIRD_PERSON_NEAR);
-	}
-
-	DISABLE_ON_FOOT_FIRST_PERSON_VIEW_THIS_UPDATE(); //Also works in vehicles
-	return;
-}
-
-void DisableIdleCamera()
-{
-	INVALIDATE_CINEMATIC_VEHICLE_IDLE_MODE();
-	INVALIDATE_IDLE_CAM();
-	return;
-}
-
-void DisableRecording()
-{
-	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING, false);
-	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING_SECONDARY, false);
-	REPLAY_PREVENT_RECORDING_THIS_FRAME();
-	return;
-}
-
-void DisableMobilePhone()
-{
-	if (DOES_SCRIPT_EXIST("cellphone_controller"))
-		TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME("cellphone_controller");
-
-	if (IS_MOBILE_PHONE_CALL_ONGOING()) { STOP_SCRIPTED_CONVERSATION(false); }
-	if (IS_PED_RINGTONE_PLAYING(GetPlayerPed())) { STOP_PED_RINGTONE(GetPlayerPed()); }
-	DESTROY_MOBILE_PHONE();
-
-	EnablePedConfigFlag(GetPlayerPed(), PCF_PhoneDisableTextingAnimations);
-	EnablePedConfigFlag(GetPlayerPed(), PCF_PhoneDisableTalkingAnimations);
-	EnablePedConfigFlag(GetPlayerPed(), PCF_PhoneDisableCameraAnimations);
-
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_PHONE, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_UP, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_DOWN, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_LEFT, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_RIGHT, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_SELECT, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CANCEL, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_OPTION, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_EXTRA_OPTION, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_SCROLL_FORWARD, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_SCROLL_BACKWARD, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_FOCUS_LOCK, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_GRID, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_SELFIE, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_DOF, false);
-	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_EXPRESSION, false);
-	return;
-}
-}	//END nControls
 
 //////////////////////////////////////////Player Vehicle/////////////////////////////////////////
 namespace nVehicle
@@ -1231,6 +1143,243 @@ void DisableAutoEquipHelmets()
 
 inline void DisableStuntJumps() { SET_STUNT_JUMPS_CAN_TRIGGER(false); return; }
 }	//END nVehicle
+
+/////////////////////////////////////////Player Controls/////////////////////////////////////////
+namespace nControls
+{
+inline void DisableAssistedMovement() { ASSISTED_MOVEMENT_OVERRIDE_LOAD_DISTANCE_THIS_FRAME(NULL); return; }
+
+bool isWalking = false;
+float playerLastMoveBlend = 0.0f;
+Timer timerToggleFPSWalking;
+void ToggleFPSWalking()
+{
+	if (!IS_PED_ON_FOOT(GetPlayerPed()) || !IS_CONTROL_ENABLED(PLAYER_CONTROL, INPUT_SPRINT) ||
+		GET_FOLLOW_PED_CAM_VIEW_MODE() != CAM_VIEW_MODE_FIRST_PERSON)
+	{
+		if (isWalking)
+		{
+			isWalking = false;
+			SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_SPRINT);
+		}
+		return;
+	}
+
+	//Walk Toggle
+	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SPRINT))
+	{
+		timerToggleFPSWalking.Reset();
+		playerLastMoveBlend = GET_PED_DESIRED_MOVE_BLEND_RATIO(GetPlayerPed());
+		SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), playerLastMoveBlend);
+	}
+	else if (timerToggleFPSWalking.Get() < 250)
+	{
+		if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_SPRINT))
+		{
+			if (isWalking)
+			{
+				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_SPRINT);
+				isWalking = false;
+			}
+			else
+			{
+				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_WALK);
+				isWalking = true;
+			}
+		}
+		else
+			SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), playerLastMoveBlend);
+	}
+	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SPRINT))
+	{
+		isWalking = false;
+		SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_SPRINT);
+	}
+	else if (isWalking)
+		SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_WALK);
+	return;
+}
+
+void DisableCameraAutoCenter()
+{
+	switch (Ini::DisableCameraAutoCenter)
+	{
+	case 1:
+		if (IS_PED_ON_FOOT(GetPlayerPed()))
+			SET_FOLLOW_CAM_IGNORE_ATTACH_PARENT_MOVEMENT_THIS_UPDATE();
+		break;
+	case 2:
+		if (GetVehiclePedIsIn(GetPlayerPed(), true, true) != NULL)
+			SET_FOLLOW_CAM_IGNORE_ATTACH_PARENT_MOVEMENT_THIS_UPDATE();
+		break;
+	case 3:
+		SET_FOLLOW_CAM_IGNORE_ATTACH_PARENT_MOVEMENT_THIS_UPDATE();
+		break;
+	}
+	return;
+}
+
+float handbrakeCamHeadingMin = 0.0f;
+float handbrakeCamHeadingMax = 0.0f;
+void SetCamSmoothHeadingLimit()
+{
+	const float frametimeMultiplier = TIMESTEP() * 275.0f;
+	const float heading = GET_GAMEPLAY_CAM_RELATIVE_HEADING();
+	if (heading > 0.0f)
+	{
+		handbrakeCamHeadingMax = heading - frametimeMultiplier;
+		if (handbrakeCamHeadingMax < 0.0f)
+			handbrakeCamHeadingMax = 0.0f;
+
+		handbrakeCamHeadingMin = 0.0f;
+	}
+	else
+	{
+		handbrakeCamHeadingMin = heading + frametimeMultiplier;
+		if (handbrakeCamHeadingMin > 0.0f)
+			handbrakeCamHeadingMin = 0.0f;
+
+		handbrakeCamHeadingMax = 0.0f;
+	}
+	return;
+}
+
+Timer timerVehCamA;
+Timer timerVehCamB;
+void CamFollowVehicleDuringHandbrake()
+{
+	const int timePressed = Ini::CamFollowVehDelay;
+	constexpr int delay = 300;
+
+	const Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
+	if (!DOES_ENTITY_EXIST(veh))
+		return;
+
+	Hash vehModel = GET_ENTITY_MODEL(veh);
+	if (!IS_THIS_MODEL_A_CAR(vehModel) && !(IS_THIS_MODEL_A_BIKE(vehModel) && !IS_THIS_MODEL_A_BICYCLE(vehModel))
+		&& !IS_THIS_MODEL_A_QUADBIKE(vehModel))
+		return;
+
+	if (timePressed > 0)
+	{
+		if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
+			timerVehCamA.Reset();
+		else if (timerVehCamA.Get() > timePressed && IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
+		{
+			SetCamSmoothHeadingLimit();
+			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
+		}
+		else if (timerVehCamA.Get() > timePressed && IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
+		{
+			timerVehCamB.Reset();
+			SetCamSmoothHeadingLimit();
+			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
+		}
+		else if (timerVehCamB.Get() < delay)
+		{
+			SetCamSmoothHeadingLimit();
+			SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
+		}
+	}
+	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_VEH_HANDBRAKE))
+	{
+		SetCamSmoothHeadingLimit();
+		SET_THIRD_PERSON_CAM_RELATIVE_HEADING_LIMITS_THIS_UPDATE(handbrakeCamHeadingMin, handbrakeCamHeadingMax);
+	}
+	return;
+}
+
+bool wasUsingHoodCam = false;
+void DisableFirstPersonView()
+{
+	if (GET_FOLLOW_PED_CAM_VIEW_MODE() == CAM_VIEW_MODE_FIRST_PERSON)
+		SET_FOLLOW_PED_CAM_VIEW_MODE(CAM_VIEW_MODE_THIRD_PERSON_NEAR);
+
+	if (IS_FOLLOW_VEHICLE_CAM_ACTIVE())
+	{
+		if (GetGameVersion() >= VER_1_0_372_2_STEAM)
+		{
+			const bool isUsingHoodCam = GET_IS_USING_HOOD_CAMERA();	//Requires b372
+			const int vehModel = GET_ENTITY_MODEL(GetVehiclePedIsUsing(GetPlayerPed()));
+			if (IS_THIS_MODEL_A_CAR(vehModel) || (IS_THIS_MODEL_A_BOAT(vehModel) && !IS_THIS_MODEL_A_JETSKI(vehModel)) ||
+				IS_THIS_MODEL_A_PLANE(vehModel) || IS_THIS_MODEL_A_HELI(vehModel))
+			{
+				if (wasUsingHoodCam && isUsingHoodCam)
+					SET_FOLLOW_VEHICLE_CAM_VIEW_MODE(CAM_VIEW_MODE_FIRST_PERSON);
+
+				if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_NEXT_CAMERA))
+				{
+					if (GET_FOLLOW_VEHICLE_CAM_VIEW_MODE() == CAM_VIEW_MODE_THIRD_PERSON_FAR)
+						wasUsingHoodCam = true;
+					else
+						wasUsingHoodCam = false;
+				}
+
+				if (isUsingHoodCam && !GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
+					return;
+			}
+
+			if (GET_FOLLOW_VEHICLE_CAM_VIEW_MODE() == CAM_VIEW_MODE_FIRST_PERSON && !GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE))
+			{
+				wasUsingHoodCam = false;
+				SET_FOLLOW_VEHICLE_CAM_VIEW_MODE(CAM_VIEW_MODE_THIRD_PERSON_NEAR);
+			}
+		}
+		else
+			SET_FOLLOW_VEHICLE_CAM_VIEW_MODE(CAM_VIEW_MODE_THIRD_PERSON_NEAR);
+	}
+
+	DISABLE_ON_FOOT_FIRST_PERSON_VIEW_THIS_UPDATE(); //Also works in vehicles
+	return;
+}
+
+void DisableIdleCamera()
+{
+	INVALIDATE_CINEMATIC_VEHICLE_IDLE_MODE();
+	INVALIDATE_IDLE_CAM();
+	return;
+}
+
+void DisableRecording()
+{
+	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING, false);
+	DISABLE_CONTROL_ACTION(PLAYER_CONTROL, INPUT_REPLAY_START_STOP_RECORDING_SECONDARY, false);
+	REPLAY_PREVENT_RECORDING_THIS_FRAME();
+	return;
+}
+
+void DisableMobilePhone()
+{
+	if (DOES_SCRIPT_EXIST("cellphone_controller"))
+		TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME("cellphone_controller");
+
+	if (IS_MOBILE_PHONE_CALL_ONGOING()) { STOP_SCRIPTED_CONVERSATION(false); }
+	if (IS_PED_RINGTONE_PLAYING(GetPlayerPed())) { STOP_PED_RINGTONE(GetPlayerPed()); }
+	DESTROY_MOBILE_PHONE();
+
+	EnablePedConfigFlag(GetPlayerPed(), PCF_PhoneDisableTextingAnimations);
+	EnablePedConfigFlag(GetPlayerPed(), PCF_PhoneDisableTalkingAnimations);
+	EnablePedConfigFlag(GetPlayerPed(), PCF_PhoneDisableCameraAnimations);
+
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_PHONE, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_UP, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_DOWN, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_LEFT, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_RIGHT, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_SELECT, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CANCEL, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_OPTION, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_EXTRA_OPTION, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_SCROLL_FORWARD, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_SCROLL_BACKWARD, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_FOCUS_LOCK, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_GRID, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_SELFIE, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_DOF, false);
+	DISABLE_CONTROL_ACTION(FRONTEND_CONTROL, INPUT_CELLPHONE_CAMERA_EXPRESSION, false);
+	return;
+}
+}	//END nControls
 
 ///////////////////////////////////////////////HUD///////////////////////////////////////////////
 namespace nHUD
@@ -1779,26 +1928,19 @@ void RegisterPlayerOptions()
 	playerOptionsManager.UnregisterAllOptions();
 
 	REGISTER_OPTION(playerOptionsManager, EnableCrouching, nGeneral, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, FriendlyFire, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, EnablePlayerActionsForAllPeds, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableActionMode, nGeneral, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, LocationalDamage, nGeneral, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, DisarmPlayerWhenShot, nGeneral, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, DropPlayerWeaponWhenRagdolling, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DynamicallyCleanWoundsAndDirt, nGeneral, VER_UNK, true);
 	REGISTER_OPTION_INI(playerOptionsManager, EnableSprintInsideInteriors, nGeneral, SprintInsideInteriors, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, AllowWeaponsInsideSafeHouse, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, SilentWanted, nGeneral, VER_UNK, true);
 
-	//////////////////////////////////////Player Controls//////////////////////////////////
-	REGISTER_OPTION(playerOptionsManager, DisableAssistedMovement, nControls, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, ToggleFPSWalking, nControls, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, DisableCameraAutoCenter, nControls, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, CamFollowVehicleDuringHandbrake, nControls, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, DisableFirstPersonView, nControls, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, DisableIdleCamera, nControls, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, DisableRecording, nControls, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, DisableMobilePhone, nControls, VER_UNK, true);
+	////////////////////////////////////Player Weapons////////////////////////////////////
+	REGISTER_OPTION(playerOptionsManager, FriendlyFire, nWeapons, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, LocationalDamage, nWeapons, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, EnableWeaponRecoil, nWeapons, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisarmPlayerWhenShot, nWeapons, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DropPlayerWeaponWhenRagdolling, nWeapons, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, AllowWeaponsInsideSafeHouse, nWeapons, VER_UNK, true);
 
 	//////////////////////////////////////Player Vehicle///////////////////////////////////
 	REGISTER_OPTION(playerOptionsManager, DisableCarMidAirAndRollControl, nVehicle, VER_UNK, true);
@@ -1820,6 +1962,16 @@ void RegisterPlayerOptions()
 	REGISTER_OPTION(playerOptionsManager, DisableAirVehicleTurbulence, nVehicle, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableAutoEquipHelmets, nVehicle, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableStuntJumps, nVehicle, VER_UNK, true);
+
+	//////////////////////////////////////Player Controls//////////////////////////////////
+	REGISTER_OPTION(playerOptionsManager, DisableAssistedMovement, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, ToggleFPSWalking, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableCameraAutoCenter, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, CamFollowVehicleDuringHandbrake, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableFirstPersonView, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableIdleCamera, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableRecording, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableMobilePhone, nControls, VER_UNK, true);
 
 	///////////////////////////////////////////HUD/////////////////////////////////////////
 	REGISTER_OPTION(playerOptionsManager, AllowGameExecutionOnPauseMenu, nHUD, VER_UNK, true);
