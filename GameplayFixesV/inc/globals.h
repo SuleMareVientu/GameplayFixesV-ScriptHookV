@@ -196,9 +196,11 @@ enum ePedFlag {
 	PCF_IgnoreInteriorCheckForSprinting = 427,		// When set, player will be able to sprint inside interriors even if it is tagged to prevent it.
 
 	//Ped Reset Flags
+	PRF_Wandering = 10,
 	PRF_IsAiming = 27,								// TASK_GUN or TASK_USE_COVER
 	PRF_DisablePlayerLockon = 43,
 	PRF_ScriptDisableSecondaryAnimationTasks = 58,
+	PRF_WanderingStoppedForOtherPed = 61,
 	PRF_NotAllowedToChangeCrouchState = 68,			// if set the ped will not be allowed to change their crouch state
 	PRF_DisableCrouchWhileInCover = 88,				// Force the crouch flag to return true while in cover.
 	PRF_DisableDynamicCapsuleRadius = 121,			// Turn off dynamic adjustments to ped capsules
@@ -2354,4 +2356,281 @@ enum eControlAction {
 	INPUT_USE_ARMOR,
 	MAX_INPUTS
 };
+#pragma endregion
+
+#pragma region Animations
+enum eAnimationFlags
+{
+	AF_DEFAULT = 0,                                     //                  
+	AF_LOOPING = 1,                                     // Repeat the animation 
+	AF_HOLD_LAST_FRAME = 2,                             // Hold on the last frame of the animation 
+	AF_REPOSITION_WHEN_FINISHED = 4,                    // When the animation finishes pop the peds physical reprsentation position to match the visual representations position Note that the animator must not unwind the animation and must have an independent mover node 
+	AF_NOT_INTERRUPTABLE = 8,                           // Can the task not be interupted by extenal events 
+	AF_UPPERBODY = 16,                                  // Only plays the upper body part of the animation. Dampens any motion caused by the lower body animation.Note that the animation should include the root node 
+	AF_SECONDARY = 32,                                  // The task will run in the secondary task slot. This means it can be used aswell as a movement task (for instance) 
+	AF_REORIENT_WHEN_FINISHED = 64,                     // When the animation finishes pop the peds physical reprsentation direction to match the visual representations direction. Note that the animator must not unwind the animation and must have an independent mover node 
+	AF_ABORT_ON_PED_MOVEMENT = 128,                     // Ends the animation early if the ped attemps to move e.g. if the player tries to move using the controller. Can also be used to blend out automatically when an ai ped starts moving by combining it with the AF_SECONDARY flag.
+	AF_ADDITIVE = 256,                                  // Play back the animation additively. Note, this will only produce sensible results on specifically authored additive animations!
+	AF_TURN_OFF_COLLISION = 512,                        // Do not react to collision detection whilst this anim is playing
+	AF_OVERRIDE_PHYSICS = 1024,                         // Do not apply any physics forces whilst the anim is playing. Automatically turns off collision, extracts any initial offset provided in the clip and uses per frame mover extraction.
+	AF_IGNORE_GRAVITY = 2048,                           // Do not apply gravity while the anim is playing
+	AF_EXTRACT_INITIAL_OFFSET = 4096,                   // Extract an initial offset from the playback position authored by the animator
+	// Use this flag when playing back anims on different peds which have been authored
+	// to sync with each other
+	AF_EXIT_AFTER_INTERRUPTED = 8192,                   // Exit the animation task if it is interrupted by another task (ie Natural Motion).  Without this flag bing set looped animations will restart ofter the NM task
+
+	// Tag synchronizer flags - sync the anim against ped movement (walking / running / etc)
+	AF_TAG_SYNC_IN = 16384,                             // Sync the anim whilst blending in (use for seamless transitions from walk / run into a full body anim)
+	AF_TAG_SYNC_OUT = 32768,                            // Sync the anim whilst blending out (use for seamless transitions from a full body anim into walking / running behaviour)
+	AF_TAG_SYNC_CONTINUOUS = 65536,                     // Sync all the time (Only usefull to synchronize a partial anim e.g. an upper body)
+
+	AF_FORCE_START = 131072,                            // Force the anim task to start even if the ped is falling / ragdolling / etc. Can fix issues with peds not playing their anims immediately after a warp / etc
+	AF_USE_KINEMATIC_PHYSICS = 262144,                  // Use the kinematic physics mode on the entity for the duration of the anim (it should push other entities out of the way, and not be pushed around by players / etc
+	AF_USE_MOVER_EXTRACTION = 524288,                   // Updates the peds capsule position every frame based on the animation. Use in conjunction with AF_USE_KINEMATIC_PHYSICS to create characters that cannot be pushed off course by other entities / geometry / etc whilst playing the anim.
+
+	AF_HIDE_WEAPON = 1048576,                           // Indicates that the ped's weapon should be hidden while this animation is playing.
+
+	AF_ENDS_IN_DEAD_POSE = 2097152,                     // When the anim ends, kill the ped and use the currently playing anim as the dead pose
+	AF_ACTIVATE_RAGDOLL_ON_COLLISION = 4194304,         // If the peds ragdoll bounds make contact with something physical (that isn't flat ground) activate the ragdoll and fall over.
+	AF_DONT_EXIT_ON_DEATH = 8388608,					// Currently used only on secondary anim tasks. Secondary anim tasks will end automatically when the ped dies. Setting this flag stops that from happening."
+	AF_ABORT_ON_WEAPON_DAMAGE = 16777216,				// Allow aborting from damage events (including non-ragdoll damage events) even when blocking other ai events using AF_NOT_INTERRUPTABLE.
+	AF_DISABLE_FORCED_PHYSICS_UPDATE = 33554432,		// Prevent adjusting the capsule on the enter state (useful if script is doing a sequence of scripted anims and they are known to more or less stand still) 
+	AF_PROCESS_ATTACHMENTS_ON_START = 67108864,			// Force the attachments to be processed at the start of the clip
+	AF_EXPAND_PED_CAPSULE_FROM_SKELETON = 134217728,	// Expands the capsule to the extents of the skeleton
+	AF_USE_ALTERNATIVE_FP_ANIM = 268435456,				// Plays an alternative first person version of the clip on the player when in first person mode (the first person clip must be in the same dictionary, and be named the same as the anim you're playing, but with _FP appended on the end)
+	AF_BLENDOUT_WRT_LAST_FRAME = 536870912,				// Start blending out the anim early, so that the blend out duration completes at the end of the animation.
+	AF_USE_FULL_BLENDING = 1073741824                 	// Use full blending for this anim and override the heading/position adjustment in CTaskScriptedAnimation::CheckIfClonePlayerNeedsHeadingPositionAdjust(), so that we don't correct errors (special case such as scrip-side implemented AI tasks, i.e. diving)
+
+};
+
+constexpr int defaultAF = AF_NOT_INTERRUPTABLE | AF_TAG_SYNC_IN | AF_TAG_SYNC_OUT | AF_HIDE_WEAPON | AF_ABORT_ON_WEAPON_DAMAGE | AF_EXIT_AFTER_INTERRUPTED;
+constexpr int upperAF = AF_NOT_INTERRUPTABLE | AF_UPPERBODY | AF_TAG_SYNC_IN | AF_TAG_SYNC_OUT | AF_HIDE_WEAPON | AF_ABORT_ON_WEAPON_DAMAGE | AF_EXIT_AFTER_INTERRUPTED;
+constexpr int upperSecondaryAF = AF_NOT_INTERRUPTABLE | AF_UPPERBODY | AF_TAG_SYNC_CONTINUOUS | AF_SECONDARY | AF_HIDE_WEAPON | AF_ABORT_ON_WEAPON_DAMAGE | AF_EXIT_AFTER_INTERRUPTED;
+
+enum eAnimPriorityFlags {
+	AF_PRIORITY_LOW = 0,
+	AF_PRIORITY_MEDIUM = 1,
+	AF_PRIORITY_HIGH = 2
+};
+
+enum eIKControlFlags {
+	AIK_NONE = 0,
+	AIK_DISABLE_LEG_IK = 1,
+	AIK_DISABLE_ARM_IK = 2,
+	AIK_DISABLE_HEAD_IK = 4,
+	AIK_DISABLE_TORSO_IK = 8,
+	AIK_DISABLE_TORSO_REACT_IK = 16,
+	AIK_USE_LEG_ALLOW_TAGS = 32,
+	AIK_USE_LEG_BLOCK_TAGS = 64,
+	AIK_USE_ARM_ALLOW_TAGS = 128,
+	AIK_USE_ARM_BLOCK_TAGS = 256,
+	AIK_PROCESS_WEAPON_HAND_GRIP = 512,
+	AIK_USE_FP_ARM_LEFT = 1024,
+	AIK_USE_FP_ARM_RIGHT = 2048,
+	AIK_DISABLE_TORSO_VEHICLE_IK = 4096,
+	AIK_LINKED_FACIAL = 8192
+};
+
+enum eAnimFilters {
+	BONEMASK_ALL = Joaat("BONEMASK_ALL"),
+	BONEMASK_ARMONLY_L = Joaat("BONEMASK_ARMONLY_L"),
+	BONEMASK_ARMONLY_R = Joaat("BONEMASK_ARMONLY_R"),
+	BONEMASK_ARMS = Joaat("BONEMASK_ARMS"),
+	BONEMASK_BODYONLY = Joaat("BONEMASK_BODYONLY"),
+	BONEMASK_HEADONLY = Joaat("BONEMASK_HEADONLY"),
+	BONEMASK_HEAD_NECK_AND_ARMS = Joaat("BONEMASK_HEAD_NECK_AND_ARMS"),
+	BONEMASK_HEAD_NECK_AND_L_ARM = Joaat("BONEMASK_HEAD_NECK_AND_L_ARM"),
+	BONEMASK_HEAD_NECK_AND_R_ARM = Joaat("BONEMASK_HEAD_NECK_AND_R_ARM"),
+	BONEMASK_LOD_LO = Joaat("BONEMASK_LOD_LO"),
+	BONEMASK_SPINEONLY = Joaat("BONEMASK_SPINEONLY"),
+	BONEMASK_SPINE_FEATHERED = Joaat("BONEMASK_SPINE_FEATHERED"),
+	BONEMASK_UPPERONLY = Joaat("BONEMASK_UPPERONLY"),
+	FILTER_ARMSHEADNOMOVER = Joaat("ArmsHeadNoMover_filter"),
+	FILTER_BOTHARMS = Joaat("BothArms_filter"),
+	FILTER_BOTHARMS_NOSPINE = Joaat("BothArms__NoSpine_filter"),
+	FILTER_GRIP_R_ONLY = Joaat("Grip_R_Only_filter"),
+	FILTER_IGNOREMOVERBLEND = Joaat("IgnoreMoverBlend_filter"),
+	FILTER_IGNOREMOVERBLENDROTATIONONLY = Joaat("IgnoreMoverBlendRotationOnly_filter"),
+	FILTER_LEGSONLY = Joaat("LegsOnly_filter"),
+	FILTER_LOWERBODY = Joaat("Lowerbody_filter"),
+	FILTER_MOVERONLY = Joaat("MoverOnly_Filter"),
+	FILTER_NOMOVER = Joaat("NoMover_filter"),
+	FILTER_ROOTONLY = Joaat("RootOnly_filter"),
+	FILTER_ROOTUPPERBODY = Joaat("RootUpperbody_filter"),
+	FILTER_UPPERBODYNOARM = Joaat("UpperBodyNoArms_filter"),
+	FILTER_UPPERBODYANDIK = Joaat("UpperbodyAndIk_filter"),
+	FILTER_UPPERBODYFEATHERED_NOLEFTTARM = Joaat("UpperbodyFeathered_NoLefttArm_filter"),
+	FILTER_UPPERBODYFEATHERED_NORIGHTARM = Joaat("UpperbodyFeathered_NoRightArm_filter"),
+	FILTER_UPPERBODYFEATHERED = Joaat("UpperbodyFeathered_filter"),
+	FILTER_UPPERBODYNOMOVER = Joaat("UpperbodyNoMover_filter"),
+	FILTER_UPPERBODY = Joaat("Upperbody_filter"),
+	FILTER_UPPERBODY_FROM_SPINE3 = Joaat("Upperbody_from_Spine3_filter"),
+	FILTER_UPPERBODYBICYCLE_DRIVEBY = Joaat("UpperBodyBicycleDriveby_filter")
+};
+
+constexpr float WALK_BLEND_IN = 1.5f;				// 20frms
+constexpr float WALK_BLEND_OUT = -1.5f;				// 20frms
+constexpr float REALLY_SLOW_BLEND_IN = 2.0f;		// 15frms
+constexpr float REALLY_SLOW_BLEND_OUT = -2.0f;		// 15frms
+constexpr float SLOW_BLEND_IN = 4.0f;				// 8frms
+constexpr float SLOW_BLEND_OUT = -4.0f;				// 8frms
+constexpr float NORMAL_BLEND_IN = 8.0f;				// 4frms
+constexpr float NORMAL_BLEND_OUT = -8.0f;			// 4frms
+constexpr float FAST_BLEND_IN = 16.0f;				// 2frms
+constexpr float FAST_BLEND_OUT = -16.0f;			// 2frms
+constexpr float INSTANT_BLEND_IN = 1000.0f;			// 0frms
+constexpr float INSTANT_BLEND_OUT = -1000.0f;		// 0frms
+
+// For scripted anims ONLY
+constexpr float SLOW_BLEND_DURATION = 0.25f;
+constexpr float NORMAL_BLEND_DURATION = 0.125f;
+constexpr float FAST_BLEND_DURATION = 0.0625f;
+constexpr float INSTANT_BLEND_DURATION = 0.0f;
+
+enum eAnimationPlaybackType {
+	APT_EMPTY = 0,
+	APT_SINGLE_ANIM = 1,
+	APT_3_WAY_BLEND = 2
+};
+
+struct AnimData {
+	alignas(8) int type;
+
+	alignas(8) char* dictionary0;
+	alignas(8) char* anim0;
+	alignas(8) float phase0;
+	alignas(8) float rate0;
+	alignas(8) float weight0;
+
+	alignas(8) char* dictionary1;
+	alignas(8) char* anim1;
+	alignas(8) float phase1;
+	alignas(8) float rate1;
+	alignas(8) float weight1;
+
+	alignas(8) char* dictionary2;
+	alignas(8) char* anim2;
+	alignas(8) float phase2;
+	alignas(8) float rate2;
+	alignas(8) float weight2;
+
+	alignas(8) int filter;			//eg. GET_HASH_KEY("BONEMASK_HEAD_NECK_AND_ARMS")
+	alignas(8) float blendInDelta;
+	alignas(8) float blendOutDelta;
+	alignas(8) int timeToPlay;
+	alignas(8) int flags;
+	alignas(8) int ikFlags;
+
+	AnimData(
+		const char* _dictionary0 = "",
+		const char* _anim0 = "",
+		const float _phase0 = 0.0f,
+		const float _rate0 = 1.0f,
+		const float _weight0 = 1.0f,
+
+		const int _type = APT_EMPTY,
+		const int _filter = 0,
+		const float _blendInDelta = NORMAL_BLEND_DURATION,
+		const float _blendOutDelta = NORMAL_BLEND_DURATION,
+		const int _timeToPlay = -1,
+		const int _flags = AF_DEFAULT,
+		const int _ikFlags = AIK_NONE,
+
+		const char* _dictionary1 = "",
+		const char* _anim1 = "",
+		const float _phase1 = 0.0f,
+		const float _rate1 = 1.0f,
+		const float _weight1 = 1.0f,
+
+		const char* _dictionary2 = "",
+		const char* _anim2 = "",
+		const float _phase2 = 0.0f,
+		const float _rate2 = 1.0f,
+		const float _weight2 = 1.0f
+	)
+	{
+		dictionary0 = const_cast<char*>(_dictionary0);
+		anim0 = const_cast<char*>(_anim0);
+		phase0 = _phase0;
+		rate0 = _rate0;
+		weight0 = _weight0;
+
+		type = _type;
+		filter = _filter;
+		blendInDelta = _blendInDelta;
+		blendOutDelta = _blendOutDelta;
+		timeToPlay = _timeToPlay;
+		flags = _flags;
+		ikFlags = _ikFlags;
+
+		dictionary1 = const_cast<char*>(_dictionary1);
+		anim1 = const_cast<char*>(_anim1);
+		phase1 = _phase1;
+		rate1 = _rate1;
+		weight1 = _weight1;
+
+		dictionary2 = const_cast<char*>(_dictionary2);
+		anim2 = const_cast<char*>(_anim2);
+		phase2 = _phase2;
+		rate2 = _rate2;
+		weight2 = _weight2;
+	}
+};
+
+inline constexpr void SetAnimData(
+	AnimData& data,
+	const char* dictionary0 = "",
+	const char* anim0 = "",
+	const float phase0 = 0.0f,
+	const float rate0 = 1.0f,
+	const float weight0 = 1.0f,
+
+	const int type = APT_EMPTY,
+	const int filter = 0,
+	const float blendInDelta = NORMAL_BLEND_DURATION,
+	const float blendOutDelta = NORMAL_BLEND_DURATION,
+	const int timeToPlay = -1,
+	const int flags = AF_DEFAULT,
+	const int ikFlags = AIK_NONE,
+
+	const char* dictionary1 = "",
+	const char* anim1 = "",
+	const float phase1 = 0.0f,
+	const float rate1 = 1.0f,
+	const float weight1 = 1.0f,
+
+	const char* dictionary2 = "",
+	const char* anim2 = "",
+	const float phase2 = 0.0f,
+	const float rate2 = 1.0f,
+	const float weight2 = 1.0f
+)
+{
+	data.dictionary0 = const_cast<char*>(dictionary0);
+	data.anim0 = const_cast<char*>(anim0);
+	data.phase0 = phase0;
+	data.rate0 = rate0;
+	data.weight0 = weight0;
+
+	data.type = type;
+	data.filter = filter;
+	data.blendInDelta = blendInDelta;
+	data.blendOutDelta = blendOutDelta;
+	data.timeToPlay = timeToPlay;
+	data.flags = flags;
+	data.ikFlags = ikFlags;
+
+	data.dictionary1 = const_cast<char*>(dictionary1);
+	data.anim1 = const_cast<char*>(anim1);
+	data.phase1 = phase1;
+	data.rate1 = rate1;
+	data.weight1 = weight1;
+
+	data.dictionary2 = const_cast<char*>(dictionary2);
+	data.anim2 = const_cast<char*>(anim2);
+	data.phase2 = phase2;
+	data.rate2 = rate2;
+	data.weight2 = weight2;
+	return;
+}
 #pragma endregion

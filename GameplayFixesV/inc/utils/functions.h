@@ -141,6 +141,8 @@ bool RequestModel(Hash model);
 bool RequestAnimDict(char* animDict);
 bool RequestClipSet(char* animDict);
 //bool RequestScaleform(const char* name, int* handle);
+Object CreateObject(Hash model, float locX = NULL, float locY = NULL, float locZ = NULL, float rotX = NULL, float rotY = NULL, float rotZ = NULL);
+void DeleteEntity(Entity* obj);
 #pragma endregion
 
 #pragma region Ped Flags
@@ -227,6 +229,21 @@ void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool 
 #pragma endregion
 
 #pragma region Misc
+void PlayScriptedAnim(
+	const Ped ped,
+	const char* dictionary0 = "",
+	const char* anim0 = "",
+	const float phase0 = 0.0f,
+	const float rate0 = 1.0f,
+	const float weight0 = 1.0f,
+
+	const int type = APT_EMPTY,
+	const int filter = 0,
+	const float blendInDelta = NORMAL_BLEND_DURATION,
+	const float blendOutDelta = NORMAL_BLEND_DURATION,
+	const int timeToPlay = -1,
+	const int flags = AF_DEFAULT,
+	const int ikFlags = AIK_NONE);
 bool IsPedMainProtagonist(const Ped ped);
 bool IsPedACop(const Ped ped);
 bool IsFirstPersonActive();

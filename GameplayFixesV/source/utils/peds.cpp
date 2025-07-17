@@ -7,6 +7,8 @@
 #include "utils\ini.h"
 #include <globals.h>
 
+#include <set>
+
 //Compatibility with player disarm
 int NMReactionTime = 0;
 int GetNMReactionTime() { return NMReactionTime; }
@@ -109,6 +111,52 @@ inline void DisableDeadPedsJumpOutOfVehicle(const Ped ped)
 	return;
 }
 
+struct PedBrolly
+{
+	Ped ped = 0;
+	Object brolly = 0;
+	// Equality (Vector == Vector)
+	constexpr bool operator==(const Ped _ped) const { return ped == _ped; }
+	constexpr bool operator<(const PedBrolly& s) const { return ped < s.ped; }
+};
+
+constexpr Hash brollyModel = Joaat("p_amb_brolly_01");
+constexpr char* brollyDict = "amb@code_human_wander_drinking@male@base";
+constexpr char* brollyAnim = "base";
+std::set<PedBrolly> brollyPeds;
+void EnablePedUmbrellas(Ped ped)
+{
+	if (!RequestAnimDict(brollyDict) ||
+		!RequestModel(brollyModel))
+		return;
+
+	if (GET_RAIN_LEVEL() < 0.1f || brollyPeds.size() == Ini::PedUmbrellas)
+		return;
+
+	if (!GET_CAN_PED_BE_GRABBED_BY_SCRIPT(ped, true, false, false, true, true, false, false, PEDTYPE_INVALID) ||
+		(GET_PED_TYPE(ped) != PEDTYPE_CIVMALE && GET_PED_TYPE(ped) != PEDTYPE_CIVFEMALE) ||
+		GET_INTERIOR_FROM_ENTITY(ped) || (GetPlayerCoords() - GET_ENTITY_COORDS(ped, true)).LengthSq() > (128.0f * 128.0f))
+		return;
+
+	const auto it = std::find(brollyPeds.begin(), brollyPeds.end(), ped);
+	if (it != brollyPeds.end())
+		return;
+
+	SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, false);
+	SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, false);
+	SET_PED_CAN_PLAY_AMBIENT_IDLES(ped, true, false);
+	SET_PED_CAN_PLAY_VISEME_ANIMS(ped, false, 0);
+	SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, false);
+
+	PedBrolly pedBrolly;
+	pedBrolly.ped = ped;
+	pedBrolly.brolly = CreateObject(brollyModel);
+	brollyPeds.emplace(pedBrolly);
+	ATTACH_ENTITY_TO_ENTITY(pedBrolly.brolly, ped, GET_PED_BONE_INDEX(ped, BONETAG_PH_R_HAND), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, true, true, false, false, EULER_XYZ, true, NULL);
+	PlayScriptedAnim(ped, brollyDict, brollyAnim, 0.0f, 1.0f, 1.0f, APT_SINGLE_ANIM, BONEMASK_ARMONLY_R, 0.5f, NORMAL_BLEND_DURATION, -1, upperSecondaryAF | AF_HOLD_LAST_FRAME);
+	return;
+}
+
 void DeadlyNPCsHeadshots(const Ped ped)
 {
 	if (!HAS_PED_BEEN_DAMAGED_BY_WEAPON(ped, NULL, GENERALWEAPON_TYPE_ANYWEAPON) || IS_PED_FALLING(ped) ||
@@ -201,6 +249,63 @@ void EnablePlayerNMReactionsWhenShot(const Ped shooter)
 	*/
 	return;
 }
+
+void UpdateOtherPeds()
+{
+	// Update brollyPeds
+	auto DropBrolly = [](Ped ped, Object brolly)
+		{
+			if (IS_ENTITY_PLAYING_ANIM(ped, brollyDict, brollyAnim, 3))
+				STOP_ANIM_TASK(ped, brollyDict, brollyAnim, NORMAL_BLEND_OUT);
+
+			DETACH_ENTITY(brolly, true, true);
+			SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, true);
+			SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, true);
+			SET_PED_CAN_PLAY_AMBIENT_IDLES(ped, false, false);
+			SET_PED_CAN_PLAY_VISEME_ANIMS(ped, true, 0);
+			SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, true);
+		};
+
+	for (auto it = brollyPeds.begin(); it != brollyPeds.end();)
+	{
+		if (!DOES_ENTITY_EXIST(it->ped))
+		{
+			Object obj = it->brolly;
+			DeleteEntity(&obj);
+			it = brollyPeds.erase(it);
+			continue;
+		}
+		else if (GET_RAIN_LEVEL() < 0.1f)
+		{
+			DropBrolly(it->ped, it->brolly);
+			Object obj = it->brolly;
+			DeleteEntity(&obj);
+			it = brollyPeds.erase(it);
+			continue;
+		}
+
+		CLEAR_PED_WETNESS(it->ped);
+
+		if (IS_PED_USING_SCENARIO(it->ped, "CODE_HUMAN_CROSS_ROAD_WAIT"))
+		{
+			it++;
+			continue;
+		}
+
+		if (!GET_CAN_PED_BE_GRABBED_BY_SCRIPT(it->ped, true, false, false, true, true, false, true, PEDTYPE_INVALID))
+			DropBrolly(it->ped, it->brolly);
+		else
+		{
+			SET_PED_CAN_PLAY_AMBIENT_ANIMS(it->ped, false);
+			SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(it->ped, false);
+			SET_PED_CAN_PLAY_AMBIENT_IDLES(it->ped, true, true);
+			SET_PED_CAN_PLAY_VISEME_ANIMS(it->ped, false, 0);
+			SET_PED_CAN_PLAY_GESTURE_ANIMS(it->ped, false);
+		}
+		it++;
+	}
+	return;
+}
 }
 
 #define REGISTER_OPTION(mngr, opt, pedptr) mngr.RegisterOption(std::make_unique<PedOption>(iniValue(Ini::opt), [](Ped ped) { opt(ped); }, pedptr, #opt))
@@ -220,7 +325,8 @@ void RegisterPedOptions()
 	REGISTER_OPTION(pedOptionsManager, DisablePedOnlyDamagedByPlayer, &currentPed);
 	REGISTER_OPTION(pedOptionsManager, DisableDeadPedsJumpOutOfVehicle, &currentPed);
 	REGISTER_OPTION(pedOptionsManager, DeadlyNPCsHeadshots, &currentPed);
-	
+	REGISTER_OPTION_INI(pedOptionsManager, EnablePedUmbrellas, &currentPed, PedUmbrellas);
+
 	// Player
 	if (GetFoundNMFunctions())
 		REGISTER_OPTION(pedOptionsManager, EnablePlayerNMReactionsWhenShot, &currentPed);
@@ -252,5 +358,6 @@ void UpdatePedsPool()
 		currentPed = peds[i];
 		pedOptionsManager.ApplyOptions();
 	}
+	UpdateOtherPeds();	// Remember to update data structures (sets, vectors etc.)
 	return;
 }

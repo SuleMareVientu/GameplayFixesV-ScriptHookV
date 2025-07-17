@@ -133,6 +133,7 @@ int DisarmChance = 50;
 bool DisarmIncludeLeftHand = false;
 bool DisablePedOnlyDamagedByPlayer = true;
 bool DisableDeadPedsJumpOutOfVehicle = true;
+int PedUmbrellas = 5;
 bool DeadlyNPCsHeadshots = true;
 bool DynamicCarJackingReactions = true;
 bool EnableShootingJackedPeds = true;
@@ -277,6 +278,7 @@ void ReadINI()
 	Ini::DisarmIncludeLeftHand = GET_INI_BOOL(ini, pedsGroup, DisarmIncludeLeftHand);
 	Ini::DisablePedOnlyDamagedByPlayer = GET_INI_BOOL(ini, pedsGroup, DisablePedOnlyDamagedByPlayer);
 	Ini::DisableDeadPedsJumpOutOfVehicle = GET_INI_BOOL(ini, pedsGroup, DisableDeadPedsJumpOutOfVehicle);
+	Ini::PedUmbrellas = GET_INI_INT(ini, pedsGroup, PedUmbrellas);
 	Ini::DeadlyNPCsHeadshots = GET_INI_BOOL(ini, pedsGroup, DeadlyNPCsHeadshots);
 	Ini::DynamicCarJackingReactions = GET_INI_BOOL(ini, pedsGroup, DynamicCarJackingReactions);
 	Ini::EnableShootingJackedPeds = GET_INI_BOOL(ini, pedsGroup, EnableShootingJackedPeds);

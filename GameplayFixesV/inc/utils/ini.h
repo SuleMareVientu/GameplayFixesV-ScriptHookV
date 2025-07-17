@@ -116,6 +116,7 @@ extern int DisarmChance;
 extern bool DisarmIncludeLeftHand;
 extern bool DisablePedOnlyDamagedByPlayer;
 extern bool DisableDeadPedsJumpOutOfVehicle;
+extern int PedUmbrellas;
 extern bool DeadlyNPCsHeadshots;
 extern bool DynamicCarJackingReactions;
 extern bool EnableShootingJackedPeds;

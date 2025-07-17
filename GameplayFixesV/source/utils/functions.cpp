@@ -373,6 +373,27 @@ bool RequestScaleform(const char* name, int* handle)
 }
 */
 
+Object CreateObject(Hash model, float locX, float locY, float locZ, float rotX, float rotY, float rotZ)
+{
+	const Object obj = CREATE_OBJECT_NO_OFFSET(model, locX, locY, locZ, false, true, false);
+	if (rotX != NULL || rotY != NULL || rotZ != NULL)
+		SET_ENTITY_ROTATION(obj, rotX, rotY, rotZ, EULER_YXZ, false);
+
+	return obj;
+}
+
+void DeleteEntity(Entity* obj)
+{
+	if (DOES_ENTITY_EXIST(*obj))
+	{
+		if (IS_ENTITY_ATTACHED(*obj))
+			DETACH_ENTITY(*obj, false, false);
+
+		SET_ENTITY_AS_MISSION_ENTITY(*obj, false, true);
+		DELETE_ENTITY(obj);
+	}
+	return;
+}
 #pragma endregion
 
 #pragma region Ped Flags
@@ -760,7 +781,7 @@ void RestorePlayerRetrievedWeapon(bool autoEquip)
 	if (retrievedWeaponThisFrame || droppedWeapons.empty())
 		return;
 
-	for (auto it = droppedWeapons.begin(); it != droppedWeapons.end(); )
+	for (auto it = droppedWeapons.begin(); it != droppedWeapons.end();)
 	{
 		if (!DOES_PICKUP_EXIST(it->PickupIndex))
 		{
@@ -1198,6 +1219,23 @@ void SetHealthHudDisplayValues(int healthPercentage, int armourPercentage, bool 
 #pragma endregion
 
 #pragma region Misc
+AnimData nullAnimData, animData;
+void PlayScriptedAnim(const Ped ped, const char* dictionary0, const char* anim0, const float phase0, const float rate0, const float weight0, const int type, const int filter, const float blendInDelta, const float blendOutDelta, const int timeToPlay, const int flags, const int ikFlags)
+{
+	SetAnimData(animData,
+		dictionary0, anim0, phase0, rate0, weight0,
+		type, filter, blendInDelta, blendOutDelta, timeToPlay, flags, ikFlags);
+	TASK_SCRIPTED_ANIMATION(
+		ped,
+		reinterpret_cast<int*>(&animData),
+		reinterpret_cast<int*>(&nullAnimData),
+		reinterpret_cast<int*>(&nullAnimData),
+		blendInDelta,
+		blendOutDelta
+	);
+	return;
+}
+
 bool IsPedMainProtagonist(const Ped ped)
 {
 	switch (GET_PED_TYPE(ped))

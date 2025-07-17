@@ -336,7 +336,6 @@ void LocationalDamage()
 	return;
 }
 
-float last = 0.0f;
 void EnableWeaponRecoil()
 {
 	if (!IS_PED_SHOOTING(GetPlayerPed()) || IsFirstPersonActive())
