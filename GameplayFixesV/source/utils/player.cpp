@@ -1814,8 +1814,8 @@ void DynamicCarJackingReactions()
 		CLEAR_PED_TASKS(ped);
 		TASK_LOOK_AT_ENTITY(ped, GetPlayerPed(), -1, SLF_FAST_TURN_RATE, SLF_LOOKAT_VERY_HIGH);
 
-		const int standStillTime = GetRandomIntInRange(250, 1250);
-		const int handsUpTime = GetRandomIntInRange(1750, 2250);
+		const int standStillTime = GetRandomNumberInRange(250, 1250);
+		const int handsUpTime = GetRandomNumberInRange(1750, 2250);
 		const bool shouldReact = GetWeightedBool(50);
 
 		int sequence = 0;

@@ -4,6 +4,10 @@
 #include <script.h>
 #include "utils\nm.h"
 
+// Random
+#include "libs\random.hpp"
+using Random = effolkronium::random_static;
+
 class Timer {
 	int gameTimer = 0;
 public:
@@ -46,12 +50,61 @@ inline bool BetweenExclude(const T val, const T min, const T max)
 
 	return false;
 }
+template <typename T>
+inline void InvertIfGreater(T& min, T& max)
+{
+	if (min > max)
+	{
+		const T tmpMin = min;
+		min = max;
+		max = tmpMin;
+	}
+	return;
+}
+
+template <typename T>
+inline void InvertIfGreater(T& min, T& max, T clampMin, T clampMax)
+{
+	if (min > max)
+	{
+		const T tmpMin = min;
+		min = max;
+		max = tmpMin;
+	}
+
+	if (min < clampMin)
+		min = clampMin;
+	else if (min > clampMax)
+		min = clampMax;
+
+	if (max < clampMin)
+		max = clampMin;
+	else if (max > clampMax)
+		max = clampMax;
+
+	return;
+}
 
 std::filesystem::path AbsoluteModulePath(HINSTANCE module);
 void SplitString(const char* charStr, std::string arr[], const int arrSize, const bool toUpper = false);
-int GetRandomIntInRange(int minValue = 0, int maxValue = 65535, bool useRd = false); // 0-65535 is the max range for natives, useRd has no such limit
-bool GetWeightedBool(int chance, bool useRd = false);
-Vector3 Normalize(Vector3 v);
+
+// Range is inclusive
+template <typename T>
+inline int GetRandomNumberInRange(const T min, const T max) {  return Random::get(min, max); }
+
+// Chance out of 100
+inline bool GetWeightedBool(int chance) 
+{
+	if (chance <= 0)
+		return false;
+	else if (chance >= 100)
+		return true;
+
+	return Random::get<bool>(static_cast<float>(chance) * 0.01f); 
+}
+// int GetRandomIntInRange(int minValue = 0, int maxValue = 65535, bool useRd = false); // 0-65535 is the max range for natives, useRd has no such limit
+// bool GetWeightedBool(int chance, bool useRd = false);
+// Vector3 Normalize(Vector3 v);
 
 static const std::unordered_map<std::string, int> mapPadControls = {
 	{"PAD_UP", INPUT_FRONTEND_UP},

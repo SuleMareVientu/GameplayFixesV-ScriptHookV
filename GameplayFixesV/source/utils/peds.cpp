@@ -15,6 +15,50 @@ int GetNMReactionTime() { return NMReactionTime; }
 
 namespace
 {
+struct PedBrolly
+{
+	Ped ped = 0;
+	Object brolly = 0;
+	constexpr bool operator==(const Ped _ped) const { return ped == _ped; }
+	constexpr bool operator<(const PedBrolly& s) const { return ped < s.ped; }
+};
+
+constexpr Hash brollyModel = Joaat("p_amb_brolly_01");
+constexpr char* brollyDict = "amb@code_human_wander_drinking@male@base";
+constexpr char* brollyAnim = "base";
+std::set<PedBrolly> brollyPeds;
+void EnablePedUmbrellas(Ped ped)
+{
+	if (!RequestAnimDict(brollyDict) ||
+		!RequestModel(brollyModel))
+		return;
+
+	if (GET_RAIN_LEVEL() < 0.1f || brollyPeds.size() == Ini::PedUmbrellas)
+		return;
+
+	if (!GET_CAN_PED_BE_GRABBED_BY_SCRIPT(ped, true, false, false, true, true, false, false, PEDTYPE_INVALID) ||
+		(GET_PED_TYPE(ped) != PEDTYPE_CIVMALE && GET_PED_TYPE(ped) != PEDTYPE_CIVFEMALE) ||
+		GET_INTERIOR_FROM_ENTITY(ped) || (GetPlayerCoords() - GET_ENTITY_COORDS(ped, true)).LengthSq() > (128.0f * 128.0f))
+		return;
+
+	if (std::find(brollyPeds.begin(), brollyPeds.end(), ped) != brollyPeds.end())
+		return;
+
+	SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, false);
+	SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, false);
+	SET_PED_CAN_PLAY_AMBIENT_IDLES(ped, true, false);
+	SET_PED_CAN_PLAY_VISEME_ANIMS(ped, false, 0);
+	SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, false);
+
+	PedBrolly pedBrolly;
+	pedBrolly.ped = ped;
+	pedBrolly.brolly = CreateObject(brollyModel);
+	brollyPeds.emplace(pedBrolly);
+	ATTACH_ENTITY_TO_ENTITY(pedBrolly.brolly, ped, GET_PED_BONE_INDEX(ped, BONETAG_PH_R_HAND), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, true, true, false, false, EULER_XYZ, true, NULL);
+	PlayScriptedAnim(ped, brollyDict, brollyAnim, 0.0f, 1.0f, 1.0f, APT_SINGLE_ANIM, BONEMASK_ARMONLY_R, 0.5f, NORMAL_BLEND_DURATION, -1, upperSecondaryAF | AF_HOLD_LAST_FRAME);
+	return;
+}
+
 inline void DisableWrithe(const Ped ped)
 {
 	EnablePedConfigFlag(ped, PCF_DisableGoToWritheWhenInjured);
@@ -63,6 +107,41 @@ void DisableSittingPedsInstantDeath(const Ped ped)
 	return;
 }
 
+inline void DisablePedOnlyDamagedByPlayer(const Ped ped)
+{
+	SET_ENTITY_ONLY_DAMAGED_BY_PLAYER(ped, false);
+	SET_ENTITY_ONLY_DAMAGED_BY_RELATIONSHIP_GROUP(ped, false, Joaat("PLAYER"));
+	return;
+}
+
+inline void DisableDeadPedsJumpOutOfVehicle(const Ped ped)
+{
+	EnablePedConfigFlag(ped, PCF_ForceDieInCar);
+	return;
+}
+
+void DeadlyNPCsHeadshots(const Ped ped)
+{
+	if (!HAS_PED_BEEN_DAMAGED_BY_WEAPON(ped, NULL, GENERALWEAPON_TYPE_ANYWEAPON) || IS_PED_FALLING(ped) ||
+		HAS_ENTITY_BEEN_DAMAGED_BY_ENTITY(ped, GetPlayerPed(), true))
+		return;
+
+	ClearEntityLastWeaponDamage(ped);
+
+	int bone = NULL;
+	if (!GET_PED_LAST_DAMAGE_BONE(ped, &bone))
+		return;
+
+	ClearPedLastDamageBone(ped);
+
+	if (GetGeneralDamageFromBoneTag(bone) == DZ_HEAD)
+	{
+		APPLY_DAMAGE_TO_PED(ped, 100000, true, NULL);
+		//EXPLODE_PED_HEAD(ped, Joaat("WEAPON_SNIPERRIFLE"));
+	}
+	return;
+}
+
 void DisarmPedWhenShot(const Ped ped)
 {
 	if (IS_ENTITY_DEAD(ped, false))
@@ -98,84 +177,71 @@ void DisarmPedWhenShot(const Ped ped)
 	return;
 }
 
-inline void DisablePedOnlyDamagedByPlayer(const Ped ped)
-{
-	SET_ENTITY_ONLY_DAMAGED_BY_PLAYER(ped, false);
-	SET_ENTITY_ONLY_DAMAGED_BY_RELATIONSHIP_GROUP(ped, false, Joaat("PLAYER"));
-	return;
-}
-
-inline void DisableDeadPedsJumpOutOfVehicle(const Ped ped)
-{
-	EnablePedConfigFlag(ped, PCF_ForceDieInCar);
-	return;
-}
-
-struct PedBrolly
+struct PedAccuracy
 {
 	Ped ped = 0;
-	Object brolly = 0;
-	// Equality (Vector == Vector)
+	int accuracy = -1;
+	int shootRate = -1;
+	constexpr PedAccuracy(Ped _ped, int _accuracy, int _shootRate) : ped(_ped), accuracy(_accuracy), shootRate(_shootRate) {}
 	constexpr bool operator==(const Ped _ped) const { return ped == _ped; }
-	constexpr bool operator<(const PedBrolly& s) const { return ped < s.ped; }
+	constexpr bool operator<(const PedAccuracy& s) const { return ped < s.ped; }
 };
 
-constexpr Hash brollyModel = Joaat("p_amb_brolly_01");
-constexpr char* brollyDict = "amb@code_human_wander_drinking@male@base";
-constexpr char* brollyAnim = "base";
-std::set<PedBrolly> brollyPeds;
-void EnablePedUmbrellas(Ped ped)
+std::set<PedAccuracy> pedAccuracies;
+void SetPedsAccuracy(Ped ped)
 {
-	if (!RequestAnimDict(brollyDict) ||
-		!RequestModel(brollyModel))
+	// Interesting natives
+	// SET_COMBAT_FLOAT, SET_PED_COMBAT_RANGE, SET_PED_COMBAT_ABILITY, SET_PED_HIGHLY_PERCEPTIVE, SET_PED_SEEING_RANGE, SET_PED_VISUAL_FIELD_PERIPHERAL_RANGE
+
+	if (std::find(pedAccuracies.begin(), pedAccuracies.end(), ped) != pedAccuracies.end())
 		return;
 
-	if (GET_RAIN_LEVEL() < 0.1f || brollyPeds.size() == Ini::PedUmbrellas)
-		return;
+	const int accMode = Ini::PedAccuracyMode;
+	const int minAcc = Ini::MinAccuracy;
+	const int maxAcc = Ini::MaxAccuracy;
 
-	if (!GET_CAN_PED_BE_GRABBED_BY_SCRIPT(ped, true, false, false, true, true, false, false, PEDTYPE_INVALID) ||
-		(GET_PED_TYPE(ped) != PEDTYPE_CIVMALE && GET_PED_TYPE(ped) != PEDTYPE_CIVFEMALE) ||
-		GET_INTERIOR_FROM_ENTITY(ped) || (GetPlayerCoords() - GET_ENTITY_COORDS(ped, true)).LengthSq() > (128.0f * 128.0f))
-		return;
+	const int shootRateMode = Ini::PedShootRateMode;;
+	const int minSR = Ini::MinShootRate;
+	const int maxSR = Ini::MaxShootRate;
 
-	const auto it = std::find(brollyPeds.begin(), brollyPeds.end(), ped);
-	if (it != brollyPeds.end())
-		return;
-
-	SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, false);
-	SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, false);
-	SET_PED_CAN_PLAY_AMBIENT_IDLES(ped, true, false);
-	SET_PED_CAN_PLAY_VISEME_ANIMS(ped, false, 0);
-	SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, false);
-
-	PedBrolly pedBrolly;
-	pedBrolly.ped = ped;
-	pedBrolly.brolly = CreateObject(brollyModel);
-	brollyPeds.emplace(pedBrolly);
-	ATTACH_ENTITY_TO_ENTITY(pedBrolly.brolly, ped, GET_PED_BONE_INDEX(ped, BONETAG_PH_R_HAND), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, true, true, false, false, EULER_XYZ, true, NULL);
-	PlayScriptedAnim(ped, brollyDict, brollyAnim, 0.0f, 1.0f, 1.0f, APT_SINGLE_ANIM, BONEMASK_ARMONLY_R, 0.5f, NORMAL_BLEND_DURATION, -1, upperSecondaryAF | AF_HOLD_LAST_FRAME);
-	return;
-}
-
-void DeadlyNPCsHeadshots(const Ped ped)
-{
-	if (!HAS_PED_BEEN_DAMAGED_BY_WEAPON(ped, NULL, GENERALWEAPON_TYPE_ANYWEAPON) || IS_PED_FALLING(ped) ||
-		HAS_ENTITY_BEEN_DAMAGED_BY_ENTITY(ped, GetPlayerPed(), true))
-		return;
-
-	ClearEntityLastWeaponDamage(ped);
-
-	int bone = NULL;
-	if (!GET_PED_LAST_DAMAGE_BONE(ped, &bone))
-		return;
-
-	ClearPedLastDamageBone(ped);
-
-	if (GetGeneralDamageFromBoneTag(bone) == DZ_HEAD)
+	PedAccuracy pa(ped, -1, -1);
+	switch (accMode)
 	{
-		APPLY_DAMAGE_TO_PED(ped, 100000, true, NULL);
-		//EXPLODE_PED_HEAD(ped, Joaat("WEAPON_SNIPERRIFLE"));
+	case 1:		// Global
+		pa.accuracy = minAcc;
+		break;
+	case 2:		// Random
+		pa.accuracy = GetRandomNumberInRange(minAcc, maxAcc);
+		break;
+	case 3:		// Clamp
+	{
+		const int acc = GET_PED_ACCURACY(ped);
+		if (acc < minAcc)
+			pa.accuracy = minAcc;
+		else if (acc > maxAcc)
+			pa.accuracy = maxAcc;
+		else
+			pa.accuracy = acc;
+		break;
 	}
+	case 4:		// Proportional
+		const int acc = GET_PED_ACCURACY(ped);
+		const float norm = static_cast<float>(acc) * 0.01f;
+		const float range = static_cast<float>(maxAcc - minAcc);
+		pa.accuracy = static_cast<int>(minAcc + (range * norm));
+		break;
+	}
+
+	switch (shootRateMode)
+	{
+	case 1:		// Global
+		pa.shootRate = minSR;
+		break;
+	case 2:		// Random
+		pa.shootRate = GetRandomNumberInRange(minSR, maxSR);
+		break;
+	}
+	pedAccuracies.emplace(pa);
 	return;
 }
 
@@ -230,9 +296,10 @@ void EnablePlayerNMReactionsWhenShot(const Ped shooter)
 	const int partIndex = GetNMPartIndexFromBoneTag(boneTag);
 	//const Vector3 partIndexLoc = GET_PED_BONE_COORDS(ped, GetBoneTagFromNMPartIndex(partIndex), 0.0f, 0.0f, 0.0f);
 
-	const int minShotReactTime = Ini::MinimumRagdollTime;	// CTaskNMShot MinimumShotReactionTimePlayerMS 450
-	const int maxShotReactTime = Ini::MaximumRagdollTime;
-	const int reactTime = GetRandomIntInRange(minShotReactTime, maxShotReactTime);
+	int minShotReactTime = Ini::MinimumRagdollTime;	// CTaskNMShot MinimumShotReactionTimePlayerMS 450
+	int maxShotReactTime = Ini::MaximumRagdollTime;
+	InvertIfGreater(maxShotReactTime, maxShotReactTime);
+	const int reactTime = GetRandomNumberInRange(minShotReactTime, maxShotReactTime);
 	
 	if (Ini::DontDropWeapon)
 		NMReactionTime = reactTime;	//Store for compatibility with player disarm
@@ -252,58 +319,92 @@ void EnablePlayerNMReactionsWhenShot(const Ped shooter)
 
 void UpdateOtherPeds()
 {
-	// Update brollyPeds
-	auto DropBrolly = [](Ped ped, Object brolly)
+	auto UpdateBrollyPeds = []()
 		{
-			if (IS_ENTITY_PLAYING_ANIM(ped, brollyDict, brollyAnim, 3))
-				STOP_ANIM_TASK(ped, brollyDict, brollyAnim, NORMAL_BLEND_OUT);
+			// Update brollyPeds
+			auto DropBrolly = [](Ped ped, Object brolly)
+				{
+					if (IS_ENTITY_PLAYING_ANIM(ped, brollyDict, brollyAnim, 3))
+						STOP_ANIM_TASK(ped, brollyDict, brollyAnim, NORMAL_BLEND_OUT);
 
-			DETACH_ENTITY(brolly, true, true);
-			SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, true);
-			SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, true);
-			SET_PED_CAN_PLAY_AMBIENT_IDLES(ped, false, false);
-			SET_PED_CAN_PLAY_VISEME_ANIMS(ped, true, 0);
-			SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, true);
+					DETACH_ENTITY(brolly, true, true);
+					SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, true);
+					SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, true);
+					SET_PED_CAN_PLAY_AMBIENT_IDLES(ped, false, false);
+					SET_PED_CAN_PLAY_VISEME_ANIMS(ped, true, 0);
+					SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, true);
+				};
+
+			for (auto it = brollyPeds.begin(); it != brollyPeds.end();)
+			{
+				if (!DOES_ENTITY_EXIST(it->ped))
+				{
+					Object obj = it->brolly;
+					DeleteEntity(&obj);
+					it = brollyPeds.erase(it);
+					continue;
+				}
+				else if (GET_RAIN_LEVEL() < 0.1f)
+				{
+					DropBrolly(it->ped, it->brolly);
+					Object obj = it->brolly;
+					DeleteEntity(&obj);
+					it = brollyPeds.erase(it);
+					continue;
+				}
+
+				CLEAR_PED_WETNESS(it->ped);
+
+				if (IS_PED_USING_SCENARIO(it->ped, "CODE_HUMAN_CROSS_ROAD_WAIT"))
+				{
+					it++;
+					continue;
+				}
+
+				if (!GET_CAN_PED_BE_GRABBED_BY_SCRIPT(it->ped, true, false, false, true, true, false, true, PEDTYPE_INVALID))
+					DropBrolly(it->ped, it->brolly);
+				else
+				{
+					SET_PED_CAN_PLAY_AMBIENT_ANIMS(it->ped, false);
+					SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(it->ped, false);
+					SET_PED_CAN_PLAY_AMBIENT_IDLES(it->ped, true, true);
+					SET_PED_CAN_PLAY_VISEME_ANIMS(it->ped, false, 0);
+					SET_PED_CAN_PLAY_GESTURE_ANIMS(it->ped, false);
+				}
+				it++;
+			}
+			return;
 		};
 
-	for (auto it = brollyPeds.begin(); it != brollyPeds.end();)
-	{
-		if (!DOES_ENTITY_EXIST(it->ped))
+	auto UpdatePedAccuracies = []()
 		{
-			Object obj = it->brolly;
-			DeleteEntity(&obj);
-			it = brollyPeds.erase(it);
-			continue;
-		}
-		else if (GET_RAIN_LEVEL() < 0.1f)
-		{
-			DropBrolly(it->ped, it->brolly);
-			Object obj = it->brolly;
-			DeleteEntity(&obj);
-			it = brollyPeds.erase(it);
-			continue;
-		}
+			if (Ini::PedGlobalWeaponDamageModifier >= 0.0f)
+				SET_AI_WEAPON_DAMAGE_MODIFIER(Ini::PedGlobalWeaponDamageModifier);
 
-		CLEAR_PED_WETNESS(it->ped);
+			if (Ini::PedGlobalMeleeWeaponDamageModifier >= 0.0f)
+				SET_AI_MELEE_WEAPON_DAMAGE_MODIFIER(Ini::PedGlobalMeleeWeaponDamageModifier);
 
-		if (IS_PED_USING_SCENARIO(it->ped, "CODE_HUMAN_CROSS_ROAD_WAIT"))
-		{
-			it++;
-			continue;
-		}
+			for (auto it = pedAccuracies.begin(); it != pedAccuracies.end();)
+			{
+				if (!DOES_ENTITY_EXIST(it->ped))
+				{
+					it = pedAccuracies.erase(it);
+					continue;
+				}
 
-		if (!GET_CAN_PED_BE_GRABBED_BY_SCRIPT(it->ped, true, false, false, true, true, false, true, PEDTYPE_INVALID))
-			DropBrolly(it->ped, it->brolly);
-		else
-		{
-			SET_PED_CAN_PLAY_AMBIENT_ANIMS(it->ped, false);
-			SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(it->ped, false);
-			SET_PED_CAN_PLAY_AMBIENT_IDLES(it->ped, true, true);
-			SET_PED_CAN_PLAY_VISEME_ANIMS(it->ped, false, 0);
-			SET_PED_CAN_PLAY_GESTURE_ANIMS(it->ped, false);
-		}
-		it++;
-	}
+				if (it->accuracy >= 0)
+					SET_PED_ACCURACY(it->ped, it->accuracy);
+
+				if (it->shootRate >= 0)
+					SET_PED_SHOOT_RATE(it->ped, it->shootRate);
+
+				it++;
+			}
+			return;
+		};
+
+	if (Ini::PedUmbrellas > 0) UpdateBrollyPeds();
+	if (Ini::EnablePedsAccuracyOptions) UpdatePedAccuracies();
 	return;
 }
 }
@@ -317,15 +418,18 @@ void RegisterPedOptions()
 {
 	pedOptionsManager.UnregisterAllOptions();
 
+	REGISTER_OPTION_INI(pedOptionsManager, EnablePedUmbrellas, &currentPed, PedUmbrellas);
+
 	REGISTER_OPTION(pedOptionsManager, DisableWrithe, &currentPed);
 	REGISTER_OPTION(pedOptionsManager, DisableHurt, &currentPed);
 	REGISTER_OPTION(pedOptionsManager, DisableShootFromGround, &currentPed);
 	REGISTER_OPTION(pedOptionsManager, DisableSittingPedsInstantDeath, &currentPed);
-	REGISTER_OPTION(pedOptionsManager, DisarmPedWhenShot, &currentPed);
 	REGISTER_OPTION(pedOptionsManager, DisablePedOnlyDamagedByPlayer, &currentPed);
 	REGISTER_OPTION(pedOptionsManager, DisableDeadPedsJumpOutOfVehicle, &currentPed);
 	REGISTER_OPTION(pedOptionsManager, DeadlyNPCsHeadshots, &currentPed);
-	REGISTER_OPTION_INI(pedOptionsManager, EnablePedUmbrellas, &currentPed, PedUmbrellas);
+	REGISTER_OPTION(pedOptionsManager, DisarmPedWhenShot, &currentPed);
+
+	REGISTER_OPTION_INI(pedOptionsManager, SetPedsAccuracy, &currentPed, EnablePedsAccuracyOptions);
 
 	// Player
 	if (GetFoundNMFunctions())
@@ -347,9 +451,9 @@ void UpdatePedsPool()
 	}
 
 	//Get all peds
-	constexpr int ARR_SIZE = 1024; Ped peds[ARR_SIZE];
-	const int count = worldGetAllPeds(peds, ARR_SIZE);
-
+	constexpr int pedsSize = 1024;
+	std::unique_ptr<Ped[]> peds = std::make_unique<Ped[]>(pedsSize);	// Allocate on the heap
+	const int count = worldGetAllPeds(peds.get(), pedsSize);
 	LOOP(i, count)
 	{
 		if (!IS_ENTITY_A_PED(peds[i]) || !IS_PED_HUMAN(peds[i]) || IS_ENTITY_DEAD(peds[i], false) || IS_PED_A_PLAYER(peds[i]))

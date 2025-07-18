@@ -55,6 +55,7 @@ void SplitString(const char* charStr, std::string arr[], const int arrSize, cons
 	return;
 }
 
+/*
 //    The range [minValue, maxValue] is inclusive.
 int GetRandomIntInRange(int minValue, int maxValue, bool useRd)
 {
@@ -92,6 +93,7 @@ bool GetWeightedBool(int chance, bool useRd)
 	return dist(gen);
 }
 
+
 Vector3 Normalize(Vector3 v)
 {
 	const float w = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
@@ -100,6 +102,7 @@ Vector3 Normalize(Vector3 v)
 	v.z /= w;
 	return v;
 }
+*/
 
 int GetPadControlFromString(const std::string& str)
 {

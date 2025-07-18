@@ -107,21 +107,34 @@ extern bool DisablePlayerPainAudio;
 extern bool MuteArtificialAmbientSounds;
 
 //Peds Settings
+extern bool DynamicCarJackingReactions;
+extern bool EnableShootingJackedPeds;
+extern int PedUmbrellas;
+extern bool DisableScenarios;
+extern bool DisableWorldPopulation;
+
+//Peds Combat
 extern bool DisableWrithe;
 extern bool DisableHurt;
 extern bool DisableShootFromGround;
 extern bool DisableSittingPedsInstantDeath;
+extern bool DisablePedOnlyDamagedByPlayer;
+extern bool DisableDeadPedsJumpOutOfVehicle;
+extern bool DeadlyNPCsHeadshots;
 extern bool DisarmPedWhenShot;
 extern int DisarmChance;
 extern bool DisarmIncludeLeftHand;
-extern bool DisablePedOnlyDamagedByPlayer;
-extern bool DisableDeadPedsJumpOutOfVehicle;
-extern int PedUmbrellas;
-extern bool DeadlyNPCsHeadshots;
-extern bool DynamicCarJackingReactions;
-extern bool EnableShootingJackedPeds;
-extern bool DisableScenarios;
-extern bool DisableWorldPopulation;
+
+//Peds Accuracy
+extern bool EnablePedsAccuracyOptions;
+extern int PedAccuracyMode;
+extern int MinAccuracy;
+extern int MaxAccuracy;
+extern int PedShootRateMode;
+extern int MinShootRate;
+extern int MaxShootRate;
+extern float PedGlobalWeaponDamageModifier;
+extern float PedGlobalMeleeWeaponDamageModifier;
 }
 
 void ReadINI();

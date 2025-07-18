@@ -8,7 +8,7 @@ ULONG_PTR FindPatternGlobal(std::string signature);
 namespace nGame
 {
 ULONG_PTR GetScriptEntity(Entity entity);
-int GetFragInstNmGtaOffset();
+int GetFragInstNmOffset();
 NmMessage CreateNmMessage();
 void GivePedNMMessage(NmMessage msgPtr, const Ped ped, const char* message);
 void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, int i);

@@ -124,21 +124,34 @@ bool DisablePlayerPainAudio = false;
 bool MuteArtificialAmbientSounds = false;
 
 //Peds Settings
+bool DynamicCarJackingReactions = true;
+bool EnableShootingJackedPeds = true;
+int PedUmbrellas = 5;
+bool DisableScenarios = false;
+bool DisableWorldPopulation = false;
+
+//Peds Combat
 bool DisableWrithe = true;
 bool DisableHurt = true;
 bool DisableShootFromGround = true;
 bool DisableSittingPedsInstantDeath = true;
+bool DisablePedOnlyDamagedByPlayer = true;
+bool DisableDeadPedsJumpOutOfVehicle = true;
+bool DeadlyNPCsHeadshots = true;
 bool DisarmPedWhenShot = true;
 int DisarmChance = 50;
 bool DisarmIncludeLeftHand = false;
-bool DisablePedOnlyDamagedByPlayer = true;
-bool DisableDeadPedsJumpOutOfVehicle = true;
-int PedUmbrellas = 5;
-bool DeadlyNPCsHeadshots = true;
-bool DynamicCarJackingReactions = true;
-bool EnableShootingJackedPeds = true;
-bool DisableScenarios = false;
-bool DisableWorldPopulation = false;
+
+//Peds Accuracy
+bool EnablePedsAccuracyOptions = false;
+int PedAccuracyMode = 2;
+int MinAccuracy = 10;
+int MaxAccuracy = 100;
+int PedShootRateMode = 2;
+int MinShootRate = 100;
+int MaxShootRate = 500;
+float PedGlobalWeaponDamageModifier = -1.0f;
+float PedGlobalMeleeWeaponDamageModifier = -1.0f;
 }
 using namespace Ini;
 
@@ -198,6 +211,7 @@ void ReadINI()
 	Ini::RagdollChance = GET_INI_INT(ini, playerGroup, RagdollChance);
 	Ini::MinimumRagdollTime = GET_INI_INT(ini, playerGroup, MinimumRagdollTime);
 	Ini::MaximumRagdollTime = GET_INI_INT(ini, playerGroup, MaximumRagdollTime);
+	InvertIfGreater(Ini::MinimumRagdollTime, Ini::MaximumRagdollTime, -1, INT_MAX);
 	Ini::ShouldRagdollInCover = GET_INI_BOOL(ini, playerGroup, ShouldRagdollInCover);
 	Ini::DontDropWeapon = GET_INI_BOOL(ini, playerGroup, DontDropWeapon);
 	Ini::AllowWeaponsInsideSafeHouse = GET_INI_BOOL(ini, playerGroup, AllowWeaponsInsideSafeHouse);
@@ -269,21 +283,36 @@ void ReadINI()
 	Ini::MuteArtificialAmbientSounds = GET_INI_BOOL(ini, AudioGroup, MuteArtificialAmbientSounds);
 
 	//////////////////////////////////////Peds/////////////////////////////////////////////
+	Ini::DynamicCarJackingReactions = GET_INI_BOOL(ini, pedsGroup, DynamicCarJackingReactions);
+	Ini::EnableShootingJackedPeds = GET_INI_BOOL(ini, pedsGroup, EnableShootingJackedPeds);
+	Ini::PedUmbrellas = GET_INI_INT(ini, pedsGroup, PedUmbrellas);
+	Ini::DisableScenarios = GET_INI_BOOL(ini, pedsGroup, DisableScenarios);
+	Ini::DisableWorldPopulation = GET_INI_BOOL(ini, pedsGroup, DisableWorldPopulation);
+
+	// Ped Combat
 	Ini::DisableWrithe = GET_INI_BOOL(ini, pedsGroup, DisableWrithe);
 	Ini::DisableHurt = GET_INI_BOOL(ini, pedsGroup, DisableHurt);
 	Ini::DisableShootFromGround = GET_INI_BOOL(ini, pedsGroup, DisableShootFromGround);
 	Ini::DisableSittingPedsInstantDeath = GET_INI_BOOL(ini, pedsGroup, DisableSittingPedsInstantDeath);
+	Ini::DisablePedOnlyDamagedByPlayer = GET_INI_BOOL(ini, pedsGroup, DisablePedOnlyDamagedByPlayer);
+	Ini::DisableDeadPedsJumpOutOfVehicle = GET_INI_BOOL(ini, pedsGroup, DisableDeadPedsJumpOutOfVehicle);
+	Ini::DeadlyNPCsHeadshots = GET_INI_BOOL(ini, pedsGroup, DeadlyNPCsHeadshots);
 	Ini::DisarmPedWhenShot = GET_INI_BOOL(ini, pedsGroup, DisarmPedWhenShot);
 	Ini::DisarmChance = GET_INI_INT(ini, pedsGroup, DisarmChance);
 	Ini::DisarmIncludeLeftHand = GET_INI_BOOL(ini, pedsGroup, DisarmIncludeLeftHand);
-	Ini::DisablePedOnlyDamagedByPlayer = GET_INI_BOOL(ini, pedsGroup, DisablePedOnlyDamagedByPlayer);
-	Ini::DisableDeadPedsJumpOutOfVehicle = GET_INI_BOOL(ini, pedsGroup, DisableDeadPedsJumpOutOfVehicle);
-	Ini::PedUmbrellas = GET_INI_INT(ini, pedsGroup, PedUmbrellas);
-	Ini::DeadlyNPCsHeadshots = GET_INI_BOOL(ini, pedsGroup, DeadlyNPCsHeadshots);
-	Ini::DynamicCarJackingReactions = GET_INI_BOOL(ini, pedsGroup, DynamicCarJackingReactions);
-	Ini::EnableShootingJackedPeds = GET_INI_BOOL(ini, pedsGroup, EnableShootingJackedPeds);
-	Ini::DisableScenarios = GET_INI_BOOL(ini, pedsGroup, DisableScenarios);
-	Ini::DisableWorldPopulation = GET_INI_BOOL(ini, pedsGroup, DisableWorldPopulation);
+
+	// Ped Accuracy
+	Ini::EnablePedsAccuracyOptions = GET_INI_BOOL(ini, pedsGroup, EnablePedsAccuracyOptions);
+	Ini::PedAccuracyMode = GET_INI_INT(ini, pedsGroup, PedAccuracyMode);
+	Ini::MinAccuracy = GET_INI_INT(ini, pedsGroup, MinAccuracy);
+	Ini::MaxAccuracy = GET_INI_INT(ini, pedsGroup, MaxAccuracy);
+	InvertIfGreater(Ini::MinAccuracy, Ini::MaxAccuracy, 0, 100);
+	Ini::PedShootRateMode = GET_INI_INT(ini, pedsGroup, PedShootRateMode);
+	Ini::MinShootRate = GET_INI_INT(ini, pedsGroup, MinShootRate);
+	Ini::MaxShootRate = GET_INI_INT(ini, pedsGroup, MaxShootRate);
+	InvertIfGreater(Ini::MinShootRate, Ini::MaxShootRate, 0, 1000);
+	Ini::PedGlobalWeaponDamageModifier = GET_INI_FLOAT(ini, pedsGroup, PedGlobalWeaponDamageModifier);
+	Ini::PedGlobalMeleeWeaponDamageModifier = GET_INI_FLOAT(ini, pedsGroup, PedGlobalMeleeWeaponDamageModifier);
 	return;
 }
 

@@ -101,6 +101,9 @@
     <ClInclude Include="inc\nm_globals.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="inc\libs\random.hpp">
+      <Filter>inc\libs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="utils">

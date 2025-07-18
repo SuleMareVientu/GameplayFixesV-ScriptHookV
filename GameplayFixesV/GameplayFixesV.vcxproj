@@ -27,6 +27,7 @@
     <ClInclude Include="inc\libs\pattern16\scanners\x64\SSE.h" />
     <ClInclude Include="inc\libs\pattern16\scanners\x64\x64.h" />
     <ClInclude Include="inc\libs\pattern16\util.h" />
+    <ClInclude Include="inc\libs\random.hpp" />
     <ClInclude Include="inc\libs\SimpleIni.h" />
     <ClInclude Include="inc\main.h" />
     <ClInclude Include="inc\nm_globals.h" />
