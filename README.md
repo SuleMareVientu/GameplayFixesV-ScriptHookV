@@ -2,9 +2,20 @@
 ![Screenshot](https://github.com/SuleMareVientu/GameplayFixesV-ScriptHookV/blob/images/GameplayFixesV.png?raw=true)
 Open-source script that aims to address some of the numerous issues GTA:V has.
 
-This mod is **does not** patch the game directly, and should thus last more without active maintenance. It only makes use of in-game natives.
+The advantages of using this mod are:
+  - It's compatible with **both Legacy and Enhanced**.
+    - It's tested on Legacy b1180 & b3521, Enhanced b812.
+    - It's theoretically compatible with every game version since b335 (ScriptHook base).  
+  - Functionalities are **thoroughly tested**, and blend-in with the game as if R* implemented them.
+  - It's **faster** than its C#/.NET counterparts because it's written in **CPP**, with great attention at keeping it performant.
+  - It merges functionalities from many other mods, meaning that mods can now share resources (e.g., entity pools), making the code faster and allowing **cross-compatibility** between different options.
+  - Almost all functionality **works out-of-the-box**, without the need to patch the game's memory. Options that do so are clearly labelled, complexity is not hidden from the user.
+  - The lack of reliance on ScriptHookV .NET (which is essentially a fancy wrapper for normal ScriptHook) means **less compatibility issues** across game versions.
+  - It's **open-source**.
 
-#### Use the INI to configure it to your liking. All options can be enabled or disabled independently from one another
+To my knowledge it's also the only mod that fixes the "Low Priority Props" bug in Enhanced and implements NM reactions without relying on ScriptHookV .NET.
+
+#### Use the INI to configure it to your liking. All options can be enabled or disabled independently from one another.
 
 **Requires [ScriptHookV](http://www.dev-c.com/gtav/scripthookv/)**
 
@@ -12,13 +23,26 @@ This mod is **does not** patch the game directly, and should thus last more with
 **Input:**
 - Reload the INI config with F12 (key can be changed).
 
+**Memory:**
+- Allow low priority props to be spawned around the map.
+    - **It's the only memory patch compatible with Enhanced (currently).**
+- Disable the automatic centering of the wheels when a ped exits a vehicle. Applies to all vehicles (not only the player's).
+    - If the normal option (DisableWheelsAutoCenterOnCarExit) is enabled, this will override it. If the patch fails and the normal option it's also enabled, it will be used as a fallback.
+- Disable cops from randomly changing the player's vehicle steering angle while ramming during a chase.
+- Disable the slowdown and screen effects triggered by the weapon and the radio wheel.
+
 **Player:**
 - Enable the unused crouched motion state.
+- Allow the player to grab onto nearby ledges when jumping. Useful for emulating parkour movement.
+    - Keep pressing the "Jump" button (space bar/'X' on controller) when in the air to automatically grab ledges that are in front of the player.
 - Allow all ped models to use stealh and action mode.
 - Disable action mode.
 - Clean the player's wounds and dirt as he gradually enters the water and after picking up a medkit.
 - Sprint inside interiors.
     - Works in b1180 & later, but doesn't in b372. Don't know in between.
+- Disable auto-vaulting small objects.
+    - Vaulting can still be performed manually by pressing the 'Jump' control near the objects.
+- Disable automatic drop-down animations when near a ledge at high heights.
 - Silent wanted (hide all HUD/music related to the wanted system).
 
 **Player Damage/Weapons:**
@@ -41,6 +65,7 @@ This mod is **does not** patch the game directly, and should thus last more with
     - When dropped, the weapon can be blipped on the minimap.
     - Definable max distance after which a dropped weapon is despawned.
 - Player Euphoria bullet reactions (the player will react to bullets with Euphoria like NPCs)
+    - **Not compatible with Enhanced.**
     - Definable 'reaction chance' when hit.
     - Definable minimum and maximum time for reaction.
     - Togglable when in cover.
@@ -76,6 +101,7 @@ This mod is **does not** patch the game directly, and should thus last more with
 
 **Player Controls:**
 - Disable assisted movement (when a player follows a path automatically while moving forward, eg. Floyd's apartment entrance).
+- Quickly turn off the radio by tapping the radio control button ('Q'/left arrow on controller).
 - Toggle walking for first person by pressing (and not holding) the sprint button (X on PS / A on XBOX).
 - Disable auto-centering of the gameplay camera.
     - Togglable on foot/in vehicle/always.

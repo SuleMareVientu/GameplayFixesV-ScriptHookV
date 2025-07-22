@@ -95,6 +95,13 @@ void GetGameFunctionsAddresses()
 	{
 		WriteLog("Info", "Hooking game functions is disabled.");
 		hasSearchedForGameFunctions = true;
+		return;
+	}
+
+	if (GetIsEnhancedVersion())
+	{
+		WriteLog("Info", "Hooking game functions is currently disabled in the Enhanced version of the game.");
+		return;
 	}
 
 	foundNMFunctions = true;
@@ -104,7 +111,7 @@ void GetGameFunctionsAddresses()
 	// FiveM - GetScriptEntity
 	// ULONG_PTR adr = FindPattern("44 8B C1 49 8B 41 08 41 C1 F8 08 41 38 0C 00");
 	// nUnsafe::GetScriptEntity = reinterpret_cast<ULONG_PTR(*)(Entity)>(adr - 12);
-
+	
 	ULONG_PTR adr = FindPattern("85 ED 74 0F 8B CD E8 ?? ?? ?? ?? 48 8B F8 48 85 C0 74 2E");
 	if (adr)
 	{
@@ -378,6 +385,26 @@ void LowPriorityPropsPatch()
 		return;
 	}
 
+	if (GetIsEnhancedVersion())
+	{
+		WriteLog("Info", "---------------------- Low Priority Props ----------------------");
+		WriteLog("Operation", "Finding prop priority address...");
+
+		// Patch "rage::fwMapDataContents::Entities_Create", should be updated to the same method as Legacy... (setting rage::fwMapData::ms_entityLevelCap)
+		const ULONG_PTR address = FindPattern("8B 47 5C 3B 05 ?? ?? ?? ?? 7E");
+		if (address)
+		{
+			WriteLog("Operation", "Found address at 0x%X! Patching 6 byte...", address);
+			constexpr int priOptionLowSize = 6;
+			constexpr char priOptionLow[priOptionLowSize] = { '\x90', '\x90', '\x90', '\x83', '\xF8', '\x03' };
+			memmove(reinterpret_cast<void*>(address + 3), &priOptionLow, priOptionLowSize);
+		}
+		else
+			WriteLog("Error", "Could not find address!");
+
+		return;
+	}
+
 	WriteLog("Info", "---------------------- Low Priority Props ----------------------");
 	WriteLog("Operation", "Finding prop priority address 1...");
 
@@ -417,6 +444,12 @@ bool GetPatchedCenterSteering() { return patchedCenterSteering; }
 // Credits aint-no-other-option: https://github.com/aint-no-other-option/CenterSteeringPatch/
 void CenterSteeringPatch()
 {
+	if (GetIsEnhancedVersion())
+	{
+		WriteLog("Info", "\"CenterSteeringPatch\" is currently not compatible with the Enhanced version of the game.");
+		return;
+	}
+	
 	constexpr int nBytes1 = 7;
 	constexpr int nBytes2 = 6;
 
@@ -451,6 +484,12 @@ void CenterSteeringPatch()
 // Credits aint-no-other-option: https://github.com/aint-no-other-option/CopBumpSteeringPatch
 void CopBumpSteeringPatch()
 {
+	if (GetIsEnhancedVersion())
+	{
+		WriteLog("Info", "\"CopBumpSteeringPatch\" is currently not compatible with the Enhanced version of the game.");
+		return;
+	}
+
 	constexpr int nBytes = 8;
 
 	WriteLog("Info", "--------------------------- Cop Bump ---------------------------");
@@ -476,6 +515,12 @@ bool GetPatchedHUDWheelSlowdown() { return patchedHUDWheelSlowdown; }
 // Has to be paired with a function that runs every frame
 void HUDWheelSlowdownPatch()
 {
+	if (GetIsEnhancedVersion())
+	{
+		WriteLog("Info", "\"HUDWheelSlowdownPatch\" is currently not compatible with the Enhanced version of the game.");
+		return;
+	}
+
 	constexpr int nBytes = 12;
 
 	WriteLog("Info", "---------------------- HUD Wheel Slowdown ----------------------");

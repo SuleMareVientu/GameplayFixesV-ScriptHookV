@@ -104,6 +104,38 @@ typedef struct Vector3
         return *this;
     }
 
+    // Vector Multiplication Assignment (Vector *= Vector)
+    constexpr Vector3& operator*=(const Vector3& v) {
+        x *= v.x;
+        y *= v.y;
+        z *= v.z;
+        return *this;
+    }
+
+    // Vector Division Assignment (Vector /= Vector)
+    constexpr Vector3& operator/=(const Vector3& v) {
+        x /= v.x;
+        y /= v.y;
+        z /= v.z;
+        return *this;
+    }
+
+    // Scalar Addition Assignment (Vector += float)
+    constexpr Vector3& operator+=(float f) {
+        x += f;
+        y += f;
+        z += f;
+        return *this;
+    }
+
+    // Scalar Subtraction Assignment (Vector -= float)
+    constexpr Vector3& operator-=(float f) {
+        x -= f;
+        y -= f;
+        z -= f;
+        return *this;
+    }
+
     // Scalar Multiplication Assignment (Vector *= float)
     constexpr Vector3& operator*=(float f) {
         x *= f;

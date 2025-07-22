@@ -34,10 +34,13 @@ bool HookGameFunctions = true;
 bool EnableLogging = false;
 //Player Settings
 bool EnableCrouching = true;
+bool EnableMidAirLedgeGrab = true;
 bool EnablePlayerActionsForAllPeds = true;
 bool DisableActionMode = false;
 bool DynamicallyCleanWoundsAndDirt = true;
 bool SprintInsideInteriors = true;
+bool DisablePlayerAutoVaulting = false;
+bool DisablePlayerDropDowns = true;
 bool SilentWanted = false;
 //Player Weapons
 bool FriendlyFire = true;
@@ -187,12 +190,14 @@ void ReadINI()
 
 	//////////////////////////////////////Player//////////////////////////////////////////
 	Ini::EnableCrouching = GET_INI_BOOL(ini, playerGroup, EnableCrouching);
+	Ini::EnableMidAirLedgeGrab = GET_INI_BOOL(ini, playerGroup, EnableMidAirLedgeGrab);
 	Ini::EnablePlayerActionsForAllPeds = GET_INI_BOOL(ini, playerGroup, EnablePlayerActionsForAllPeds);
 	Ini::DisableActionMode = GET_INI_BOOL(ini, playerGroup, DisableActionMode);
 	Ini::DynamicallyCleanWoundsAndDirt = GET_INI_BOOL(ini, playerGroup, DynamicallyCleanWoundsAndDirt);
 	Ini::SprintInsideInteriors = GET_INI_BOOL(ini, playerGroup, SprintInsideInteriors);
+	Ini::DisablePlayerAutoVaulting = GET_INI_BOOL(ini, playerGroup, DisablePlayerAutoVaulting);
+	Ini::DisablePlayerDropDowns = GET_INI_BOOL(ini, playerGroup, DisablePlayerDropDowns);
 	Ini::SilentWanted = GET_INI_BOOL(ini, playerGroup, SilentWanted);
-
 
 	////////////////////////////////////Player Weapons////////////////////////////////////
 	Ini::FriendlyFire = GET_INI_BOOL(ini, playerGroup, FriendlyFire);

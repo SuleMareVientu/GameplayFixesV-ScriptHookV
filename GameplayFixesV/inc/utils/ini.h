@@ -17,10 +17,13 @@ extern bool HookGameFunctions;
 extern bool EnableLogging;
 //Player Settings
 extern bool EnableCrouching;
+extern bool EnableMidAirLedgeGrab;
 extern bool EnablePlayerActionsForAllPeds;
 extern bool DisableActionMode;
 extern bool DynamicallyCleanWoundsAndDirt;
 extern bool SprintInsideInteriors;
+extern bool DisablePlayerAutoVaulting;
+extern bool DisablePlayerDropDowns;
 extern bool SilentWanted;
 //Player Weapons
 extern bool FriendlyFire;

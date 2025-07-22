@@ -157,6 +157,141 @@ void EnableCrouching()
 	return;
 }
 
+int mainClimbSTHandle = NULL; bool mainClimbSTHit = false; Vector3 mainClimbSTHitCoords = Vector3();
+int heightClimbSTHandle = NULL; bool heightClimbSTHit = false;
+int surfaceClimbSTHandle = NULL; bool surfaceClimbSTHit = false;
+int surface2ndClimbSTHandle = NULL; bool surface2ndClimbSTHit = false;
+void EnableMidAirLedgeGrab()
+{
+	constexpr float fwdOff = 0.3f;
+	constexpr float upOff = 2.0f;
+
+	if (DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())) || IS_PED_RAGDOLL(GetPlayerPed()) ||
+		(!IS_ENTITY_IN_AIR(GetPlayerPed()) && !IS_PED_FALLING(GetPlayerPed())))
+		return;
+
+	Vector3 fwdVec = Vector3(); Vector3 rightVec = Vector3(); Vector3 upVec = Vector3(); Vector3 locVec = Vector3();
+	GET_ENTITY_MATRIX(GetPlayerPed(), &fwdVec, &rightVec, &upVec, &locVec);
+	Vector3 min = Vector3(); Vector3 max = Vector3();
+	GET_MODEL_DIMENSIONS(GET_ENTITY_MODEL(GetPlayerPed()), &min, &max);
+	const float radius = (max.x - min.x) * 0.35f;
+	Vector3 start = GET_PED_BONE_COORDS(GetPlayerPed(), BONETAG_SPINE3, 0.0f, 0.0f, 0.0f);
+	Vector3 end = start + (fwdVec * 1.25f);
+	if (mainClimbSTHandle != NULL)
+	{
+		Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
+		if (GET_SHAPE_TEST_RESULT(mainClimbSTHandle, &mainClimbSTHit, &mainClimbSTHitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
+		{
+			if (!IS_ENTITY_A_PED(hitEntity))
+			{
+				SET_CAN_CLIMB_ON_ENTITY(hitEntity, true);
+				SET_CAN_AUTO_VAULT_ON_ENTITY(hitEntity, true);
+			}
+			RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
+			mainClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, start.z, radius, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+		}
+	}
+	else
+		mainClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, start.z, radius, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+
+	if (!mainClimbSTHit)
+		return;
+
+	//Print("main", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
+
+	start = mainClimbSTHitCoords + (fwdVec * fwdOff); start.z = mainClimbSTHitCoords.z + upOff;
+	end = start; end.z += 1.0f;
+	if (heightClimbSTHandle != NULL)
+	{
+		Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
+		if (GET_SHAPE_TEST_RESULT(heightClimbSTHandle, &heightClimbSTHit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
+		{
+			if (!IS_ENTITY_A_PED(hitEntity))
+			{
+				SET_CAN_CLIMB_ON_ENTITY(hitEntity, true);
+				SET_CAN_AUTO_VAULT_ON_ENTITY(hitEntity, true);
+			}
+			RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
+			heightClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, end.z, radius, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+		}
+	}
+	else
+		heightClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, end.z, radius, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+
+	if (heightClimbSTHit)
+		return;
+
+	//Print("height", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
+
+	start = mainClimbSTHitCoords + (fwdVec * fwdOff);
+	start += (rightVec * radius);
+	start.z = mainClimbSTHitCoords.z;
+	end = start;
+	start.z += upOff + 1.0f;
+	if (surfaceClimbSTHandle != NULL)
+	{
+		Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
+		if (GET_SHAPE_TEST_RESULT(surfaceClimbSTHandle, &surfaceClimbSTHit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
+		{
+			if (!IS_ENTITY_A_PED(hitEntity))
+			{
+				SET_CAN_CLIMB_ON_ENTITY(hitEntity, true);
+				SET_CAN_AUTO_VAULT_ON_ENTITY(hitEntity, true);
+			}
+			RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
+			surfaceClimbSTHandle = START_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+		}
+	}
+	else
+		surfaceClimbSTHandle = START_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+
+	if (!surfaceClimbSTHit)
+		return;
+
+	//Print("surface", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
+
+	start = mainClimbSTHitCoords + (fwdVec * fwdOff);
+	start -= (rightVec * radius);
+	start.z = mainClimbSTHitCoords.z;
+	end = start;
+	start.z += upOff + 1.0f;
+	if (surface2ndClimbSTHandle != NULL)
+	{
+		Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
+		if (GET_SHAPE_TEST_RESULT(surface2ndClimbSTHandle, &surface2ndClimbSTHit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
+		{
+			if (!IS_ENTITY_A_PED(hitEntity))
+			{
+				SET_CAN_CLIMB_ON_ENTITY(hitEntity, true);
+				SET_CAN_AUTO_VAULT_ON_ENTITY(hitEntity, true);
+			}
+			RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
+			surface2ndClimbSTHandle = START_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+		}
+	}
+	else
+		surface2ndClimbSTHandle = START_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+
+	if (!surface2ndClimbSTHit)
+		return;
+
+	//Print("2nd", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
+
+	if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_JUMP) && !IS_PED_CLIMBING(GetPlayerPed()) && !IS_PED_VAULTING(GetPlayerPed()) &&
+		GET_SCRIPT_TASK_STATUS(GetPlayerPed(), SCRIPT_TASK_CLIMB) == FINISHED_TASK)
+	{
+		constexpr float force = 10.0f;
+		const Vector3 vel = GET_ENTITY_VELOCITY(GetPlayerPed());
+		if (vel.z < 0.0f)
+			SET_ENTITY_VELOCITY(GetPlayerPed(), vel.x, vel.y, 0.0f);
+
+		APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(GetPlayerPed(), APPLY_TYPE_IMPULSE, 0.0f, 0.0f, force, RAGDOLL_PELVIS, false, true, false);
+		CLEAR_PED_TASKS_IMMEDIATELY(GetPlayerPed());
+		TASK_CLIMB(GetPlayerPed(), false);
+	}
+	return;
+}
+
 void EnablePlayerActionsForAllPeds()
 {
 	if (Ini::EnableCrouching || !IS_PED_HUMAN(GetPlayerPed()) || DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())))
@@ -230,6 +365,9 @@ void DynamicallyCleanWoundsAndDirt()
 }
 
 inline void EnableSprintInsideInteriors() { EnablePedConfigFlag(GetPlayerPed(), PCF_IgnoreInteriorCheckForSprinting); return; }
+
+inline void DisablePlayerAutoVaulting() { EnablePedResetFlag(GetPlayerPed(), PRF_DisablePlayerAutoVaulting); return; }
+inline void DisablePlayerDropDowns() { EnablePedResetFlag(GetPlayerPed(), PRF_DisableDropDowns); return; }
 
 void SilentWanted()
 {
@@ -1057,13 +1195,13 @@ void DynamicallyCleanVehicles()
 					rainShapetestLastRes = hit;
 					RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 					const Vector3 loc = GET_ENTITY_COORDS(nearbyVehs[i].Uns, false);
-					rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, NULL, SCRIPT_SHAPETEST_OPTION_DEFAULT);
+					rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, nearbyVehs[i].Uns, SCRIPT_SHAPETEST_OPTION_DEFAULT);
 				}
 			}
 			else
 			{
 				const Vector3 loc = GET_ENTITY_COORDS(nearbyVehs[i].Uns, false);
-				rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, NULL, SCRIPT_SHAPETEST_OPTION_DEFAULT);
+				rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, nearbyVehs[i].Uns, SCRIPT_SHAPETEST_OPTION_DEFAULT);
 			}
 		}
 
@@ -1893,7 +2031,8 @@ int shoveShapetestHandle = NULL;
 bool shoveHit = false; Vector3 shoveHitCoords = Vector3(); Vector3 shoveHitNormal = Vector3(); Entity shoveHitEntity = NULL;
 void EnablePedShove()
 {
-	if (!RequestAnimDict(shoveDict) || !IS_CONTROL_ENABLED(PLAYER_CONTROL, INPUT_JUMP) || DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())))
+	if (!RequestAnimDict(shoveDict) || !IS_CONTROL_ENABLED(PLAYER_CONTROL, INPUT_JUMP) ||
+		DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())) || GetIsPlayerCrouching())
 		return;
 
 	const bool playingAnim = IS_ENTITY_PLAYING_ANIM(GetPlayerPed(), shoveDict, shoveAnim, 3);
@@ -2048,10 +2187,13 @@ void RegisterPlayerOptions()
 	playerOptionsManager.UnregisterAllOptions();
 
 	REGISTER_OPTION(playerOptionsManager, EnableCrouching, nGeneral, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, EnableMidAirLedgeGrab, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, EnablePlayerActionsForAllPeds, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableActionMode, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DynamicallyCleanWoundsAndDirt, nGeneral, VER_UNK, true);
 	REGISTER_OPTION_INI(playerOptionsManager, EnableSprintInsideInteriors, nGeneral, SprintInsideInteriors, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisablePlayerAutoVaulting, nGeneral, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisablePlayerDropDowns, nGeneral, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, SilentWanted, nGeneral, VER_UNK, true);
 
 	////////////////////////////////////Player Weapons////////////////////////////////////

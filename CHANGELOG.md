@@ -1,4 +1,4 @@
-### **v3.0**
+# **v3.0**
 **Added:**  
 - Add memory patching options without hiding complexity to the user. These types of patches are known to break easily across different game versions.  
 - Implement basic logging for errors.  
@@ -7,11 +7,13 @@
 - **Memory:**  
   - LowPriorityPropsPatch, CenterSteeringPatch, CopBumpSteeringPatch, HUDWheelSlowdownPatch  
 - **Player:**  
-  - EnableCrouching, SilentWanted,
+  - EnableCrouching, EnableMidAirLedgeGrab, DisablePlayerAutoVaulting, DisablePlayerDropDowns, SilentWanted
 - **Player Damage:**  
   - LocationalDamage, DeadlyPlayerHeadshots, EnableWeaponRecoil, DropPlayerWeaponWhenRagdolling EnablePlayerNMReactionsWhenShot  
 - **Player Vehicle:**   
   - EnableBrakeLightsOnStoppedVehicle, DynamicallyCleanVehicles, DisableVehicleJitter, DisableAirVehicleTurbulence, DisableAutoEquipHelmets  
+- **Player Controls:**  
+  - ReplaceRadioTuneForwardWithRadioOff    
 - **HUD:**  
   - MinimapSpeedometer  
 - **Audio:**  
@@ -27,7 +29,7 @@
 - General refactoring 
 - ReloadIniKey, DisableWheelsAutoCenterOnCarExit, KeepCarHydraulicsPosition, DisarmPlayerWhenShot, EnablePlayerActionsForAllPeds, DynamicallyCleanWoundsAndDirt, FriendlyFire, DisableFirstPersonView
 
-### **v2.0**
+# **v2.0**
 **Added:**  
 - ReloadIniKey, FiveM support resource files  
 - **Player:**  
@@ -58,14 +60,14 @@ LeaveEngineOnWhenExitingVehicles
 **Removed:**  
 - PlayerCanJackFriendlyPeds
 
-### **v1.2**
+# **v1.2**
 - CamFollowVehicleDuringHandbrake / CamFollowVehDelay - Force gameplay camera to follow the vehicle when using the handbrake
 - DisableStuntJumps - Disables all stunt jumps around the map
 - DisableMobilePhone - Disables the player's mobile phone  
 **Fixes:**  
 DisableEngineSmoke and DisableEngineFire now work as intended
 
-### **v1.1**
+# **v1.1**
 - DisarmPlayerWhenShot / DisarmPedWhenShot - Allows enemies that hit the player's weapon (or hands) to disarm the player, similar to RDR and GTA:IV. Adjust DisarmChance and DisarmIncludeLeftHand to your liking. Inspired by jedijosh920's [Disarm](https://www.gta5-mods.com/scripts/disarm)
 - ToggleFPSWalking - Allow player to toggle between jogging and walking in FPS mode. Inspired by chinagreenelvis's [Walk Toggle](https://www.gta5-mods.com/scripts/walk-toggle)
 - DisableEngineFire - Disables engine fires when engine health reaches below 0. Also disables automatic vehicle explosion after engine health reaches -4000
