@@ -66,6 +66,7 @@ extern int DisableAutoEquipHelmets;
 extern bool DisableStuntJumps;
 //Player Controls
 extern bool DisableAssistedMovement;
+extern bool ReplaceRadioTuneForwardWithRadioOff;
 extern int DisableCameraAutoCenter;
 extern bool ToggleFPSWalking;
 extern bool CamFollowVehicleDuringHandbrake;

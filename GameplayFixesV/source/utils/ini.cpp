@@ -83,6 +83,7 @@ int DisableAutoEquipHelmets = NULL;
 bool DisableStuntJumps = false;
 //Player Controls
 bool DisableAssistedMovement = true;
+bool ReplaceRadioTuneForwardWithRadioOff = false;
 bool ToggleFPSWalking = true;
 int DisableCameraAutoCenter = NULL;
 bool CamFollowVehicleDuringHandbrake = false;
@@ -241,6 +242,7 @@ void ReadINI()
 
 	//////////////////////////////////////Player Controls//////////////////////////////////
 	Ini::DisableAssistedMovement = GET_INI_BOOL(ini, playerGroup, DisableAssistedMovement);
+	Ini::ReplaceRadioTuneForwardWithRadioOff = GET_INI_BOOL(ini, playerGroup, ReplaceRadioTuneForwardWithRadioOff);
 	Ini::ToggleFPSWalking = GET_INI_BOOL(ini, playerGroup, ToggleFPSWalking);
 	Ini::DisableCameraAutoCenter = GET_INI_INT(ini, playerGroup, DisableCameraAutoCenter);
 	Ini::CamFollowVehicleDuringHandbrake = GET_INI_BOOL(ini, playerGroup, CamFollowVehicleDuringHandbrake);

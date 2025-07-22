@@ -1149,6 +1149,26 @@ namespace nControls
 {
 inline void DisableAssistedMovement() { ASSISTED_MOVEMENT_OVERRIDE_LOAD_DISTANCE_THIS_FRAME(NULL); return; }
 
+Timer radioTapTimer;
+void ReplaceRadioTuneForwardWithRadioOff()
+{
+	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_RADIO_WHEEL))
+		radioTapTimer.Reset();
+	else if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_VEH_RADIO_WHEEL) && radioTapTimer.Get() <= 250)
+	{
+		if (DOES_PLAYER_VEH_HAVE_RADIO() && IS_PLAYER_VEH_RADIO_ENABLE() && GET_PLAYER_RADIO_STATION_INDEX() != 255)
+		{
+			SET_USER_RADIO_CONTROL_ENABLED(false);
+			SET_RADIO_TO_STATION_NAME("OFF");
+		}
+	}
+	else if (radioTapTimer.Get() > 500)
+	{
+		radioTapTimer.Set(INT_MIN);
+		SET_USER_RADIO_CONTROL_ENABLED(true);
+	}
+}
+
 bool isWalking = false;
 float playerLastMoveBlend = 0.0f;
 Timer timerToggleFPSWalking;
@@ -1947,7 +1967,8 @@ void EnablePedShove()
 		if (!IS_ENTITY_A_PED(shoveHitEntity) || !IS_PED_HUMAN(shoveHitEntity) || IS_ENTITY_DEAD(shoveHitEntity, false) ||
 			DOES_ENTITY_EXIST(GetVehiclePedIsUsing(shoveHitEntity)) || IS_PED_SWIMMING(shoveHitEntity) || IS_PED_SHOOTING(shoveHitEntity) ||
 			IS_PED_PRONE(shoveHitEntity) || IS_PED_CLIMBING(shoveHitEntity) || IS_PED_STRAFING(shoveHitEntity) || IS_PED_A_PLAYER(shoveHitEntity) ||
-			!IS_ENTITY_UPRIGHT(shoveHitEntity, 60.0f) || // IS_PED_IN_MELEE_COMBAT(shoveHitEntity) || COUNT_PEDS_IN_COMBAT_WITH_TARGET(shoveHitEntity) > 0 ||
+			!IS_ENTITY_UPRIGHT(shoveHitEntity, 60.0f) || IS_ENTITY_A_MISSION_ENTITY(shoveHitEntity) ||
+			// IS_PED_IN_MELEE_COMBAT(shoveHitEntity) || COUNT_PEDS_IN_COMBAT_WITH_TARGET(shoveHitEntity) > 0 ||
 			!IS_PED_FACING_PED(GetPlayerPed(), shoveHitEntity, 60.0f))
 		{
 			RELEASE_SCRIPT_GUID_FROM_ENTITY(shoveHitEntity);
@@ -2064,6 +2085,7 @@ void RegisterPlayerOptions()
 
 	//////////////////////////////////////Player Controls//////////////////////////////////
 	REGISTER_OPTION(playerOptionsManager, DisableAssistedMovement, nControls, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, ReplaceRadioTuneForwardWithRadioOff, nControls, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, ToggleFPSWalking, nControls, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableCameraAutoCenter, nControls, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, CamFollowVehicleDuringHandbrake, nControls, VER_UNK, true);
