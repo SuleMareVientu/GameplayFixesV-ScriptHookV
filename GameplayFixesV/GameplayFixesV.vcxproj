@@ -46,6 +46,7 @@
     <ClInclude Include="res\resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="bin\Release\GameplayFixesV.ini" />
     <None Include="inc\libs\pattern16\pfreq.inl" />
     <None Include="res\weapons.json" />
   </ItemGroup>

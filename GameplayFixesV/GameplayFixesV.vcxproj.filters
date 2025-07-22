@@ -141,6 +141,7 @@
     <None Include="inc\libs\pattern16\pfreq.inl">
       <Filter>inc\libs\pattern16</Filter>
     </None>
+    <None Include="bin\Release\GameplayFixesV.ini" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\resource.rc">
