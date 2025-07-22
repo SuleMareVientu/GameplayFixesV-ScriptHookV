@@ -109,6 +109,7 @@ extern bool MuteArtificialAmbientSounds;
 //Peds Settings
 extern bool DynamicCarJackingReactions;
 extern bool EnableShootingJackedPeds;
+extern bool EnablePedShove;
 extern int PedUmbrellas;
 extern bool DisableScenarios;
 extern bool DisableWorldPopulation;

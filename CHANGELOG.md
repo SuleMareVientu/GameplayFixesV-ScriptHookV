@@ -7,13 +7,21 @@
 - **Memory:**  
   - LowPriorityPropsPatch, CenterSteeringPatch, CopBumpSteeringPatch, HUDWheelSlowdownPatch  
 - **Player:**  
-  - EnableCrouching, SilentWanted, LocationalDamage, DeadlyPlayerHeadshots, EnableWeaponRecoil, DropPlayerWeaponWhenRagdolling, EnablePlayerNMReactionsWhenShot, EnableBrakeLightsOnStoppedVehicle, DynamicallyCleanVehicles, DisableVehicleJitter, DisableAirVehicleTurbulence, DisableAutoEquipHelmets  
+  - EnableCrouching, SilentWanted,
+- **Player Damage:**  
+  - LocationalDamage, DeadlyPlayerHeadshots, EnableWeaponRecoil, DropPlayerWeaponWhenRagdolling EnablePlayerNMReactionsWhenShot  
+- **Player Vehicle:**   
+  - EnableBrakeLightsOnStoppedVehicle, DynamicallyCleanVehicles, DisableVehicleJitter, DisableAirVehicleTurbulence, DisableAutoEquipHelmets  
 - **HUD:**  
   - MinimapSpeedometer  
 - **Audio:**  
   - MuteSounds, MuteArtificialAmbientSounds, DisablePlayerPainAudio
 - **Peds:**  
-  - DynamicCarJackingReactions, EnableShootingJackedPeds, PedUmbrellas, DisableScenarios, DisableWorldPopulation, DeadlyNPCsHeadshots, PedAccuracyMode, PedShootRateMode, PedGlobalWeaponDamageModifier, PedGlobalMeleeWeaponDamageModifier  
+  - DynamicCarJackingReactions, EnableShootingJackedPeds, EnablePedShove, PedUmbrellas, DisableScenarios, DisableWorldPopulation  
+- **Peds Combat:**  
+  - DeadlyNPCsHeadshots  
+- **Peds Accuracy:**  
+  - PedAccuracyMode, PedShootRateMode, PedGlobalWeaponDamageModifier, PedGlobalMeleeWeaponDamageModifier  
    
 **Improved:**  
 - General refactoring 

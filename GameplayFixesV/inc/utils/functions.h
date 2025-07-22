@@ -182,9 +182,9 @@ bool LoadWeaponJson();
 
 #pragma region Print
 void Print(char* string, int ms = 0);
-void Print(std::string string, int ms = 0);
-void PrintInt(int value, int ms = 0);
-void PrintFloat(float value, int ms = 0);
+void Print(const std::string string, int ms = 0);
+void Print(const int value, int ms = 0);
+void Print(const float value, int ms = 0);
 void PrintHelp(char* string, bool playSound = false, int overrideDuration = -1);
 int ShowNotification(const char* str, bool flash = false);
 #pragma endregion

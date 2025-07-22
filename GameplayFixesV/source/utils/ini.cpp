@@ -126,6 +126,7 @@ bool MuteArtificialAmbientSounds = false;
 //Peds Settings
 bool DynamicCarJackingReactions = true;
 bool EnableShootingJackedPeds = true;
+bool EnablePedShove = true;
 int PedUmbrellas = 5;
 bool DisableScenarios = false;
 bool DisableWorldPopulation = false;
@@ -285,6 +286,7 @@ void ReadINI()
 	//////////////////////////////////////Peds/////////////////////////////////////////////
 	Ini::DynamicCarJackingReactions = GET_INI_BOOL(ini, pedsGroup, DynamicCarJackingReactions);
 	Ini::EnableShootingJackedPeds = GET_INI_BOOL(ini, pedsGroup, EnableShootingJackedPeds);
+	Ini::EnablePedShove = GET_INI_BOOL(ini, pedsGroup, EnablePedShove);
 	Ini::PedUmbrellas = GET_INI_INT(ini, pedsGroup, PedUmbrellas);
 	Ini::DisableScenarios = GET_INI_BOOL(ini, pedsGroup, DisableScenarios);
 	Ini::DisableWorldPopulation = GET_INI_BOOL(ini, pedsGroup, DisableWorldPopulation);

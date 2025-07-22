@@ -1,0 +1,1 @@
+## Files in this folder are distributed under MIT licence.

@@ -124,6 +124,8 @@ This mod is **does not** patch the game directly, and should thus last more with
 - Dynamic car jacking reactions (allow peds to dynamically react to the player pointing a gun at their vehicle, just like in GTA:IV). Some will instantly flee, others will react and there's also a chance they'll still run you over.
 - Shoot jacked peds (allow the player to kill the driver while jacking a vehicle with a handgun).
     - Weapon jacking animations trigger only with non-customized weapons (e.g. silencers won't work).
+- Allow the player to push (shove) peds out of his way, like in GTA:IV.
+    - Press the "Jump" button (space bar/'X' on controller) when standing in front of a ped to activate.
 - Allow peds to use umbrellas during rainy weather.
     - Definable max number of peds allowed to equip umbrellas.
 - Disable all peds scenarios.

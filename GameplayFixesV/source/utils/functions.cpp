@@ -286,7 +286,7 @@ void Print(char* string, int ms)
 	return;
 }
 
-void Print(std::string string, int ms)
+void Print(const std::string string, int ms)
 {
 	std::string strCpy = string;
 	BEGIN_TEXT_COMMAND_PRINT("STRING");
@@ -295,7 +295,7 @@ void Print(std::string string, int ms)
 	return;
 }
 
-void PrintInt(int value, int ms)
+void Print(const int value, int ms)
 {
 	BEGIN_TEXT_COMMAND_PRINT("NUMBER");
 	ADD_TEXT_COMPONENT_INTEGER(value);
@@ -303,7 +303,7 @@ void PrintInt(int value, int ms)
 	return;
 }
 
-void PrintFloat(float value, int ms)
+void Print(const float value, int ms)
 {
 	BEGIN_TEXT_COMMAND_PRINT("NUMBER");
 	ADD_TEXT_COMPONENT_FLOAT(value, 4);

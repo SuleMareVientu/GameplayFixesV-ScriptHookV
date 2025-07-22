@@ -1055,6 +1055,7 @@ void DynamicallyCleanVehicles()
 				if (GET_SHAPE_TEST_RESULT(rainShapetestHandle, &hit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 				{
 					rainShapetestLastRes = hit;
+					RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 					const Vector3 loc = GET_ENTITY_COORDS(nearbyVehs[i].Uns, false);
 					rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, NULL, SCRIPT_SHAPETEST_OPTION_DEFAULT);
 				}
@@ -1863,6 +1864,105 @@ void EnableShootingJackedPeds()
 	}
 }
 
+// constexpr char* shoveDict = "melee@unarmed@streamed_core";
+// constexpr char* shoveAnim = "shove";
+constexpr char* shoveDict = "reaction@shove";
+constexpr char* shoveAnim = "shove_var_a";
+bool alreadyShoved = false;
+int shoveShapetestHandle = NULL;
+bool shoveHit = false; Vector3 shoveHitCoords = Vector3(); Vector3 shoveHitNormal = Vector3(); Entity shoveHitEntity = NULL;
+void EnablePedShove()
+{
+	if (!RequestAnimDict(shoveDict) || !IS_CONTROL_ENABLED(PLAYER_CONTROL, INPUT_JUMP) || DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())))
+		return;
+
+	const bool playingAnim = IS_ENTITY_PLAYING_ANIM(GetPlayerPed(), shoveDict, shoveAnim, 3);
+	if (playingAnim)
+	{
+		const float animTime = GET_ENTITY_ANIM_CURRENT_TIME(GetPlayerPed(), shoveDict, shoveAnim);
+		if (animTime >= 0.35f)
+			STOP_ANIM_TASK(GetPlayerPed(), shoveDict, shoveAnim, REALLY_SLOW_BLEND_OUT);
+		else if (animTime >= 0.15f && !alreadyShoved)
+		{
+			STOP_CURRENT_PLAYING_SPEECH(shoveHitEntity);
+			STOP_CURRENT_PLAYING_AMBIENT_SPEECH(shoveHitEntity);
+			PLAY_PED_AMBIENT_SPEECH_NATIVE(shoveHitEntity, "GENERIC_CURSE_MED", "SPEECH_PARAMS_FORCE", false);
+
+			/*
+			const int pedType = GET_PED_TYPE(shoveHitEntity);
+			if ((pedType != PEDTYPE_CIVMALE && pedType != PEDTYPE_CIVFEMALE) || IS_PED_ARMED(shoveHitEntity, 1 | 4))
+				TASK_COMBAT_PED(shoveHitEntity, GetPlayerPed(), 0, 16);
+			*/
+
+			const Vector3 loc = GetPlayerCoords();
+			ADD_SHOCKING_EVENT_AT_POSITION(EVENT_SHOCKING_SEEN_CONFRONTATION, loc.x, loc.y, loc.z, -1.0f);
+
+			if (!IS_PED_RAGDOLL(shoveHitEntity))
+				SET_PED_TO_RAGDOLL(shoveHitEntity, -1, GetRandomNumberInRange(500, 1500), TASK_NM_BALANCE, true, true, false);
+
+			const Vector3 force = GET_ENTITY_FORWARD_VECTOR(GetPlayerPed()) * 7.5f;
+			//const Vector3 spineVec = GET_PED_BONE_COORDS(shoveHitEntity, BONETAG_SPINE3, 0.0f, 0.0f, 0.0f);
+			//const Vector3 off = GET_OFFSET_FROM_ENTITY_GIVEN_WORLD_COORDS(shoveHitEntity, spineVec.x, spineVec.y, spineVec.z);
+			//APPLY_FORCE_TO_ENTITY(shoveHitEntity, APPLY_TYPE_IMPULSE, force.x, force.y, 0.0f, off.x, off.y, off.z, RAGDOLL_SPINE3, false, true, true, false, true);
+			APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(shoveHitEntity, APPLY_TYPE_IMPULSE, force.x, force.y, 0.0f, RAGDOLL_PELVIS, false, true, false);
+
+			RELEASE_SCRIPT_GUID_FROM_ENTITY(shoveHitEntity);
+			alreadyShoved = true;
+		}
+
+		EnablePedResetFlag(GetPlayerPed(), PRF_DisablePlayerJumping);
+		EnablePedResetFlag(GetPlayerPed(), PRF_DisablePlayerVaulting);
+	}
+	else
+	{
+		alreadyShoved = false;
+		RELEASE_SCRIPT_GUID_FROM_ENTITY(shoveHitEntity);
+	}
+
+	if (GET_SELECTED_PED_WEAPON(GetPlayerPed()) != WEAPON_UNARMED)
+		return;
+
+	Vector3 min = Vector3(); Vector3 max = Vector3();
+	GET_MODEL_DIMENSIONS(GET_ENTITY_MODEL(GetPlayerPed()), &min, &max);
+	const float radius = ((max.x - min.x) * 0.5f) - 0.25f;
+	const Vector3 startVec = GET_PED_BONE_COORDS(GetPlayerPed(), BONETAG_SPINE3, 0.0f, 0.0f, 0.0f);
+	const Vector3 endVec = startVec + (GET_ENTITY_FORWARD_VECTOR(GetPlayerPed()) * 1.25f);
+	if (shoveShapetestHandle != NULL)
+	{
+		bool hit = false; Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
+		SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);	// Required
+		if (GET_SHAPE_TEST_RESULT(shoveShapetestHandle, &hit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
+		{
+			shoveHit = hit; shoveHitCoords = hitCoords;  shoveHitNormal = hitNormal;  shoveHitEntity = hitEntity;
+			shoveShapetestHandle = START_SHAPE_TEST_CAPSULE(startVec.x, startVec.y, startVec.z, endVec.x, endVec.y, endVec.z, radius,
+				SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+		}
+	}
+	else
+		shoveShapetestHandle = START_SHAPE_TEST_CAPSULE(startVec.x, startVec.y, startVec.z, endVec.x, endVec.y, endVec.z, radius,
+			SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+
+	if (DOES_ENTITY_EXIST(shoveHitEntity))
+	{
+		if (!IS_ENTITY_A_PED(shoveHitEntity) || !IS_PED_HUMAN(shoveHitEntity) || IS_ENTITY_DEAD(shoveHitEntity, false) ||
+			DOES_ENTITY_EXIST(GetVehiclePedIsUsing(shoveHitEntity)) || IS_PED_SWIMMING(shoveHitEntity) || IS_PED_SHOOTING(shoveHitEntity) ||
+			IS_PED_PRONE(shoveHitEntity) || IS_PED_CLIMBING(shoveHitEntity) || IS_PED_STRAFING(shoveHitEntity) || IS_PED_A_PLAYER(shoveHitEntity) ||
+			!IS_ENTITY_UPRIGHT(shoveHitEntity, 60.0f) || // IS_PED_IN_MELEE_COMBAT(shoveHitEntity) || COUNT_PEDS_IN_COMBAT_WITH_TARGET(shoveHitEntity) > 0 ||
+			!IS_PED_FACING_PED(GetPlayerPed(), shoveHitEntity, 60.0f))
+		{
+			RELEASE_SCRIPT_GUID_FROM_ENTITY(shoveHitEntity);
+			return;
+		}
+
+		EnablePedResetFlag(GetPlayerPed(), PRF_DisablePlayerJumping);
+		EnablePedResetFlag(GetPlayerPed(), PRF_DisablePlayerVaulting);
+
+		if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_JUMP) && !playingAnim)
+			PlayScriptedAnim(GetPlayerPed(), shoveDict, shoveAnim, 0.0f, 1.0f, 1.0f, APT_SINGLE_ANIM, FILTER_BOTHARMS_NOSPINE, 0.5f, NORMAL_BLEND_DURATION, -1, upperSecondaryAF);
+	}
+	return;
+}
+
 int DisableScenariosCount = 0;
 int DisableScenarioGroupsCount = 0;
 void DisableScenarios()
@@ -2007,6 +2107,7 @@ void RegisterPlayerOptions()
 	//////////////////////////////////////////Peds/////////////////////////////////////////
 	REGISTER_OPTION(playerOptionsManager, DynamicCarJackingReactions, nPeds, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, EnableShootingJackedPeds, nPeds, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, EnablePedShove, nPeds, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableScenarios, nPeds, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableWorldPopulation, nPeds, VER_UNK, true);
 
