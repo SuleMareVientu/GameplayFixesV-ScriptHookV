@@ -1,8 +1,12 @@
 #pragma once
 #include <globals.h>
 
+#pragma region Memory Utils
 ULONG_PTR FindPattern(std::string signature);
 ULONG_PTR FindPatternGlobal(std::string signature);
+void InitHooks();
+void ShutdownHooks();
+#pragma endregion
 
 #pragma region Game Functions
 namespace nGame

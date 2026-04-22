@@ -56,7 +56,6 @@ bool GetIsEnhancedVersion();
 
 bool GetFoundNMFunctions();
 bool GetPatchedCenterSteering();
-bool GetPatchedHUDWheelSlowdown();
 bool GetIsPlayerCrouching();
 int GetNMReactionTime();
 #pragma endregion
@@ -178,9 +177,11 @@ enum ePedFlag {
 	PCF_CanAttackFriendly = 140,					// True allows this ped to attack peds theya re friendly with
 	PCF_IsInjured = 166,							// When true, the ped will use injured movement anim sets and getup animations.
 	PCF_PreventAllMeleeTaunts = 169,				// Disable all melee taunts for this particular ped
+	PCF_PedIgnoresAnimInterruptEvents = 179,		// AI peds only, will not early out of anims, default behaviour is to exit as early as possible
 	PCF_EnableWeaponBlocking = 186,					// When enabled, Non-player peds can use WeaponBlocking behaviors
 	PCF_HasHurtStarted = 187,
 	PCF_DisableHurt = 188,							// Will prevent the peds go into hurt combat mode
+	PCF_DisablePotentialToBeWalkedIntoResponse = 225, // make EVENT_POTENTIAL_BE_WALKED_INTO not affect this ped
 	PCF_LeaveEngineOnWhenExitingVehicles = 241,		// The player will leave the engine running when leaving vehicles
 	PCF_PhoneDisableTextingAnimations = 242,		// tells taskmobile phone to not texting animations.  Currently don't play these in MP
 	PCF_PhoneDisableTalkingAnimations = 243,		// tells taskmobile phone to not talking animations.  Currently don't play these in MP

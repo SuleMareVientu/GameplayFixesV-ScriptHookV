@@ -4,7 +4,7 @@ Open-source script that aims to address some of the numerous issues GTA:V has.
 
 The advantages of using this mod are:
   - It's compatible with **both Legacy and Enhanced**.
-    - It's tested on Legacy b1180 & b3521, Enhanced b812.
+    - It's tested on Legacy b1180 & b3521, Enhanced b812 & b1013.
     - It's theoretically compatible with every game version since b335 (ScriptHook base).  
   - Functionalities are **thoroughly tested**, and blend-in with the game as if R* implemented them.
   - It's **faster** than its C#/.NET counterparts because it's written in **CPP**, with great attention at keeping it performant.
@@ -25,7 +25,6 @@ To my knowledge it's also the only mod that fixes the "Low Priority Props" bug i
 
 **Memory:**
 - Allow low priority props to be spawned around the map.
-    - **It's the only memory patch compatible with Enhanced (currently).**
 - Disable the automatic centering of the wheels when a ped exits a vehicle. Applies to all vehicles (not only the player's).
     - If the normal option (DisableWheelsAutoCenterOnCarExit) is enabled, this will override it. If the patch fails and the normal option it's also enabled, it will be used as a fallback.
 - Disable cops from randomly changing the player's vehicle steering angle while ramming during a chase.
@@ -71,7 +70,7 @@ To my knowledge it's also the only mod that fixes the "Low Priority Props" bug i
     - Togglable when in cover.
     - Compatibility with other options that drop the player's weapon (so that the bullet reactions do not drop the player's weapon).
 - Allow weapons inside the safehouse.
-    - **Will break some story missions**, but shouldn't otherwise have problems in normal free-roam.
+    - Uses function hooks and could break upon updating.
 
 **Player Vehicle:**
 - Disable mid-air car controls and the ability to rotate the player's vehicle while stuck/upside down.
@@ -79,7 +78,6 @@ To my knowledge it's also the only mod that fixes the "Low Priority Props" bug i
 - Disable engine fire/smoke.
 - Leave the engine on when exiting a vehicle unless the player keeps the exit vehicle button pressed for 250ms. Exactly like GTA:IV.
 - Disable the auto-centering of the player vehicle's wheels on exit.
-    - While this is universally compatible, **it could cause some issues** with mission vehicles. Disable if necessary.
 - Keeps the current position of the player vehicle's hydraulics on enter/exit.
     - **Requires at least b2372**.
 - Turn on brake lights while the player's vehicle is stopped.
@@ -198,6 +196,7 @@ To my knowledge it's also the only mod that fixes the "Low Priority Props" bug i
     - [json](https://github.com/nlohmann/json)
     - [Pattern16](https://github.com/Dasaav-dsv/Pattern16)
     - [random](https://github.com/ilqvya/random)
+    - [MinHook](https://github.com/tsudakageyu/minhook)
 
 This work is licensed under a
 [GNU General Public License v3.0][GPL-3.0].

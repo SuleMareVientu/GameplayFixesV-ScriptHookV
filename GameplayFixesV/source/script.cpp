@@ -58,15 +58,9 @@ void ScriptMain()
 	ReadINI();
 	srand(static_cast<unsigned int>(GetTickCount64()));
 
-	if (GetIsEnhancedVersion())
-	{
-		WriteLog("Info",
-			"Memory patches and associated functions are not currently fully compatible with the Enhanced version of the game."
-		);
-	}
-
 	GetGameFunctionsAddresses();
 	ApplyExePatches();
+	InitHooks();
 
 	while (true)
 	{

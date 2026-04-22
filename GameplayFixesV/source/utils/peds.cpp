@@ -19,8 +19,9 @@ struct PedBrolly
 {
 	Ped ped = 0;
 	Object brolly = 0;
-	constexpr bool operator==(const Ped _ped) const { return ped == _ped; }
-	constexpr bool operator<(const PedBrolly& s) const { return ped < s.ped; }
+	constexpr bool operator==(const Ped _ped) const { return (ped == _ped); }
+	constexpr bool operator==(const PedBrolly& s) const { return (ped == s.ped); }
+	constexpr bool operator<(const PedBrolly& s) const { return (ped < s.ped); }
 };
 
 constexpr Hash brollyModel = Joaat("p_amb_brolly_01");
@@ -29,11 +30,10 @@ constexpr char* brollyAnim = "base";
 std::set<PedBrolly> brollyPeds;
 void EnablePedUmbrellas(Ped ped)
 {
-	if (!RequestAnimDict(brollyDict) ||
-		!RequestModel(brollyModel))
+	if (!RequestAnimDict(brollyDict) || !RequestModel(brollyModel))
 		return;
 
-	if (GET_RAIN_LEVEL() < 0.1f || brollyPeds.size() == Ini::PedUmbrellas)
+	if (GET_RAIN_LEVEL() < 0.1f || brollyPeds.size() >= Ini::PedUmbrellas)
 		return;
 
 	if (!GET_CAN_PED_BE_GRABBED_BY_SCRIPT(ped, true, false, false, true, true, false, false, PEDTYPE_INVALID) ||
@@ -41,21 +41,16 @@ void EnablePedUmbrellas(Ped ped)
 		GET_INTERIOR_FROM_ENTITY(ped) || (GetPlayerCoords() - GET_ENTITY_COORDS(ped, true)).LengthSq() > (128.0f * 128.0f))
 		return;
 
-	if (std::find(brollyPeds.begin(), brollyPeds.end(), ped) != brollyPeds.end())
-		return;
-
-	SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, false);
-	SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, false);
-	SET_PED_CAN_PLAY_AMBIENT_IDLES(ped, true, false);
-	SET_PED_CAN_PLAY_VISEME_ANIMS(ped, false, 0);
-	SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, false);
-
 	PedBrolly pedBrolly;
 	pedBrolly.ped = ped;
+	if (brollyPeds.find(pedBrolly) != brollyPeds.end())
+		return;
+
 	pedBrolly.brolly = CreateObject(brollyModel);
 	brollyPeds.emplace(pedBrolly);
-	ATTACH_ENTITY_TO_ENTITY(pedBrolly.brolly, ped, GET_PED_BONE_INDEX(ped, BONETAG_PH_R_HAND), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, true, true, false, false, EULER_XYZ, true, NULL);
-	PlayScriptedAnim(ped, brollyDict, brollyAnim, 0.0f, 1.0f, 1.0f, APT_SINGLE_ANIM, BONEMASK_ARMONLY_R, 0.5f, NORMAL_BLEND_DURATION, -1, upperSecondaryAF | AF_HOLD_LAST_FRAME);
+	ATTACH_ENTITY_TO_ENTITY(pedBrolly.brolly, ped, GET_PED_BONE_INDEX(ped, BONETAG_PH_R_HAND), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, true, true, false, false, EULER_XYZ, true, true);
+	PlayScriptedAnim(ped, brollyDict, brollyAnim, 0.0f, 1.0f, 1.0f, APT_SINGLE_ANIM, BONEMASK_ARMONLY_R, 0.5f, NORMAL_BLEND_DURATION, -1,
+		AF_HOLD_LAST_FRAME | AF_NOT_INTERRUPTABLE | AF_UPPERBODY | AF_TAG_SYNC_CONTINUOUS | AF_SECONDARY | AF_HIDE_WEAPON | AF_ABORT_ON_WEAPON_DAMAGE);
 	return;
 }
 
@@ -192,8 +187,7 @@ void SetPedsAccuracy(Ped ped)
 {
 	// Interesting natives
 	// SET_COMBAT_FLOAT, SET_PED_COMBAT_RANGE, SET_PED_COMBAT_ABILITY, SET_PED_HIGHLY_PERCEPTIVE, SET_PED_SEEING_RANGE, SET_PED_VISUAL_FIELD_PERIPHERAL_RANGE
-
-	if (std::find(pedAccuracies.begin(), pedAccuracies.end(), ped) != pedAccuracies.end())
+	if (pedAccuracies.find(PedAccuracy{ ped, -1 , -1 }) != pedAccuracies.end())
 		return;
 
 	const int accMode = Ini::PedAccuracyMode;
@@ -317,52 +311,42 @@ void EnablePlayerNMReactionsWhenShot(const Ped shooter)
 	return;
 }
 
-void UpdateOtherPeds()
+void UpdatePedsNextFrame()
 {
 	auto UpdateBrollyPeds = []()
 		{
 			// Update brollyPeds
-			auto DropBrolly = [](Ped ped, Object brolly)
+			auto DeleteBrolly = [](Ped ped, Object brolly)
 				{
-					if (IS_ENTITY_PLAYING_ANIM(ped, brollyDict, brollyAnim, 3))
-						STOP_ANIM_TASK(ped, brollyDict, brollyAnim, NORMAL_BLEND_OUT);
+					if (DOES_ENTITY_EXIST(brolly))
+					{
+						DETACH_ENTITY(brolly, true, true);
+						DeleteEntity(&brolly);
+					}
 
-					DETACH_ENTITY(brolly, true, true);
+					if (!DOES_ENTITY_EXIST(ped))
+						return;
+
 					SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, true);
 					SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, true);
 					SET_PED_CAN_PLAY_AMBIENT_IDLES(ped, false, false);
 					SET_PED_CAN_PLAY_VISEME_ANIMS(ped, true, 0);
 					SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, true);
+					DisablePedConfigFlag(ped, PCF_DisablePotentialToBeWalkedIntoResponse);
+					CLEAR_PED_SECONDARY_TASK(ped);
 				};
 
 			for (auto it = brollyPeds.begin(); it != brollyPeds.end();)
 			{
-				if (!DOES_ENTITY_EXIST(it->ped))
+				if (!DOES_ENTITY_EXIST(it->ped) || GET_RAIN_LEVEL() < 0.1f)
 				{
-					Object obj = it->brolly;
-					DeleteEntity(&obj);
+					DeleteBrolly(it->ped, it->brolly);
 					it = brollyPeds.erase(it);
 					continue;
 				}
-				else if (GET_RAIN_LEVEL() < 0.1f)
-				{
-					DropBrolly(it->ped, it->brolly);
-					Object obj = it->brolly;
-					DeleteEntity(&obj);
-					it = brollyPeds.erase(it);
-					continue;
-				}
-
-				CLEAR_PED_WETNESS(it->ped);
-
-				if (IS_PED_USING_SCENARIO(it->ped, "CODE_HUMAN_CROSS_ROAD_WAIT"))
-				{
-					it++;
-					continue;
-				}
-
-				if (!GET_CAN_PED_BE_GRABBED_BY_SCRIPT(it->ped, true, false, false, true, true, false, true, PEDTYPE_INVALID))
-					DropBrolly(it->ped, it->brolly);
+				else if ((!GET_CAN_PED_BE_GRABBED_BY_SCRIPT(it->ped, true, false, false, true, true, false, false, PEDTYPE_INVALID) &&
+						!IS_PED_USING_SCENARIO(it->ped, "CODE_HUMAN_CROSS_ROAD_WAIT")) || IS_PED_RAGDOLL(it->ped))
+					DeleteBrolly(it->ped, it->brolly);
 				else
 				{
 					SET_PED_CAN_PLAY_AMBIENT_ANIMS(it->ped, false);
@@ -370,12 +354,21 @@ void UpdateOtherPeds()
 					SET_PED_CAN_PLAY_AMBIENT_IDLES(it->ped, true, true);
 					SET_PED_CAN_PLAY_VISEME_ANIMS(it->ped, false, 0);
 					SET_PED_CAN_PLAY_GESTURE_ANIMS(it->ped, false);
+					EnablePedResetFlag(it->ped, PRF_ScriptDisableSecondaryAnimationTasks);
+					EnablePedConfigFlag(it->ped, PCF_DisablePotentialToBeWalkedIntoResponse);
+					CLEAR_PED_WETNESS(it->ped);
 				}
 				it++;
 			}
 			return;
 		};
 
+	if (Ini::PedUmbrellas > 0) UpdateBrollyPeds();
+	return;
+}
+
+void UpdatePedsCurrentFrame()
+{
 	auto UpdatePedAccuracies = []()
 		{
 			if (Ini::PedGlobalWeaponDamageModifier >= 0.0f)
@@ -403,7 +396,6 @@ void UpdateOtherPeds()
 			return;
 		};
 
-	if (Ini::PedUmbrellas > 0) UpdateBrollyPeds();
 	if (Ini::EnablePedsAccuracyOptions) UpdatePedAccuracies();
 	return;
 }
@@ -450,6 +442,8 @@ void UpdatePedsPool()
 		hasRegisteredPedOptions = true;
 	}
 
+	UpdatePedsNextFrame();
+
 	//Get all peds
 	constexpr int pedsSize = 1024;
 	std::unique_ptr<Ped[]> peds = std::make_unique<Ped[]>(pedsSize);	// Allocate on the heap
@@ -462,6 +456,6 @@ void UpdatePedsPool()
 		currentPed = peds[i];
 		pedOptionsManager.ApplyOptions();
 	}
-	UpdateOtherPeds();	// Remember to update data structures (sets, vectors etc.)
+	UpdatePedsCurrentFrame();	// Remember to update data structures (sets, vectors etc.)
 	return;
 }

@@ -182,11 +182,6 @@ void EnableMidAirLedgeGrab()
 		Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
 		if (GET_SHAPE_TEST_RESULT(mainClimbSTHandle, &mainClimbSTHit, &mainClimbSTHitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 		{
-			if (!IS_ENTITY_A_PED(hitEntity))
-			{
-				SET_CAN_CLIMB_ON_ENTITY(hitEntity, true);
-				SET_CAN_AUTO_VAULT_ON_ENTITY(hitEntity, true);
-			}
 			RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 			mainClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, start.z, radius, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
 		}
@@ -206,11 +201,6 @@ void EnableMidAirLedgeGrab()
 		Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
 		if (GET_SHAPE_TEST_RESULT(heightClimbSTHandle, &heightClimbSTHit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 		{
-			if (!IS_ENTITY_A_PED(hitEntity))
-			{
-				SET_CAN_CLIMB_ON_ENTITY(hitEntity, true);
-				SET_CAN_AUTO_VAULT_ON_ENTITY(hitEntity, true);
-			}
 			RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 			heightClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, end.z, radius, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
 		}
@@ -222,7 +212,6 @@ void EnableMidAirLedgeGrab()
 		return;
 
 	//Print("height", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
-
 	start = mainClimbSTHitCoords + (fwdVec * fwdOff);
 	start += (rightVec * radius);
 	start.z = mainClimbSTHitCoords.z;
@@ -233,11 +222,6 @@ void EnableMidAirLedgeGrab()
 		Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
 		if (GET_SHAPE_TEST_RESULT(surfaceClimbSTHandle, &surfaceClimbSTHit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 		{
-			if (!IS_ENTITY_A_PED(hitEntity))
-			{
-				SET_CAN_CLIMB_ON_ENTITY(hitEntity, true);
-				SET_CAN_AUTO_VAULT_ON_ENTITY(hitEntity, true);
-			}
 			RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 			surfaceClimbSTHandle = START_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
 		}
@@ -260,11 +244,6 @@ void EnableMidAirLedgeGrab()
 		Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
 		if (GET_SHAPE_TEST_RESULT(surface2ndClimbSTHandle, &surface2ndClimbSTHit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 		{
-			if (!IS_ENTITY_A_PED(hitEntity))
-			{
-				SET_CAN_CLIMB_ON_ENTITY(hitEntity, true);
-				SET_CAN_AUTO_VAULT_ON_ENTITY(hitEntity, true);
-			}
 			RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 			surface2ndClimbSTHandle = START_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
 		}
@@ -309,14 +288,14 @@ void EnablePlayerActionsForAllPeds()
 
 inline void DisableActionMode() { EnablePedResetFlag(GetPlayerPed(), PRF_DisableActionMode); return; }
 
-constexpr int timeClearDirtDecal = 120000;	//2min
+constexpr int timeClearDirtDecal = 180000;	//3min
 Timer timerDirtDecal(timeClearDirtDecal);
 int oldHealthWounds = 0;
 void DynamicallyCleanWoundsAndDirt()
 {
 	if (IS_PLAYER_SWITCH_IN_PROGRESS())
 	{
-		timerDirtDecal.Set(120000);
+		timerDirtDecal.Set(180000);
 		return;
 	}
 
@@ -350,7 +329,7 @@ void DynamicallyCleanWoundsAndDirt()
 		CLEAR_PED_BLOOD_DAMAGE(GetPlayerPed());
 	}
 
-	// Dirt ad oldHealth should always be at the bottom
+	// Dirt and oldHealth should always be at the bottom
 	oldHealthWounds = health;
 	if (timerDirtDecal.Get() <= timeClearDirtDecal)
 	{
@@ -391,13 +370,17 @@ void FriendlyFire()
 
 	auto EnableLockOn = [](Ped ped)
 		{
-			//int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(GetPlayerPed(), ped);
-			//if (relationship == ACQUAINTANCE_TYPE_PED_RESPECT || relationship == ACQUAINTANCE_TYPE_PED_LIKE)
+			return;
+			const int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(GetPlayerPed(), ped);
+			if (relationship != ACQUAINTANCE_TYPE_PED_RESPECT && relationship != ACQUAINTANCE_TYPE_PED_LIKE && relationship != ACQUAINTANCE_TYPE_PED_IGNORE)
+				return;
+
 			SET_PED_CAN_BE_TARGETTED(ped, true);
 			SET_PED_CAN_BE_TARGETTED_BY_PLAYER(ped, GetPlayer(), true);
 			SET_PED_CAN_BE_TARGETED_WHEN_INJURED(ped, true);
 			SET_ALLOW_LOCKON_TO_PED_IF_FRIENDLY(ped, true);	// same as setting PCF_AllowPlayerLockOnIfFriendly
 			//SET_ENTITY_IS_TARGET_PRIORITY(ped, false, 1000.0f);
+			SET_PED_KEEP_TASK(ped, true);
 			SET_PED_CAN_RAGDOLL(ped, true);
 			CLEAR_RAGDOLL_BLOCKING_FLAGS(ped, RAGDOLL_BLOCKING_FLAGS_ALL);
 			SET_ENTITY_PROOFS(ped, false, false, false, false, false, false, false, false);
@@ -412,7 +395,15 @@ void FriendlyFire()
 	Ped ped = NULL;
 	SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);
 	if (GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(GetPlayer(), &ped))
+	{
+		LOOP(i, ACQUAINTANCE_TYPE_PED_DEAD)
+		{
+			const int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(ped, GetPlayerPed());
+			//if (relationship != ACQUAINTANCE_TYPE_PED_RESPECT && relationship != ACQUAINTANCE_TYPE_PED_LIKE && relationship != ACQUAINTANCE_TYPE_PED_IGNORE)
+			//	Print(i);
+		}
 		EnableLockOn(ped);
+	}
 
 	SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);
 	if (GET_PLAYER_TARGET_ENTITY(GetPlayer(), &ped))
@@ -678,70 +669,6 @@ void DropPlayerWeaponWhenRagdolling()
 		lastRagdollWp = NULL;
 		lastRagdollWpRot = { 0.0f, 0.0f, 0.0f };
 	}
-	return;
-}
-
-//This approach isn't great, and could cause a lot of issues with the game's story... Too bad
-//MUST BE CALLED EVERY FRAME
-//A different and more aggressive approach would be to terminate these scripts, which are responsible for the family scenes
-//inside the safehouses and disable the player's control: family_scene_f0, family_scene_f1, family_scene_m, family_scene_t0, family_scene_t1
-Weapon lastPlayerWeapon = NULL;
-Timer timerLastPlayerWeapon;
-Timer timerCharacterSwitch;
-void AllowWeaponsInsideSafeHouse()
-{
-	//Force selected player weapon for 1000ms upon exit/enter of safehouse
-	if (timerLastPlayerWeapon.Get() < 1000 && lastPlayerWeapon != WEAPON_UNARMED)
-		SET_CURRENT_PED_WEAPON(GetPlayerPed(), lastPlayerWeapon, true);
-
-	//Checks if player is inside valid interior
-	int playerInterior = GET_INTERIOR_FROM_ENTITY(GetPlayerPed());
-	if (!IS_VALID_INTERIOR(playerInterior) ||
-		//reset fakewanted also if player is inside the strip club but not inside the office
-		(GET_INTERIOR_AT_COORDS(113.53f, -1287.61f, 28.64f) == playerInterior /*v_strip3*/ && GET_ROOM_KEY_FROM_ENTITY(GetPlayerPed()) != strp3off))
-	{
-		if (GetFakeWanted())
-		{
-			timerLastPlayerWeapon.Reset();
-			SetFakeWanted(GetPlayer(), false);
-		}
-		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(GetPlayerPed());
-		return;
-	}
-
-	//Check if player is inside a safehouse, and not just in a random interior and return if player was already wanted before entering the interior
-	if (!IsPlayerInsideSafehouse() || (!GetFakeWanted() && GET_PLAYER_WANTED_LEVEL(GetPlayer()) != 0))
-		return;
-
-	//Allow player to switch characters while inside the safehouse
-	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_CHARACTER_WHEEL) ||
-		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_MICHAEL) ||
-		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_FRANKLIN) ||
-		IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_TREVOR))
-	{
-		timerCharacterSwitch.Reset();
-	}
-	else if (timerCharacterSwitch.Get() > 250 &&
-		(IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_CHARACTER_WHEEL) ||
-			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_MICHAEL) ||
-			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_FRANKLIN) ||
-			IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_SELECT_CHARACTER_TREVOR)))
-	{
-		if (GetFakeWanted())
-			SetFakeWanted(GetPlayer(), false);
-
-		timerLastPlayerWeapon.Reset();
-		return;
-	}
-
-	//Reset weapon timer
-	if (!GetFakeWanted())
-		timerLastPlayerWeapon.Reset();
-	else
-		lastPlayerWeapon = GET_SELECTED_PED_WEAPON(GetPlayerPed());
-
-	//If all checks pass, set fake wanted level
-	SetFakeWanted(GetPlayer(), true);
 	return;
 }
 }
@@ -1063,7 +990,7 @@ void EnableBrakeLightsOnStoppedVehicle()
 		return;
 
 	// Preferrably, do NOT use IS_VEHICLE_STOPPED: "Returns true if the vehicle's current speed is less than, or equal to 0.0025f."
-	if (GET_IS_VEHICLE_ENGINE_RUNNING(veh) && GET_ENTITY_SPEED(veh) > 0.1f)
+	if (GET_IS_VEHICLE_ENGINE_RUNNING(veh) && GET_ENTITY_SPEED(veh) < 0.1f)
 		SET_VEHICLE_BRAKE_LIGHTS(veh, true);
 
 	return;
@@ -1956,7 +1883,7 @@ void DynamicCarJackingReactions()
 	constexpr float dist = 12.5f;
 	const Vector3 loc = GetPlayerCoords();
 	const Vector3 targetLoc = GET_ENTITY_COORDS(target, true);
-	if (VDIST2(loc.x, loc.y, loc.z, targetLoc.x, targetLoc.y, targetLoc.z) > (dist * dist))
+	if ((loc - targetLoc).LengthSq() > (dist * dist))
 		return;
 
 	SET_VEHICLE_CAN_BE_USED_BY_FLEEING_PEDS(veh, false);
@@ -2064,7 +1991,6 @@ void EnablePedShove()
 			//const Vector3 off = GET_OFFSET_FROM_ENTITY_GIVEN_WORLD_COORDS(shoveHitEntity, spineVec.x, spineVec.y, spineVec.z);
 			//APPLY_FORCE_TO_ENTITY(shoveHitEntity, APPLY_TYPE_IMPULSE, force.x, force.y, 0.0f, off.x, off.y, off.z, RAGDOLL_SPINE3, false, true, true, false, true);
 			APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(shoveHitEntity, APPLY_TYPE_IMPULSE, force.x, force.y, 0.0f, RAGDOLL_PELVIS, false, true, false);
-
 			RELEASE_SCRIPT_GUID_FROM_ENTITY(shoveHitEntity);
 			alreadyShoved = true;
 		}
@@ -2103,6 +2029,13 @@ void EnablePedShove()
 
 	if (DOES_ENTITY_EXIST(shoveHitEntity))
 	{
+		// RELEASE_SCRIPT_GUID_FROM_ENTITY causes glithes with peds holding a brolly
+		if (DOES_ENTITY_EXIST(GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(shoveHitEntity, Joaat("p_amb_brolly_01"))))
+		{
+			shoveHitEntity = NULL;
+			return;
+		}
+
 		if (!IS_ENTITY_A_PED(shoveHitEntity) || !IS_PED_HUMAN(shoveHitEntity) || IS_ENTITY_DEAD(shoveHitEntity, false) ||
 			DOES_ENTITY_EXIST(GetVehiclePedIsUsing(shoveHitEntity)) || IS_PED_SWIMMING(shoveHitEntity) || IS_PED_SHOOTING(shoveHitEntity) ||
 			IS_PED_PRONE(shoveHitEntity) || IS_PED_CLIMBING(shoveHitEntity) || IS_PED_STRAFING(shoveHitEntity) || IS_PED_A_PLAYER(shoveHitEntity) ||
@@ -2168,16 +2101,6 @@ void DisableWorldPopulation()
 }
 }
 
-namespace nMemory
-{
-void HUDWheelSlowdownPatch()
-{	
-	SET_AUDIO_FLAG("AllowAmbientSpeechInSlowMo", true);
-	SET_AUDIO_FLAG("AllowScriptedSpeechInSlowMo", true);
-	return;
-}
-}
-
 #define REGISTER_OPTION(mngr, opt, nspace, minVer, en) mngr.RegisterOption(std::make_unique<PlayerOption>(iniValue(Ini::opt), minVer, en, []() { nspace::opt(); }, #opt))
 #define REGISTER_OPTION_INI(mngr, opt, nspace, nm, minVer, en) mngr.RegisterOption(std::make_unique<PlayerOption>(iniValue(Ini::nm), minVer, en, []() { nspace::opt(); }, #opt))
 
@@ -2202,7 +2125,6 @@ void RegisterPlayerOptions()
 	REGISTER_OPTION(playerOptionsManager, EnableWeaponRecoil, nWeapons, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisarmPlayerWhenShot, nWeapons, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DropPlayerWeaponWhenRagdolling, nWeapons, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, AllowWeaponsInsideSafeHouse, nWeapons, VER_UNK, true);
 
 	//////////////////////////////////////Player Vehicle///////////////////////////////////
 	REGISTER_OPTION(playerOptionsManager, DisableCarMidAirAndRollControl, nVehicle, VER_UNK, true);
@@ -2274,9 +2196,6 @@ void RegisterPlayerOptions()
 	REGISTER_OPTION(playerOptionsManager, EnablePedShove, nPeds, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableScenarios, nPeds, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableWorldPopulation, nPeds, VER_UNK, true);
-
-	/////////////////////////////////////////Memory////////////////////////////////////////
-	if (GetPatchedHUDWheelSlowdown()) { REGISTER_OPTION(playerOptionsManager, HUDWheelSlowdownPatch, nMemory, VER_UNK, true); }
 	return;
 }
 

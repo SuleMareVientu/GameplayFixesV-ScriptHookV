@@ -794,7 +794,7 @@ void RestorePlayerRetrievedWeapon(bool autoEquip)
 
 		const float maxDist = Ini::DroppedWeaponsMaxDistance;
 		const Vector3 loc1 = GetPlayerCoords(); const Vector3 loc2 = GET_PICKUP_COORDS(it->PickupIndex);
-		if (VDIST2(loc1.x, loc1.y, loc1.z, loc2.x, loc2.y, loc2.z) > (maxDist * maxDist))
+		if ((loc1 - loc2).LengthSq() > (maxDist * maxDist))
 		{
 			REMOVE_PICKUP(it->PickupIndex);
 			it = droppedWeapons.erase(it);
@@ -1136,14 +1136,24 @@ bool DoesVehicleHaveAbility(const Vehicle veh)
 #pragma endregion
 
 #pragma region HUD
-int minimapScaleformIndex = NULL;
+bool initializedMinimap = false;
+int minimapScaleformIndex = -1;
 int RequestMinimapScaleform()
 {
 	if (!HAS_SCALEFORM_MOVIE_LOADED(minimapScaleformIndex))
 	{
+		initializedMinimap = false;
 		minimapScaleformIndex = REQUEST_SCALEFORM_MOVIE("MINIMAP");
-		CALL_SCALEFORM_MOVIE_METHOD(minimapScaleformIndex, "INITIALISE");
-		return NULL;
+		return -1;
+	}
+	else if (!initializedMinimap)
+	{
+		if (BEGIN_SCALEFORM_MOVIE_METHOD(minimapScaleformIndex, "MINIMAP"))
+		{
+			initializedMinimap = true;
+			SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(NULL);
+			END_SCALEFORM_MOVIE_METHOD();
+		}
 	}
 	return minimapScaleformIndex;
 }
@@ -1292,11 +1302,17 @@ bool IsPlayerAiming(bool includeAimGunTask, bool includeShooting)
 	return false;
 }
 
+
+bool isPlayerInsideSafehouseThisFrame = false;
 bool IsPlayerInsideSafehouse()
 {
+	if (isPlayerInsideSafehouseThisFrame)
+		return true;
+
+	bool res = false;
 	const Vector3 tmpCoords = GetPlayerCoords();
 	constexpr int arrSize = 5;
-	int safehouses[arrSize] = {
+	Interior safehouses[arrSize] = {
 		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_franklins"),
 		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_franklinshouse"),
 		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_michael"),
@@ -1304,18 +1320,21 @@ bool IsPlayerInsideSafehouse()
 		GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, "v_trevors")
 	};
 
-	int playerInterior = GET_INTERIOR_FROM_ENTITY(GetPlayerPed());
 	LOOP(i, arrSize)
 	{
-		if (safehouses[i] == playerInterior)
-			return true;
+		if (safehouses[i])
+		{
+			res = true;
+			break;
+		}
 	}
 
 	//Special check for Trevor's office inside the strip club
 	if (GET_ROOM_KEY_FROM_ENTITY(GetPlayerPed()) == strp3off)	//room key for "strp3off"
-		return true;
+		res = true;
 
-	return false;
+	isPlayerInsideSafehouseThisFrame = res;
+	return res;
 }
 
 void SetDispatchServices(bool toggle)
@@ -1334,6 +1353,7 @@ void SetDispatchServices(bool toggle)
 	return;
 }
 
+/*
 bool isFakeWanted = false;
 bool GetFakeWanted() { return isFakeWanted; }
 void SetFakeWanted(Player player, bool toggle)
@@ -1380,6 +1400,7 @@ void SetFakeWanted(Player player, bool toggle)
 	}
 	return;
 }
+*/
 
 Hash GetCharacterStatHash(const char* statName)
 {
@@ -1608,5 +1629,6 @@ int GetBoneTagFromNMPartIndex(const int partIndex)
 void UpdatePlayerVars()
 {
 	retrievedWeaponThisFrame = false;
+	isPlayerInsideSafehouseThisFrame = false;
 	return;
 }

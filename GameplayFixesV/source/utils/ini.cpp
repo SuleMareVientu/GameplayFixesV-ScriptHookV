@@ -62,7 +62,7 @@ int MinimumRagdollTime = 450;
 int MaximumRagdollTime = 1500;
 bool ShouldRagdollInCover = false;
 bool DontDropWeapon = true;
-bool AllowWeaponsInsideSafeHouse = false;
+bool AllowWeaponsInsideSafeHouse = true;
 //Player Vehicle
 bool DisableCarMidAirAndRollControl = true;
 bool DisableForcedCarExplosionOnImpact = true;
@@ -82,13 +82,13 @@ bool DisableBikeKnockOff = false;
 bool DisableShallowWaterBikeJumpOut = true;
 bool DisableVehicleJitter = true;
 bool DisableAirVehicleTurbulence = false;
-int DisableAutoEquipHelmets = NULL;
+int DisableAutoEquipHelmets = 0;
 bool DisableStuntJumps = false;
 //Player Controls
 bool DisableAssistedMovement = true;
 bool ReplaceRadioTuneForwardWithRadioOff = false;
 bool ToggleFPSWalking = true;
-int DisableCameraAutoCenter = NULL;
+int DisableCameraAutoCenter = 0;
 bool CamFollowVehicleDuringHandbrake = false;
 int CamFollowVehDelay = 250;
 bool DisableFirstPersonView = false;
@@ -131,7 +131,7 @@ bool MuteArtificialAmbientSounds = false;
 bool DynamicCarJackingReactions = true;
 bool EnableShootingJackedPeds = true;
 bool EnablePedShove = true;
-int PedUmbrellas = 5;
+int PedUmbrellas = 3;
 bool DisableScenarios = false;
 bool DisableWorldPopulation = false;
 

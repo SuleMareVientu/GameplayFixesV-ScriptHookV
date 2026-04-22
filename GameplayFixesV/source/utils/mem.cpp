@@ -6,10 +6,12 @@
 #include <Psapi.h>
 #include <globals.h>
 #include <libs\pattern16\Pattern16.h>
+#include <libs\minhook\include\MinHook.h>
 #include "utils\ini.h"
 #include "utils\functions.h"
 #include "utils\mem.h"
 
+#pragma region Memory Utils
 ULONG_PTR FindPattern(std::string signature)
 {
 	MODULEINFO modInfo;
@@ -67,6 +69,7 @@ ULONG_PTR FindPatternGlobal(std::string signature)
 
 	return 0; // Pattern not found
 }
+#pragma endregion
 
 #pragma region Game Functions
 namespace nUnsafe
@@ -98,12 +101,6 @@ void GetGameFunctionsAddresses()
 		return;
 	}
 
-	if (GetIsEnhancedVersion())
-	{
-		WriteLog("Info", "Hooking game functions is currently disabled in the Enhanced version of the game.");
-		return;
-	}
-
 	foundNMFunctions = true;
 
 	WriteLog("Info", "---------------------- General Functions -----------------------");
@@ -112,10 +109,19 @@ void GetGameFunctionsAddresses()
 	// ULONG_PTR adr = FindPattern("44 8B C1 49 8B 41 08 41 C1 F8 08 41 38 0C 00");
 	// nUnsafe::GetScriptEntity = reinterpret_cast<ULONG_PTR(*)(Entity)>(adr - 12);
 	
-	ULONG_PTR adr = FindPattern("85 ED 74 0F 8B CD E8 ?? ?? ?? ?? 48 8B F8 48 85 C0 74 2E");
+	ULONG_PTR adr = NULL;
+	if (GetIsEnhancedVersion())
+		adr = FindPattern("41 8B 4C 1C ?? E8");
+	else
+		adr = FindPattern("85 ED 74 0F 8B CD E8 ?? ?? ?? ?? 48 8B F8 48 85 C0 74 2E");
+
 	if (adr)
 	{
-		nUnsafe::GetScriptEntity = reinterpret_cast<ULONG_PTR(*)(Entity)>((adr + 11) + (*reinterpret_cast<const int*>(adr + 7)));
+		if (GetIsEnhancedVersion())
+			nUnsafe::GetScriptEntity = reinterpret_cast<ULONG_PTR(*)(Entity)>((adr + 0x0A) + (*reinterpret_cast<const int32_t*>(adr + 0x06)));
+		else
+			nUnsafe::GetScriptEntity = reinterpret_cast<ULONG_PTR(*)(Entity)>((adr + 0x0B) + (*reinterpret_cast<const int32_t*>(adr + 0x07)));
+
 		WriteLog("Operation", "Found address of \"GetScriptEntity\" at 0x%X!", nUnsafe::GetScriptEntity);
 	}
 	else
@@ -126,10 +132,15 @@ void GetGameFunctionsAddresses()
 
 	WriteLog("Info", "------------------------- NM Functions -------------------------");
 
-	adr = FindPattern("48 83 EC 28 48 8B 42 ?? 48 85 C0 74 09 48 3B 82 ?? ?? ?? ?? 74 21");
+	if (GetIsEnhancedVersion())
+		adr = FindPattern("B3 ?? F6 87 ?? ?? ?? ?? ?? 74 ?? 48 8B 47");
+	else
+		adr = FindPattern("48 83 EC 28 48 8B 42 ?? 48 85 C0 74 09 48 3B 82 ?? ?? ?? ?? 74 21");
+
 	if (adr)
 	{
-		nUnsafe::fragInstNmOffset = *reinterpret_cast<int*>(adr + 16);
+		GetIsEnhancedVersion() ? adr += 0x17 : adr += 0x10;
+		nUnsafe::fragInstNmOffset = *reinterpret_cast<int32_t*>(adr);
 		WriteLog("Operation", "Found address of \"FragInstNmOffset\" at 0x%X!", nUnsafe::fragInstNmOffset);
 	}
 	else
@@ -139,7 +150,11 @@ void GetGameFunctionsAddresses()
 	}
 
 	// ART::MessageParamsBase::MessageParamsBase(ART::MessageParamsBase* this, ART::MessageParamsBase::Parameter* const params, int maxParamCount)
-	adr = FindPattern("40 53 48 83 EC 20 83 61 0C 00 44 89 41 08 49 63 C0");
+	if (GetIsEnhancedVersion())
+		adr = FindPattern("56 48 83 EC ?? 48 89 CE 48 89 11 44 89 41");
+	else
+		adr = FindPattern("40 53 48 83 EC 20 83 61 0C 00 44 89 41 08 49 63 C0");
+	
 	if (adr)
 	{
 		nUnsafe::CreateNmMessage = reinterpret_cast<ULONG_PTR(*)(ULONG_PTR, ULONG_PTR, int)>(adr);
@@ -152,10 +167,18 @@ void GetGameFunctionsAddresses()
 	}
 
 	// rage::fragInstNM::PostARTMessage(rage::fragInstNM* this, const char* messageName, const ART::MessageParamsBase* params)
-	adr = FindPattern("0F 84 8B 00 00 00 48 8B 47 30 48 8B 48 10 48 8B 51 20 80 7A 10 0A");
+	if (GetIsEnhancedVersion())
+		adr = FindPattern("44 8B 89 ?? ?? ?? ?? B9");
+	else
+		adr = FindPattern("0F 84 8B 00 00 00 48 8B 47 30 48 8B 48 10 48 8B 51 20 80 7A 10 0A");
+	
 	if (adr)
 	{
-		nUnsafe::GivePedNMMessage = reinterpret_cast<void(*)(ULONG_PTR, const char*, ULONG_PTR)>((adr - 0x1A) + (*reinterpret_cast<const int*>(adr - 0x1E)));
+		if (GetIsEnhancedVersion())
+			nUnsafe::GivePedNMMessage = reinterpret_cast<void(*)(ULONG_PTR, const char*, ULONG_PTR)>(adr);
+		else
+			nUnsafe::GivePedNMMessage = reinterpret_cast<void(*)(ULONG_PTR, const char*, ULONG_PTR)>((adr - 0x1A) + (*reinterpret_cast<const int32_t*>(adr - 0x1E)));
+		
 		WriteLog("Operation", "Found address of \"GiveNmMessage\" at 0x%X!", nUnsafe::GivePedNMMessage);
 	}
 	else
@@ -163,11 +186,18 @@ void GetGameFunctionsAddresses()
 		WriteLog("Error", "Could not find address of \"GiveNmMessage\"!");
 		foundNMFunctions = false;
 	}
-
+	
 	// ART::MessageParamsBase::addInt(ART::MessageParamsBase *this, const char *key, int val)
-	adr = FindPattern("48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 48 63 49 0C 41 8B F8");
+	if (GetIsEnhancedVersion())
+		adr = FindPattern("7D ?? 45 89 C6 48 89 D7");
+	else
+		adr = FindPattern("48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 48 63 49 0C 41 8B F8");
+
 	if (adr)
 	{
+		if (GetIsEnhancedVersion())
+			adr -= 0x14;
+
 		nUnsafe::SetNMMessageInt = reinterpret_cast<bool(*)(ULONG_PTR, const char*, int)>(adr);
 		WriteLog("Operation", "Found address of \"SetNmParameterInt\" at 0x%X!", nUnsafe::SetNMMessageInt);
 	}
@@ -176,11 +206,18 @@ void GetGameFunctionsAddresses()
 		WriteLog("Error", "Could not find address of \"SetNmParameterInt\"!");
 		foundNMFunctions = false;
 	}
-
+	
 	// ART::MessageParamsBase::addBool(ART::MessageParamsBase *this, const char *key, bool val)
-	adr = FindPattern("48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 48 63 49 0C 41 8A F8");
+	if (GetIsEnhancedVersion())
+		adr = FindPattern("7D ?? 45 89 C6 48 89 D3");
+	else
+		adr = FindPattern("48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 48 63 49 0C 41 8A F8");
+
 	if (adr)
 	{
+		if (GetIsEnhancedVersion())
+			adr -= 0x14;
+
 		nUnsafe::SetNMMessageBool = reinterpret_cast<bool(*)(ULONG_PTR, const char*, bool)>(adr);
 		WriteLog("Operation", "Found address of \"SetNmParameterBool\" at 0x%X!", nUnsafe::SetNMMessageBool);
 	}
@@ -191,7 +228,11 @@ void GetGameFunctionsAddresses()
 	}
 
 	// ART::MessageParamsBase::addFloat(ART::MessageParamsBase *this, const char *key, float val)
-	adr = FindPattern("40 53 48 83 EC 30 48 8B D9 48 63 49 0C");
+	if (GetIsEnhancedVersion())
+		adr = FindPattern("41 56 56 57 53 48 83 EC ?? 0F 29 74 24 20 48 89 CE 48 63 79");
+	else
+		adr = FindPattern("40 53 48 83 EC 30 48 8B D9 48 63 49 0C");
+	
 	if (adr)
 	{
 		nUnsafe::SetNMMessageFloat = reinterpret_cast<bool(*)(ULONG_PTR, const char*, float)>(adr);
@@ -204,10 +245,17 @@ void GetGameFunctionsAddresses()
 	}
 
 	// ART::MessageParamsBase::addString(ART::MessageParamsBase *this, const char *key, const char *val)
-	adr = FindPattern("57 48 83 EC 20 48 8B D9 48 63 49 0C 49 8B E8");
+	if (GetIsEnhancedVersion())
+		adr = FindPattern("41 56 56 57 53 48 83 EC ?? 48 89 CE 48 63 79");
+	else
+		adr = FindPattern("57 48 83 EC 20 48 8B D9 48 63 49 0C 49 8B E8");
+	
 	if (adr)
 	{
-		nUnsafe::SetNMMessageString = reinterpret_cast<bool(*)(ULONG_PTR, const char*, const char*)>(adr - 15);
+		if (!GetIsEnhancedVersion())
+			adr -= 0x0F;
+
+		nUnsafe::SetNMMessageString = reinterpret_cast<bool(*)(ULONG_PTR, const char*, const char*)>(adr);
 		WriteLog("Operation", "Found address of \"SetNmParameterString\" at 0x%X!", nUnsafe::SetNMMessageString);
 	}
 	else
@@ -217,9 +265,16 @@ void GetGameFunctionsAddresses()
 	}
 
 	// ART::MessageParamsBase::addVector3(ART::MessageParamsBase* this, const char* key, float x, float y, float z)
-	adr = FindPattern("40 53 48 83 EC 40 48 8B D9 48 63 49 0C");
+	if (GetIsEnhancedVersion())
+		adr = FindPattern("0F 29 7C 24 30 0F 29 74 24 20 48 89 CE 48 63 79");
+	else
+		adr = FindPattern("40 53 48 83 EC 40 48 8B D9 48 63 49 0C");
+
 	if (adr)
 	{
+		if (GetIsEnhancedVersion())
+			adr -= 0x0F;
+
 		nUnsafe::SetNMMessageVec3 = reinterpret_cast<bool(*)(ULONG_PTR, const char*, float, float, float)>(adr);
 		WriteLog("Operation", "Found address of \"SetNmParameterVector\" at 0x%X!", nUnsafe::SetNMMessageVec3);
 	}
@@ -375,7 +430,117 @@ void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, float x, float
 }
 #pragma endregion
 
+#pragma region Memory Hooking
+typedef void(__fastcall* DoDisableInputType)(uint32_t* control, uint32_t input, const uint32_t* options, bool disableRelatedInputs);
+DoDisableInputType TrampolineDoDisableInput = nullptr;
+void __fastcall DetourDoDisableInput(uint32_t* control, uint32_t input, const uint32_t* options, bool disableRelatedInputs)
+{
+	if (IsPlayerInsideSafehouse())
+	{
+		switch (input)
+		{
+		case INPUT_SPRINT: case INPUT_JUMP: case INPUT_AIM: case INPUT_SELECT_WEAPON:
+		case INPUT_PICKUP: case INPUT_TALK: case INPUT_DETONATE: case INPUT_VEH_AIM:
+		case INPUT_VEH_ATTACK: case INPUT_VEH_ATTACK2: case INPUT_VEH_PASSENGER_ATTACK:
+		case INPUT_VEH_SELECT_NEXT_WEAPON: case INPUT_VEH_SELECT_PREV_WEAPON:
+		case INPUT_VEH_FLY_SELECT_NEXT_WEAPON: case INPUT_MELEE_ATTACK_LIGHT:
+		case INPUT_MELEE_ATTACK_HEAVY: case INPUT_MELEE_ATTACK_ALTERNATE: case INPUT_MELEE_BLOCK:
+			return;
+		default:
+			break;
+		}
+	}
+
+	TrampolineDoDisableInput(control, input, options, disableRelatedInputs);
+	return;
+}
+
+typedef bool(__fastcall* EquipWeaponType)(uint32_t* wpmanager, uint32_t uWeaponNameHash, uint32_t iVehicleIndex, bool bCreateWeaponWhenLoaded, bool bProcessWeaponInstructions, uint32_t attach);
+EquipWeaponType TrampolineEquipWeapon = nullptr;
+bool __fastcall DetourEquipWeapon(uint32_t* wpmanager, uint32_t uWeaponNameHash, uint32_t iVehicleIndex, bool bCreateWeaponWhenLoaded, bool bProcessWeaponInstructions, uint32_t attach)
+{
+	if (IsPlayerInsideSafehouse())
+	{
+		if (uWeaponNameHash == WEAPON_UNARMED && GET_SELECTED_PED_WEAPON(GetPlayerPed()) != WEAPON_UNARMED)
+			return true;
+	}
+
+	return TrampolineEquipWeapon(wpmanager, uWeaponNameHash, iVehicleIndex, bCreateWeaponWhenLoaded, bProcessWeaponInstructions, attach);
+}
+
+void AllowWeaponsInsideSafeHouse()
+{
+	WriteLog("Info", "---------------------- AllowWeaponsInsideSafeHouse ----------------------");
+	
+	// Hook DoDisableInput() and EquipWeapon() called from game scripts
+	ULONG_PTR target = NULL;  // RVA
+	if (GetIsEnhancedVersion())
+		target = FindPattern("48 89 C1 BA 1A 00 00 00");
+	else
+		target = FindPattern("44 8A CD BA 1A 00 00 00");
+
+	if (target)
+	{
+		if (GetIsEnhancedVersion())
+			target += 11;
+		else
+			target += 11;
+
+		target = target + *reinterpret_cast<int32_t*>(target + 1) + 5;
+		WriteLog("Operation", "Found address of \"DoDisableInput\" at 0x%X!", target);
+		MH_CreateHook(reinterpret_cast<LPVOID>(target), reinterpret_cast<LPVOID>(DetourDoDisableInput), reinterpret_cast<LPVOID*>(&TrampolineDoDisableInput));
+	}
+	else
+		WriteLog("Error", "Could not find address of \"DoDisableInput\"!");
+
+	if (GetIsEnhancedVersion())
+		target = FindPattern("48 89 E9 89 DA 45 31 C9 E8 ?? ?? ?? ?? 8B");
+	else
+		target = FindPattern("4C 8B 55 10 49 8B 82 D0 00 00 00 48 85 C0 74");
+
+	if (target)
+	{
+		if (GetIsEnhancedVersion())
+		{
+			target += 8;
+			target = target + *reinterpret_cast<int32_t*>(target + 1) + 5;
+		}
+		else
+			target -= 59;
+
+		WriteLog("Operation", "Found address of \"EquipWeapon\" at 0x%X!", target);
+		MH_CreateHook(reinterpret_cast<LPVOID>(target), reinterpret_cast<LPVOID>(DetourEquipWeapon), reinterpret_cast<LPVOID*>(&TrampolineEquipWeapon));
+	}
+	else
+		WriteLog("Error", "Could not find address of \"EquipWeapon\"!");
+
+	return;
+}
+
+void InitHooks()
+{
+	WriteLog("Info", "---------------------- Hook Functions -----------------------");
+	MH_Initialize();
+
+	if (Ini::AllowWeaponsInsideSafeHouse)
+		AllowWeaponsInsideSafeHouse();
+
+	MH_EnableHook(MH_ALL_HOOKS);
+	return;
+}
+
+void ShutdownHooks()
+{
+	MH_DisableHook(MH_ALL_HOOKS);
+	MH_Uninitialize();
+	return;
+}
+#pragma endregion
+
 #pragma region Memory Patching
+constexpr char* DefaultFindAdressErr = "Could not find address(es)!";
+constexpr char* DefaultDoneMsg = "Done!";
+
 // Credits FiveM: https://github.com/citizenfx/fivem/blob/master/code/components/gta-streaming-five/src/UnkStuff.cpp
 void LowPriorityPropsPatch()
 {
@@ -385,9 +550,10 @@ void LowPriorityPropsPatch()
 		return;
 	}
 
+	WriteLog("Info", "---------------------- Low Priority Props ----------------------");
+
 	if (GetIsEnhancedVersion())
 	{
-		WriteLog("Info", "---------------------- Low Priority Props ----------------------");
 		WriteLog("Operation", "Finding prop priority address...");
 
 		// Patch "rage::fwMapDataContents::Entities_Create", should be updated to the same method as Legacy... (setting rage::fwMapData::ms_entityLevelCap)
@@ -398,42 +564,41 @@ void LowPriorityPropsPatch()
 			constexpr int priOptionLowSize = 6;
 			constexpr char priOptionLow[priOptionLowSize] = { '\x90', '\x90', '\x90', '\x83', '\xF8', '\x03' };
 			memmove(reinterpret_cast<void*>(address + 3), &priOptionLow, priOptionLowSize);
+			WriteLog("Operation", DefaultDoneMsg);
 		}
 		else
-			WriteLog("Error", "Could not find address!");
+			WriteLog("Error", DefaultFindAdressErr);
 
 		return;
 	}
 
-	WriteLog("Info", "---------------------- Low Priority Props ----------------------");
-	WriteLog("Operation", "Finding prop priority address 1...");
-
+	WriteLog("Operation", "Finding prop priority addresses...");
 	ULONG_PTR address = FindPattern("BB 02 00 00 00 39 1D");
 	if (address)
 	{
-		WriteLog("Operation", "Found address at 0x%X! Patching 1 byte...", address);
+		WriteLog("Operation", "Found address 1 at 0x%X! Patching 1 byte...", address);
 
+		// rage::fwEntityDef.m_priorityLevel
 		// Make GTA default rage::fwMapData::ms_entityLevelCap to PRI_OPTIONAL_LOW, not PRI_OPTIONAL_MEDIUM (RAGE suite defaults)
-		*reinterpret_cast<char*>(address + 1) = '\x03';	// mov ebx, 0x02 (PRI_OPTIONAL_MEDIUM) to mov ebx, 0x03 (PRI_OPTIONAL_LOW)
+		*reinterpret_cast<uint8_t*>(address + 1) = '\x03';	// mov ebx, 0x02 (PRI_OPTIONAL_MEDIUM) to mov ebx, 0x03 (PRI_OPTIONAL_LOW)
 
 		//constexpr char priOptionLow = '\x03';
 		//memmove(reinterpret_cast<void*>(address + 1), &priOptionLow, 1);
 
-		WriteLog("Operation", "Finding prop priority address 2...");
 		address = FindPattern("0F 2F 47 24 0F 93 05");
 		if (address)
 		{
-			WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, 7);
+			WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, 7);
 
 			// Don't disable low-priority objects when LOD distance is <20%
 			memset(reinterpret_cast<void*>(address + 4), 0x90, 7);
-			WriteLog("Operation", "Done!");
+			WriteLog("Operation", DefaultDoneMsg);
 		}
 		else
-			WriteLog("Error", "Could not find address!");
+			WriteLog("Error", DefaultFindAdressErr);
 	}
 	else
-		WriteLog("Error", "Could not find address!");
+		WriteLog("Error", DefaultFindAdressErr);
 
 	return;
 }
@@ -444,39 +609,63 @@ bool GetPatchedCenterSteering() { return patchedCenterSteering; }
 // Credits aint-no-other-option: https://github.com/aint-no-other-option/CenterSteeringPatch/
 void CenterSteeringPatch()
 {
+	WriteLog("Info", "----------------------- Center Steering ------------------------");
+	WriteLog("Operation", "Finding steering addresses...");
+
 	if (GetIsEnhancedVersion())
 	{
-		WriteLog("Info", "\"CenterSteeringPatch\" is currently not compatible with the Enhanced version of the game.");
+		constexpr int nBytes1 = 10;
+		constexpr int nBytes2 = 10;
+
+		// mov dword ptr [rsi+9DCh], 0
+		ULONG_PTR address = FindPattern("C7 86 DC 09 00 00 00 00 00 00 E9");
+		if (address)
+		{
+			WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, nBytes1);
+			memset(reinterpret_cast<void*>(address), 0x90, nBytes1);
+			patchedCenterSteering = true;
+
+			// mov dword ptr [rsi+9DCh], 0
+			address = FindPattern("C7 86 DC 09 00 00 00 00 00 00 31 C0");
+			if (address)
+			{
+				WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2);
+				memset(reinterpret_cast<void*>(address), 0x90, nBytes2);
+				WriteLog("Operation", DefaultDoneMsg);
+			}
+			else
+				WriteLog("Error", DefaultFindAdressErr);
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
+
 		return;
 	}
-	
+
 	constexpr int nBytes1 = 7;
 	constexpr int nBytes2 = 6;
 
 	/* Address of centering when getting out of car normally */
-	WriteLog("Info", "----------------------- Center Steering ------------------------");
-	WriteLog("Operation", "Finding steering address 1...");
-	ULONG_PTR address = FindPattern("44 89 BB ?? ?? ?? ?? 8B 0D");
+	ULONG_PTR address = FindPattern("72 ?? 84 C0 75 ?? 44 89");
 	if (address)
 	{
-		WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes1);
-		memset(reinterpret_cast<void*>(address), 0x90, nBytes1);
+		WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, nBytes1);
+		memset(reinterpret_cast<void*>(address + 6), 0x90, nBytes1);
 		patchedCenterSteering = true;
 
 		/* Address of centering when diving out */
-		WriteLog("Operation", "Finding steering address 2...");
 		address = FindPattern("89 82 ?? ?? ?? ?? 38 81");
 		if (address)
 		{
-			WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes2);
+			WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2);
 			memset(reinterpret_cast<void*>(address), 0x90, nBytes2);
-			WriteLog("Operation", "Done!");
+			WriteLog("Operation", DefaultDoneMsg);
 		}
 		else
-			WriteLog("Error", "Could not find address!");
+			WriteLog("Error", DefaultFindAdressErr);
 	}
 	else
-		WriteLog("Error", "Could not find address!");
+		WriteLog("Error", DefaultFindAdressErr);
 
 	return;
 }
@@ -484,73 +673,173 @@ void CenterSteeringPatch()
 // Credits aint-no-other-option: https://github.com/aint-no-other-option/CopBumpSteeringPatch
 void CopBumpSteeringPatch()
 {
+	WriteLog("Info", "--------------------------- Cop Bump ---------------------------");
+
 	if (GetIsEnhancedVersion())
 	{
-		WriteLog("Info", "\"CopBumpSteeringPatch\" is currently not compatible with the Enhanced version of the game.");
+		ULONG_PTR address = FindPattern("F3 41 0F 11 8D 38 1A 00 00 80");
+		if (address)
+		{
+			constexpr int nBytes1 = 9;
+			WriteLog("Operation", "Finding cop bump addresses...");
+			WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, nBytes1);
+			memset(reinterpret_cast<void*>(address), 0x90, nBytes1);
+
+			address = FindPattern("F3 41 0F 11 B5 3C 1A 00 00 F3");
+			if (address)
+			{
+				constexpr int nBytes2 = 9;
+				WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2);
+				memset(reinterpret_cast<void*>(address), 0x90, nBytes2);
+				WriteLog("Operation", DefaultDoneMsg);
+			}
+			else
+				WriteLog("Error", DefaultFindAdressErr);
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
+
 		return;
 	}
 
+	ULONG_PTR address = FindPattern("F3 0F 11 ?? ?? ?? 00 00 45 ?? ?? 74 ?? E8 ?? ?? ?? ?? 84");
+	if (address)
+	{
+		constexpr int nBytes1 = 8;
+		WriteLog("Operation", "Finding cop bump addresses...");
+		WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, nBytes1);
+		memset(reinterpret_cast<void*>(address), 0x90, nBytes1);
+
+		address = FindPattern("EB 08 F3 0F 59 35 ?? ?? ?? 00 F3 0F 11");
+		if (address)
+		{
+			constexpr int nBytes2 = 8;
+			WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2);
+			memset(reinterpret_cast<void*>(address + 10), 0x90, nBytes2);
+			WriteLog("Operation", DefaultDoneMsg);
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
+	}
+	else
+		WriteLog("Error", DefaultFindAdressErr);
+
+	/*
 	constexpr int nBytes = 8;
-
-	WriteLog("Info", "--------------------------- Cop Bump ---------------------------");
-	WriteLog("Operation", "Finding cop bump address...");
-
 	const ULONG_PTR address = FindPattern("33 F6 F3 0F 11 87 ?? ?? ?? ?? 45 84 ED 74 25");
 	if (address)
 	{
+		WriteLog("Operation", "Finding cop bump address...");
 		WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes);
 		memset(reinterpret_cast<void*>(address + 2), 0x90, nBytes);
-		WriteLog("Operation", "Done!");
+		WriteLog("Operation", DefaultDoneMsg);
 	}
 	else
-		WriteLog("Error", "Could not find address!");
-
+		WriteLog("Error", DefaultFindAdressErr);
+	*/
 	return;
 }
-
-bool patchedHUDWheelSlowdown = false;
-bool GetPatchedHUDWheelSlowdown() { return patchedHUDWheelSlowdown; }
 
 // Credits CamxxCore: https://github.com/CamxxCore/GTAVWeaponWheelMod
 // Has to be paired with a function that runs every frame
 void HUDWheelSlowdownPatch()
 {
+	WriteLog("Info", "---------------------- HUD Wheel Slowdown ----------------------");
+	WriteLog("Operation", "Finding HUD wheel slowdown addresses...");
+
 	if (GetIsEnhancedVersion())
 	{
-		WriteLog("Info", "\"HUDWheelSlowdownPatch\" is currently not compatible with the Enhanced version of the game.");
+		ULONG_PTR address = FindPattern("80 ?? 64 01 74");
+		if (address)
+		{
+			constexpr int nBytes1 = 13;
+			WriteLog("Operation", "Found address 1 at 0x%X! Patching %d total bytes...", address, nBytes1);
+
+			// Remove vignetting (CSelectionWheel::TriggerFadeOutEffect)
+			ULONG_PTR tempAdr = address + 33;
+			const ULONG_PTR TriggerFadeOutEffectAdr = tempAdr + *reinterpret_cast<int32_t*>(tempAdr + 1) + 5;
+			*reinterpret_cast<uint8_t*>(TriggerFadeOutEffectAdr) = '\xC3';
+
+			// Vignetting call patch (CSelectionWheel::TriggerFadeInEffect)
+			tempAdr = address + 13;
+			const ULONG_PTR TriggerFadeInEffectAdr = tempAdr + *reinterpret_cast<int32_t*>(tempAdr + 1) + 5;
+			*reinterpret_cast<uint8_t*>(TriggerFadeInEffectAdr) = '\xC3';
+
+			// Timescale override patch (CTimeWarper::SetTargetTimeWarp)
+			memset(reinterpret_cast<void*>(address - 11), 0x90, 11);
+			constexpr int patchTimescaleSize = 2; // 31 ff
+			constexpr char patchTimescale[patchTimescaleSize] = { '\x31', '\xFF' };
+			memmove(reinterpret_cast<void*>(address - 11), patchTimescale, patchTimescaleSize);
+
+			/* Weapon Wheel Audio SlowMo Address (audNorthAudioEngine::ActivateSlowMoMode & audFrontendAudioEntity::StartWeaponWheel) */
+			address = FindPattern("82 90 D2 F1"); // Joaat("SLOWMO_WEAPON")
+			if (address)
+			{
+				constexpr int nBytes2 = 10;
+				WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2 + 1);
+				memset(reinterpret_cast<void*>(address - 1), 0x90, nBytes2);
+				*reinterpret_cast<uint8_t*>(address - 11) = '\x00';
+			}
+			else
+				WriteLog("Error", DefaultFindAdressErr);
+
+			/*
+			address = FindPattern("84 DB 74 ?? E8 ?? ?? ?? ?? 80 3D");
+			if (address)
+			{
+				constexpr int nBytes2 = 5;
+				WriteLog("Operation", "Found address 3 at 0x%X! Patching %d bytes...", address, nBytes2);
+				memset(reinterpret_cast<void*>(address + 4), 0x90, nBytes2);
+			}
+			else
+				WriteLog("Error", DefaultFindAdressErr);
+			*/
+
+			WriteLog("Operation", DefaultDoneMsg);
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
+
 		return;
 	}
 
-	constexpr int nBytes = 12;
-
-	WriteLog("Info", "---------------------- HUD Wheel Slowdown ----------------------");
-	WriteLog("Operation", "Finding HUD wheel slowdown address...");
-
-	const ULONG_PTR address = FindPattern("38 51 64 74 19");
+	ULONG_PTR address = FindPattern("38 51 64 74 19");
 	if (address)
 	{
-		WriteLog("Operation", "Found address at 0x%X! Patching %d total bytes...", address, nBytes);
+		constexpr int nBytes = 4;
+		WriteLog("Operation", "Found address 1 at 0x%X! Patching %d total bytes...", address, nBytes);
 
-		// Remove vignetting
-		ULONG_PTR vignettingAdr = address + 26;
-		vignettingAdr = vignettingAdr + *reinterpret_cast<int*>(vignettingAdr) + 4;
-		constexpr int patchVignettingSize = 5;
-		constexpr char patchVignetting[patchVignettingSize] = { '\xC3', '\x90', '\x90', '\x90', '\x90' };
-		memmove(reinterpret_cast<void*>(vignettingAdr), patchVignetting, patchVignettingSize);
+		// Remove vignetting (CSelectionWheel::TriggerFadeOutEffect)
+		ULONG_PTR tempAdr = address + 25;
+		const ULONG_PTR TriggerFadeOutEffectAdr = tempAdr + *reinterpret_cast<int32_t*>(tempAdr + 1) + 5;
+		*reinterpret_cast<uint8_t*>(TriggerFadeOutEffectAdr) = '\xC3';
 
-		// Vignetting call patch (NOP)
-		memset(reinterpret_cast<void*>(address + 8), 0x90, 5);
+		// Vignetting call patch (CSelectionWheel::TriggerFadeInEffect)
+		tempAdr = address + 8;
+		const ULONG_PTR TriggerFadeInEffectAdr = tempAdr + *reinterpret_cast<int32_t*>(tempAdr + 1) + 5;
+		*reinterpret_cast<uint8_t*>(TriggerFadeInEffectAdr) = '\xC3';
 
-		// Timescale override patch
+		// Timescale override patch (CTimeWarper::SetTargetTimeWarp)
 		constexpr int patchTimescaleSize = 2;
-		constexpr char patchTimescale[patchTimescaleSize] = { '\x31', '\xD2' };
+		constexpr int8_t patchTimescale[patchTimescaleSize] = { '\x31', '\xD2' };
 		memmove(reinterpret_cast<void*>(address + 34), patchTimescale, patchTimescaleSize);
 
-		patchedHUDWheelSlowdown = true;
-		WriteLog("Operation", "Done!");
+		/* Weapon Wheel Audio SlowMo Address (audNorthAudioEngine::ActivateSlowMoMode & audFrontendAudioEntity::StartWeaponWheel) */
+		address = FindPattern("82 90 D2 F1"); // Joaat("SLOWMO_WEAPON")
+		if (address)
+		{
+			constexpr int nBytes2 = 10;
+			WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2 + 1);
+			memset(reinterpret_cast<void*>(address - 1), 0x90, nBytes2);
+			*reinterpret_cast<uint8_t*>(address - 4) = '\x00';
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
+
+		WriteLog("Operation", DefaultDoneMsg);
 	}
 	else
-		WriteLog("Error", "Could not find address!");
+		WriteLog("Error", DefaultFindAdressErr);
 
 	return;
 }

@@ -303,8 +303,8 @@ bool IsFirstPersonActive();
 bool IsPlayerAiming(bool includeAimGunTask, bool includeShooting);
 bool IsPlayerInsideSafehouse();
 void SetDispatchServices(bool toggle);
-bool GetFakeWanted();
-void SetFakeWanted(Player player, bool toggle);
+// bool GetFakeWanted();
+// void SetFakeWanted(Player player, bool toggle);
 inline int GetNumberOfScriptInstances(const char* name) { return (GET_NUMBER_OF_THREADS_RUNNING_THE_SCRIPT_WITH_THIS_HASH(Joaat(name))); }
 Hash GetCharacterStatHash(const char* statName);
 
