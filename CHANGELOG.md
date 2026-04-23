@@ -1,3 +1,11 @@
+# **v3.1**
+- Add support for Enhanced memory patches 
+    - Memory patches are now universal, tested from Legacy b1180 to b3521, and latest Enhanced (b1013).
+- Completely reworked AllowWeaponsInsideSafeHouse 
+- Fixed EnableBrakeLightsOnStoppedVehicle, PedUmbrellas, FriendlyFire
+- Disabled LowPriorityPropsPatch by default: causes crashes in Enhanced.
+- Misc fixes
+
 # **v3.0**
 **Added:**  
 - Add memory patching options without hiding complexity to the user. These types of patches are known to break easily across different game versions.  
