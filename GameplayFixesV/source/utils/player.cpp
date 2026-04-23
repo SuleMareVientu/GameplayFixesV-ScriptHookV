@@ -182,7 +182,7 @@ void EnableMidAirLedgeGrab()
 		Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
 		if (GET_SHAPE_TEST_RESULT(mainClimbSTHandle, &mainClimbSTHit, &mainClimbSTHitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 		{
-			RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
+			//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 			mainClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, start.z, radius, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
 		}
 	}
@@ -201,7 +201,7 @@ void EnableMidAirLedgeGrab()
 		Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
 		if (GET_SHAPE_TEST_RESULT(heightClimbSTHandle, &heightClimbSTHit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 		{
-			RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
+			//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 			heightClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, end.z, radius, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
 		}
 	}
@@ -222,7 +222,7 @@ void EnableMidAirLedgeGrab()
 		Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
 		if (GET_SHAPE_TEST_RESULT(surfaceClimbSTHandle, &surfaceClimbSTHit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 		{
-			RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
+			//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 			surfaceClimbSTHandle = START_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
 		}
 	}
@@ -244,7 +244,7 @@ void EnableMidAirLedgeGrab()
 		Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
 		if (GET_SHAPE_TEST_RESULT(surface2ndClimbSTHandle, &surface2ndClimbSTHit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 		{
-			RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
+			//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 			surface2ndClimbSTHandle = START_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
 		}
 	}
@@ -364,56 +364,9 @@ void SilentWanted()
 
 namespace nWeapons
 {
-void FriendlyFire()
+inline void FriendlyFire()
 {
 	SET_CAN_ATTACK_FRIENDLY(GetPlayerPed(), true, true);	// Sets PCF_CanAttackFriendly, PCF_AllowLockonToFriendlyPlayers
-
-	auto EnableLockOn = [](Ped ped)
-		{
-			return;
-			const int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(GetPlayerPed(), ped);
-			if (relationship != ACQUAINTANCE_TYPE_PED_RESPECT && relationship != ACQUAINTANCE_TYPE_PED_LIKE && relationship != ACQUAINTANCE_TYPE_PED_IGNORE)
-				return;
-
-			SET_PED_CAN_BE_TARGETTED(ped, true);
-			SET_PED_CAN_BE_TARGETTED_BY_PLAYER(ped, GetPlayer(), true);
-			SET_PED_CAN_BE_TARGETED_WHEN_INJURED(ped, true);
-			SET_ALLOW_LOCKON_TO_PED_IF_FRIENDLY(ped, true);	// same as setting PCF_AllowPlayerLockOnIfFriendly
-			//SET_ENTITY_IS_TARGET_PRIORITY(ped, false, 1000.0f);
-			SET_PED_KEEP_TASK(ped, true);
-			SET_PED_CAN_RAGDOLL(ped, true);
-			CLEAR_RAGDOLL_BLOCKING_FLAGS(ped, RAGDOLL_BLOCKING_FLAGS_ALL);
-			SET_ENTITY_PROOFS(ped, false, false, false, false, false, false, false, false);
-			SET_PED_DIES_WHEN_INJURED(ped, true);
-			// SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, false); // might not be desirable
-			DisablePedConfigFlag(ped, PCF_PreventAllMeleeTaunts);
-			DisablePedConfigFlag(ped, PCF_NeverEverTargetThisPed);
-			DisablePedConfigFlag(ped, PCF_DisablePlayerLockon);
-			DisablePedResetFlag(ped, PRF_DisablePlayerLockon);
-		};
-
-	Ped ped = NULL;
-	SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);
-	if (GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(GetPlayer(), &ped))
-	{
-		LOOP(i, ACQUAINTANCE_TYPE_PED_DEAD)
-		{
-			const int relationship = GET_RELATIONSHIP_BETWEEN_PEDS(ped, GetPlayerPed());
-			//if (relationship != ACQUAINTANCE_TYPE_PED_RESPECT && relationship != ACQUAINTANCE_TYPE_PED_LIKE && relationship != ACQUAINTANCE_TYPE_PED_IGNORE)
-			//	Print(i);
-		}
-		EnableLockOn(ped);
-	}
-
-	SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);
-	if (GET_PLAYER_TARGET_ENTITY(GetPlayer(), &ped))
-		EnableLockOn(ped);
-
-	const Vector3 tmpCoords = GetPlayerCoords();
-	SET_SCENARIO_PEDS_TO_BE_RETURNED_BY_NEXT_COMMAND(true);
-	if (GET_CLOSEST_PED(tmpCoords.x, tmpCoords.y, tmpCoords.z, 10.0f, true, true, &ped, false, true, GET_PED_TYPE(GetPlayerPed())))
-		EnableLockOn(ped);
-
 	return;
 }
 
@@ -1120,7 +1073,7 @@ void DynamicallyCleanVehicles()
 				if (GET_SHAPE_TEST_RESULT(rainShapetestHandle, &hit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 				{
 					rainShapetestLastRes = hit;
-					RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
+					//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 					const Vector3 loc = GET_ENTITY_COORDS(nearbyVehs[i].Uns, false);
 					rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, nearbyVehs[i].Uns, SCRIPT_SHAPETEST_OPTION_DEFAULT);
 				}
@@ -1991,7 +1944,7 @@ void EnablePedShove()
 			//const Vector3 off = GET_OFFSET_FROM_ENTITY_GIVEN_WORLD_COORDS(shoveHitEntity, spineVec.x, spineVec.y, spineVec.z);
 			//APPLY_FORCE_TO_ENTITY(shoveHitEntity, APPLY_TYPE_IMPULSE, force.x, force.y, 0.0f, off.x, off.y, off.z, RAGDOLL_SPINE3, false, true, true, false, true);
 			APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(shoveHitEntity, APPLY_TYPE_IMPULSE, force.x, force.y, 0.0f, RAGDOLL_PELVIS, false, true, false);
-			RELEASE_SCRIPT_GUID_FROM_ENTITY(shoveHitEntity);
+			//RELEASE_SCRIPT_GUID_FROM_ENTITY(shoveHitEntity);
 			alreadyShoved = true;
 		}
 
@@ -2001,7 +1954,7 @@ void EnablePedShove()
 	else
 	{
 		alreadyShoved = false;
-		RELEASE_SCRIPT_GUID_FROM_ENTITY(shoveHitEntity);
+		//RELEASE_SCRIPT_GUID_FROM_ENTITY(shoveHitEntity);
 	}
 
 	if (GET_SELECTED_PED_WEAPON(GetPlayerPed()) != WEAPON_UNARMED)
@@ -2029,7 +1982,7 @@ void EnablePedShove()
 
 	if (DOES_ENTITY_EXIST(shoveHitEntity))
 	{
-		// RELEASE_SCRIPT_GUID_FROM_ENTITY causes glithes with peds holding a brolly
+		//RELEASE_SCRIPT_GUID_FROM_ENTITY causes glithes with peds holding a brolly
 		if (DOES_ENTITY_EXIST(GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(shoveHitEntity, Joaat("p_amb_brolly_01"))))
 		{
 			shoveHitEntity = NULL;
@@ -2043,7 +1996,7 @@ void EnablePedShove()
 			// IS_PED_IN_MELEE_COMBAT(shoveHitEntity) || COUNT_PEDS_IN_COMBAT_WITH_TARGET(shoveHitEntity) > 0 ||
 			!IS_PED_FACING_PED(GetPlayerPed(), shoveHitEntity, 60.0f))
 		{
-			RELEASE_SCRIPT_GUID_FROM_ENTITY(shoveHitEntity);
+			//RELEASE_SCRIPT_GUID_FROM_ENTITY(shoveHitEntity);
 			return;
 		}
 

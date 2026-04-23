@@ -26,7 +26,7 @@ namespace Ini
 unsigned long ReloadIniKey = VK_F12;
 //Memory Settings
 bool ApplyExePatches = true;
-bool LowPriorityPropsPatch = true;
+bool LowPriorityPropsPatch = false;
 bool CenterSteeringPatch = true;
 bool CopBumpSteeringPatch = true;
 bool HUDWheelSlowdownPatch = false;

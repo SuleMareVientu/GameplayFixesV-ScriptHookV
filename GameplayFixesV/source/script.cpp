@@ -60,7 +60,6 @@ void ScriptMain()
 
 	GetGameFunctionsAddresses();
 	ApplyExePatches();
-	InitHooks();
 
 	while (true)
 	{

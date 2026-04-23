@@ -470,7 +470,7 @@ bool __fastcall DetourEquipWeapon(uint32_t* wpmanager, uint32_t uWeaponNameHash,
 
 void AllowWeaponsInsideSafeHouse()
 {
-	WriteLog("Info", "---------------------- AllowWeaponsInsideSafeHouse ----------------------");
+	// WriteLog("Info", "---------------------- AllowWeaponsInsideSafeHouse ----------------------");
 	
 	// Hook DoDisableInput() and EquipWeapon() called from game scripts
 	ULONG_PTR target = NULL;  // RVA
@@ -519,11 +519,10 @@ void AllowWeaponsInsideSafeHouse()
 
 void InitHooks()
 {
-	WriteLog("Info", "---------------------- Hook Functions -----------------------");
 	MH_Initialize();
+	WriteLog("Info", "---------------------- Enable Hooks -----------------------");
 
-	if (Ini::AllowWeaponsInsideSafeHouse)
-		AllowWeaponsInsideSafeHouse();
+	if (Ini::AllowWeaponsInsideSafeHouse) AllowWeaponsInsideSafeHouse();
 
 	MH_EnableHook(MH_ALL_HOOKS);
 	return;
@@ -531,6 +530,7 @@ void InitHooks()
 
 void ShutdownHooks()
 {
+	WriteLog("Info", "---------------------- Disable Hooks -----------------------");
 	MH_DisableHook(MH_ALL_HOOKS);
 	MH_Uninitialize();
 	return;
@@ -557,6 +557,8 @@ void LowPriorityPropsPatch()
 		WriteLog("Operation", "Finding prop priority address...");
 
 		// Patch "rage::fwMapDataContents::Entities_Create", should be updated to the same method as Legacy... (setting rage::fwMapData::ms_entityLevelCap)
+		//C7 05 0C ?? ?? ?? ?? 00 00 00 B8 02 00 00 00 89 05
+		/*
 		const ULONG_PTR address = FindPattern("8B 47 5C 3B 05 ?? ?? ?? ?? 7E");
 		if (address)
 		{
@@ -568,7 +570,53 @@ void LowPriorityPropsPatch()
 		}
 		else
 			WriteLog("Error", DefaultFindAdressErr);
+			*/
 
+		ULONG_PTR address = FindPattern("C7 05 ?? ?? ?? ?? 02 00 00 00 B8 02 00 00 00 89 05");
+		if (address)
+		{
+			WriteLog("Operation", "Found address at 0x%X! Patching 2 bytes...", address);
+			*reinterpret_cast<uint8_t*>(address + 6) = '\x03';
+			*reinterpret_cast<uint8_t*>(address + 11) = '\x03';
+			WriteLog("Operation", DefaultDoneMsg);	
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
+
+		/*
+		address = FindPattern("C7 05 ?? ?? ?? ?? 02 00 00 00 C7 05 ?? ?? ?? ?? 02 00 00 00");
+		if (address)
+		{
+			WriteLog("Operation", "Found address at 0x%X! Patching 2 bytes...", address);
+			*reinterpret_cast<uint8_t*>(address + 6) = '\x03';
+			*reinterpret_cast<uint8_t*>(address + 16) = '\x03';
+			WriteLog("Operation", DefaultDoneMsg);
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
+
+		address = FindPattern("C7 05 ?? ?? ?? ?? 02 00 00 00 C7 05 ?? ?? ?? ?? 02 00 00 00");
+		if (address)
+		{
+			WriteLog("Operation", "Found address at 0x%X! Patching 2 bytes...", address);
+			*reinterpret_cast<uint8_t*>(address + 6) = '\x03';
+			*reinterpret_cast<uint8_t*>(address + 16) = '\x03';
+			WriteLog("Operation", DefaultDoneMsg);
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
+
+		address = FindPattern("C7 05 ?? ?? ?? ?? 02 00 00 00 C7 05 ?? ?? ?? ?? 02 00 00 00");
+		if (address)
+		{
+			WriteLog("Operation", "Found address at 0x%X! Patching 2 bytes...", address);
+			*reinterpret_cast<uint8_t*>(address + 6) = '\x03';
+			*reinterpret_cast<uint8_t*>(address + 16) = '\x03';
+			WriteLog("Operation", DefaultDoneMsg);
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
+		*/
 		return;
 	}
 
@@ -861,6 +909,7 @@ void ApplyExePatches()
 	if (Ini::CopBumpSteeringPatch) { CopBumpSteeringPatch(); }
 	if (Ini::HUDWheelSlowdownPatch) { HUDWheelSlowdownPatch(); }
 
+	InitHooks();
 	hasAppliedExePatches = true;
 	return;
 }
