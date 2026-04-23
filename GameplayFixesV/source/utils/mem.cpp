@@ -520,7 +520,7 @@ void AllowWeaponsInsideSafeHouse()
 void InitHooks()
 {
 	MH_Initialize();
-	WriteLog("Info", "---------------------- Enable Hooks -----------------------");
+	WriteLog("Info", "------------------------- Enable Hooks -------------------------");
 
 	if (Ini::AllowWeaponsInsideSafeHouse) AllowWeaponsInsideSafeHouse();
 
@@ -530,7 +530,7 @@ void InitHooks()
 
 void ShutdownHooks()
 {
-	WriteLog("Info", "---------------------- Disable Hooks -----------------------");
+	WriteLog("Info", "------------------------ Disable Hooks -------------------------");
 	MH_DisableHook(MH_ALL_HOOKS);
 	MH_Uninitialize();
 	return;
