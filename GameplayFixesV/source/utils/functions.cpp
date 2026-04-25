@@ -1353,55 +1353,6 @@ void SetDispatchServices(bool toggle)
 	return;
 }
 
-/*
-bool isFakeWanted = false;
-bool GetFakeWanted() { return isFakeWanted; }
-void SetFakeWanted(Player player, bool toggle)
-{
-	Vector3 fakeCoords{ 7000.0f, 7000.0f, 0.0f};
-	switch (toggle)
-	{
-	case true:
-		SET_MAX_WANTED_LEVEL(5);	//Fix for Menyoo never wanted
-		SET_PLAYER_WANTED_LEVEL_NO_DROP(GetPlayer(), 1, true);
-		SET_PLAYER_WANTED_LEVEL_NOW(GetPlayer(), true);
-
-		//Various ignore player commands
-		SET_PLAYER_WANTED_CENTRE_POSITION(GetPlayer(), &fakeCoords);
-		SET_POLICE_IGNORE_PLAYER(GetPlayer(), true);
-		SetDispatchServices(false);
-		SET_DISPATCH_COPS_FOR_PLAYER(GetPlayer(), false);
-		SET_IGNORE_LOW_PRIORITY_SHOCKING_EVENTS(GetPlayer(), true);
-		SET_WANTED_LEVEL_DIFFICULTY(GetPlayer(), 0.001f);
-		SET_WANTED_LEVEL_MULTIPLIER(0.0f);
-		SET_AUDIO_FLAG("PoliceScannerDisabled", true);
-		SET_BLOCK_WANTED_FLASH(true);
-		FORCE_OFF_WANTED_STAR_FLASH(true);
-		HIDE_HUD_COMPONENT_THIS_FRAME(HUD_WANTED_STARS);
-		isFakeWanted = true;
-		break;
-	case false:
-		if (GET_PLAYER_WANTED_LEVEL(GetPlayer()) != 0)
-			CLEAR_PLAYER_WANTED_LEVEL(GetPlayer());
-
-		//Reset ignore player commands
-		SET_POLICE_IGNORE_PLAYER(GetPlayer(), false);
-		SetDispatchServices(true);
-		SET_DISPATCH_COPS_FOR_PLAYER(GetPlayer(), true);
-		SET_IGNORE_LOW_PRIORITY_SHOCKING_EVENTS(GetPlayer(), false);
-		RESET_WANTED_LEVEL_DIFFICULTY(GetPlayer());
-		SET_WANTED_LEVEL_MULTIPLIER(1.0f);
-		SET_AUDIO_FLAG("PoliceScannerDisabled", false);
-		SET_BLOCK_WANTED_FLASH(false);
-		FORCE_OFF_WANTED_STAR_FLASH(false);
-		HIDE_HUD_COMPONENT_THIS_FRAME(HUD_WANTED_STARS);
-		isFakeWanted = false;
-		break;
-	}
-	return;
-}
-*/
-
 Hash GetCharacterStatHash(const char* statName)
 {
 	if (statName == nullptr || strlen(statName) == 0)

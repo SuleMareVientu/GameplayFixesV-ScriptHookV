@@ -520,6 +520,9 @@ void AllowWeaponsInsideSafeHouse()
 void InitHooks()
 {
 	MH_Initialize();
+	if (!Ini::HookGameFunctions)
+		return;
+
 	WriteLog("Info", "------------------------- Enable Hooks -------------------------");
 
 	if (Ini::AllowWeaponsInsideSafeHouse) AllowWeaponsInsideSafeHouse();
@@ -570,7 +573,7 @@ void LowPriorityPropsPatch()
 		}
 		else
 			WriteLog("Error", DefaultFindAdressErr);
-			*/
+		*/
 
 		ULONG_PTR address = FindPattern("C7 05 ?? ?? ?? ?? 02 00 00 00 B8 02 00 00 00 89 05");
 		if (address)
@@ -583,40 +586,6 @@ void LowPriorityPropsPatch()
 		else
 			WriteLog("Error", DefaultFindAdressErr);
 
-		/*
-		address = FindPattern("C7 05 ?? ?? ?? ?? 02 00 00 00 C7 05 ?? ?? ?? ?? 02 00 00 00");
-		if (address)
-		{
-			WriteLog("Operation", "Found address at 0x%X! Patching 2 bytes...", address);
-			*reinterpret_cast<uint8_t*>(address + 6) = '\x03';
-			*reinterpret_cast<uint8_t*>(address + 16) = '\x03';
-			WriteLog("Operation", DefaultDoneMsg);
-		}
-		else
-			WriteLog("Error", DefaultFindAdressErr);
-
-		address = FindPattern("C7 05 ?? ?? ?? ?? 02 00 00 00 C7 05 ?? ?? ?? ?? 02 00 00 00");
-		if (address)
-		{
-			WriteLog("Operation", "Found address at 0x%X! Patching 2 bytes...", address);
-			*reinterpret_cast<uint8_t*>(address + 6) = '\x03';
-			*reinterpret_cast<uint8_t*>(address + 16) = '\x03';
-			WriteLog("Operation", DefaultDoneMsg);
-		}
-		else
-			WriteLog("Error", DefaultFindAdressErr);
-
-		address = FindPattern("C7 05 ?? ?? ?? ?? 02 00 00 00 C7 05 ?? ?? ?? ?? 02 00 00 00");
-		if (address)
-		{
-			WriteLog("Operation", "Found address at 0x%X! Patching 2 bytes...", address);
-			*reinterpret_cast<uint8_t*>(address + 6) = '\x03';
-			*reinterpret_cast<uint8_t*>(address + 16) = '\x03';
-			WriteLog("Operation", DefaultDoneMsg);
-		}
-		else
-			WriteLog("Error", DefaultFindAdressErr);
-		*/
 		return;
 	}
 
@@ -629,9 +598,6 @@ void LowPriorityPropsPatch()
 		// rage::fwEntityDef.m_priorityLevel
 		// Make GTA default rage::fwMapData::ms_entityLevelCap to PRI_OPTIONAL_LOW, not PRI_OPTIONAL_MEDIUM (RAGE suite defaults)
 		*reinterpret_cast<uint8_t*>(address + 1) = '\x03';	// mov ebx, 0x02 (PRI_OPTIONAL_MEDIUM) to mov ebx, 0x03 (PRI_OPTIONAL_LOW)
-
-		//constexpr char priOptionLow = '\x03';
-		//memmove(reinterpret_cast<void*>(address + 1), &priOptionLow, 1);
 
 		address = FindPattern("0F 2F 47 24 0F 93 05");
 		if (address)
@@ -651,9 +617,6 @@ void LowPriorityPropsPatch()
 	return;
 }
 
-bool patchedCenterSteering = false;
-bool GetPatchedCenterSteering() { return patchedCenterSteering; }
-
 // Credits aint-no-other-option: https://github.com/aint-no-other-option/CenterSteeringPatch/
 void CenterSteeringPatch()
 {
@@ -671,7 +634,6 @@ void CenterSteeringPatch()
 		{
 			WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, nBytes1);
 			memset(reinterpret_cast<void*>(address), 0x90, nBytes1);
-			patchedCenterSteering = true;
 
 			// mov dword ptr [rsi+9DCh], 0
 			address = FindPattern("C7 86 DC 09 00 00 00 00 00 00 31 C0");
@@ -699,7 +661,6 @@ void CenterSteeringPatch()
 	{
 		WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, nBytes1);
 		memset(reinterpret_cast<void*>(address + 6), 0x90, nBytes1);
-		patchedCenterSteering = true;
 
 		/* Address of centering when diving out */
 		address = FindPattern("89 82 ?? ?? ?? ?? 38 81");
@@ -722,6 +683,7 @@ void CenterSteeringPatch()
 void CopBumpSteeringPatch()
 {
 	WriteLog("Info", "--------------------------- Cop Bump ---------------------------");
+	WriteLog("Operation", "Finding cop bump addresses...");
 
 	if (GetIsEnhancedVersion())
 	{
@@ -729,7 +691,6 @@ void CopBumpSteeringPatch()
 		if (address)
 		{
 			constexpr int nBytes1 = 9;
-			WriteLog("Operation", "Finding cop bump addresses...");
 			WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, nBytes1);
 			memset(reinterpret_cast<void*>(address), 0x90, nBytes1);
 
@@ -754,7 +715,6 @@ void CopBumpSteeringPatch()
 	if (address)
 	{
 		constexpr int nBytes1 = 8;
-		WriteLog("Operation", "Finding cop bump addresses...");
 		WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, nBytes1);
 		memset(reinterpret_cast<void*>(address), 0x90, nBytes1);
 
@@ -913,118 +873,4 @@ void ApplyExePatches()
 	hasAppliedExePatches = true;
 	return;
 }
-#pragma endregion
-
-#pragma region Memory Patching Test
-/*
-void TerminateAllScriptsWithThisName(const char* name, int exceptId = 0)
-{
-	if (!exceptId)
-	{
-		TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME(name);
-		return;
-	}
-
-	// Ensure only one instance of the script is running
-	const int n = GetNumberOfScriptInstances(name) - 1;
-	int count = 0;
-	SCRIPT_THREAD_ITERATOR_RESET();
-	while (count <= n)
-	{
-		const int id = SCRIPT_THREAD_ITERATOR_GET_NEXT_THREAD_ID();
-		if (id == exceptId)
-			continue;
-
-		if (name == GET_NAME_OF_SCRIPT_WITH_THIS_ID(id))
-		{
-			TERMINATE_THREAD(id);
-			count++;
-		}
-	}
-
-	return;
-}
-
-int GetFirstIdFromScriptName(const char* name)
-{
-	SCRIPT_THREAD_ITERATOR_RESET();
-	int id = 0; int count = 0;
-	while (!id && count < 4096)
-	{
-		const int tmp = SCRIPT_THREAD_ITERATOR_GET_NEXT_THREAD_ID();
-		if (name == GET_NAME_OF_SCRIPT_WITH_THIS_ID(tmp))
-			id = tmp;
-
-		count++;
-	}
-
-	return id;
-}
-
-
-bool patchedF0 = false; bool patchedF1 = false;
-bool patchedM = false;
-bool patchedT0 = false; bool patchedT1 = false;
-void WeaponsInsideSafehousePatch()
-{
-	bool firstPrint = true;
-	auto PatchScript = [&](const char* name, bool& b)
-		{
-			constexpr int nBytes = 3;
-			if (GetNumberOfScriptInstances(name) == 0)
-			{
-				b = false;
-				return;
-			}
-			else if (b)
-				return;
-
-			if (firstPrint)
-			{
-				WriteLog("Info", "------------------- Weapons Inside Safehouse -------------------");
-				firstPrint = false;
-			}
-
-			LOOP(i, GetNumberOfScriptInstances(name))
-			{
-				std::string tmp = name; tmp = "Patching script: " + tmp;
-				WriteLog("Info", tmp.c_str());
-				WriteLog("Operation", "Finding address...");
-
-				ULONG_PTR address = FindPatternGlobal("71 25 2F 72 2C 0C ?? ?? 71 25 26 72 2C 0C ?? ?? 71 25 16 72");
-				if (address)
-				{
-					WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes);
-					memset(reinterpret_cast<void*>(address - 6), 0x00, nBytes);
-					memset(reinterpret_cast<void*>(address), 0x00, 20);	// Prevent pattern from being found again
-					WriteLog("Operation", "Done!");
-				}
-				else
-					WriteLog("Error", "Could not find address!");
-			}
-			b = true;
-		};
-
-	PatchScript("family_scene_f0", patchedF0);
-	PatchScript("family_scene_f1", patchedF1);
-	PatchScript("family_scene_m", patchedM);
-	PatchScript("family_scene_t0", patchedT0);
-	PatchScript("family_scene_t1", patchedT1);
-	return;
-}
-
-bool initializedScriptPatches = false;
-void ApplyScriptPatches()
-{
-	if (!initializedScriptPatches)
-	{
-		initializedScriptPatches = true;
-		WriteLog("Info", "------------------------ Script Patches ------------------------");
-		WriteLog("Operation", "Applying script patches...");
-	}
-
-	WeaponsInsideSafehousePatch();
-	return;
-}
-*/
 #pragma endregion

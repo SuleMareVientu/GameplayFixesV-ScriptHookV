@@ -55,7 +55,6 @@ int GetGameVersion();
 bool GetIsEnhancedVersion();
 
 bool GetFoundNMFunctions();
-bool GetPatchedCenterSteering();
 bool GetIsPlayerCrouching();
 int GetNMReactionTime();
 #pragma endregion

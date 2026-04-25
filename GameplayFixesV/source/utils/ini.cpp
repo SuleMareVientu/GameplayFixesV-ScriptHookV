@@ -31,6 +31,7 @@ bool CenterSteeringPatch = true;
 bool CopBumpSteeringPatch = true;
 bool HUDWheelSlowdownPatch = false;
 bool HookGameFunctions = true;
+bool AllowWeaponsInsideSafeHouse = true;
 bool EnableLogging = false;
 //Player Settings
 bool EnableCrouching = true;
@@ -62,14 +63,12 @@ int MinimumRagdollTime = 450;
 int MaximumRagdollTime = 1500;
 bool ShouldRagdollInCover = false;
 bool DontDropWeapon = true;
-bool AllowWeaponsInsideSafeHouse = true;
 //Player Vehicle
 bool DisableCarMidAirAndRollControl = true;
 bool DisableForcedCarExplosionOnImpact = true;
 bool DisableEngineSmoke = false;
 bool DisableEngineFire = false;
 bool LeaveEngineOnWhenExitingVehicles = true;
-bool DisableWheelsAutoCenterOnCarExit = true;
 bool KeepCarHydraulicsPosition = true;
 bool EnableBrakeLightsOnStoppedVehicle = true;
 bool EnableHeliWaterPhysics = true;
@@ -186,6 +185,7 @@ void ReadINI()
 	Ini::CopBumpSteeringPatch = GET_INI_BOOL(ini, memoryGroup, CopBumpSteeringPatch);
 	Ini::HUDWheelSlowdownPatch = GET_INI_BOOL(ini, memoryGroup, HUDWheelSlowdownPatch);
 	Ini::HookGameFunctions = GET_INI_BOOL(ini, memoryGroup, HookGameFunctions);
+	Ini::AllowWeaponsInsideSafeHouse = GET_INI_BOOL(ini, memoryGroup, AllowWeaponsInsideSafeHouse);
 	Ini::EnableLogging = GET_INI_BOOL(ini, memoryGroup, EnableLogging);
 
 	//////////////////////////////////////Player//////////////////////////////////////////
@@ -221,7 +221,6 @@ void ReadINI()
 	InvertIfGreater(Ini::MinimumRagdollTime, Ini::MaximumRagdollTime, -1, INT_MAX);
 	Ini::ShouldRagdollInCover = GET_INI_BOOL(ini, playerGroup, ShouldRagdollInCover);
 	Ini::DontDropWeapon = GET_INI_BOOL(ini, playerGroup, DontDropWeapon);
-	Ini::AllowWeaponsInsideSafeHouse = GET_INI_BOOL(ini, playerGroup, AllowWeaponsInsideSafeHouse);
 
 	//////////////////////////////////////Player Vehicle///////////////////////////////////
 	Ini::DisableCarMidAirAndRollControl = GET_INI_BOOL(ini, playerGroup, DisableCarMidAirAndRollControl);
@@ -231,7 +230,6 @@ void ReadINI()
 	Ini::EnableBrakeLightsOnStoppedVehicle = GET_INI_BOOL(ini, playerGroup, EnableBrakeLightsOnStoppedVehicle);
 	Ini::LeaveEngineOnWhenExitingVehicles = GET_INI_BOOL(ini, playerGroup, LeaveEngineOnWhenExitingVehicles);
 	Ini::KeepCarHydraulicsPosition = GET_INI_BOOL(ini, playerGroup, KeepCarHydraulicsPosition);
-	Ini::DisableWheelsAutoCenterOnCarExit = GET_INI_BOOL(ini, playerGroup, DisableWheelsAutoCenterOnCarExit);
 	Ini::EnableHeliWaterPhysics = GET_INI_BOOL(ini, playerGroup, EnableHeliWaterPhysics);
 	Ini::DynamicallyCleanVehicles = GET_INI_BOOL(ini, playerGroup, DynamicallyCleanVehicles);
 	Ini::DisableRagdollOnVehicleRoof = GET_INI_BOOL(ini, playerGroup, DisableRagdollOnVehicleRoof);

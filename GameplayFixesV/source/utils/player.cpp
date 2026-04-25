@@ -775,81 +775,6 @@ void LeaveEngineOnWhenExitingVehicles()
 	return;
 }
 
-//Very very bad method of doing this, but it works!
-//When a vehicle is physically attached to another vehicle it retains the same steering on exit (thanks to RAGE constraints)
-//Only problem is that the vehicle now inherits most veh flags from parent. 
-//Don't know if this could cause issues, but better than patching memory
-Timer timerWheelsAutoCenter;
-Vehicle tmpVeh = NULL;
-bool shouldAttachVeh = false;
-void DisableWheelsAutoCenterOnCarExit()
-{
-	constexpr float maxVehSpeedDetach = 10.0f;
-
-	const Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
-	if (!DOES_ENTITY_EXIST(veh))
-		return;
-
-	const int vehHash = GET_ENTITY_MODEL(veh);	//Disable for bikes and bicycles, can cause issues
-	if (!IS_THIS_MODEL_A_CAR(vehHash) || !IS_VEHICLE_DRIVEABLE(veh, false) || GET_ENTITY_SUBMERGED_LEVEL(GetPlayerPed()) > 0.7f)
-		return;
-
-	const int tmpVehHash = GET_ENTITY_MODEL(tmpVeh);
-	if (tmpVehHash != vehHash)
-	{
-		if (DOES_ENTITY_EXIST(tmpVeh))
-		{
-			if (IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh))
-				DETACH_ENTITY(veh, false, false);
-
-			SET_ENTITY_AS_MISSION_ENTITY(tmpVeh, false, true);
-			DELETE_ENTITY(&tmpVeh);
-			SET_MODEL_AS_NO_LONGER_NEEDED(tmpVehHash);
-			tmpVeh = NULL;
-		}
-
-		if (!HAS_MODEL_LOADED(vehHash))
-		{
-			REQUEST_MODEL(vehHash);
-			return;
-		}
-		tmpVeh = CREATE_VEHICLE(vehHash, 0.0f, 0.0f, -90.0f, 0.0f, false, false, true);
-		SET_ENTITY_AS_MISSION_ENTITY(tmpVeh, false, true);
-		SET_ENTITY_VISIBLE(tmpVeh, false, false);
-		FREEZE_ENTITY_POSITION(tmpVeh, true);
-		return;
-	}
-
-	if (GET_IS_TASK_ACTIVE(GetPlayerPed(), CODE_TASK_EXIT_VEHICLE) || timerWheelsAutoCenter.Get() > 2000 || GET_ENTITY_SPEED(veh) > maxVehSpeedDetach)
-		shouldAttachVeh = false;
-
-	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_VEH_EXIT) && GetVehiclePedIsIn(GetPlayerPed(), false, false)) //&& !IS_VEHICLE_ATTACHED_TO_TRAILER(veh))
-		shouldAttachVeh = true;
-
-	if (shouldAttachVeh && !IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh) && GET_ENTITY_SPEED(veh) < maxVehSpeedDetach)
-	{
-		timerWheelsAutoCenter.Reset();
-
-		float yOffset = 100.0f;
-		if (GET_ENTITY_SPEED_VECTOR(veh, true).y < 0.0f)
-			yOffset *= -1.0f;
-
-		const Vector3 tmpOffset = GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(veh, 0.0f, yOffset, 0.0f);
-		SET_ENTITY_COORDS_NO_OFFSET(tmpVeh, tmpOffset.x, tmpOffset.y, GET_ENTITY_COORDS(tmpVeh, false).z, true, true, false);
-
-		ATTACH_ENTITY_TO_ENTITY_PHYSICALLY(veh, tmpVeh, NULL, NULL, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, false, false, false, true, 2);
-		return;
-	}
-
-	//Detach veh 
-	if (IS_ENTITY_ATTACHED_TO_ENTITY(veh, tmpVeh) && !shouldAttachVeh)
-	{
-		DETACH_ENTITY(veh, false, false);
-		return;
-	}
-	return;
-}
-
 struct VehicleHydraulicsState {
 	Vehicle veh = NULL;
 	bool update = false;
@@ -2085,7 +2010,6 @@ void RegisterPlayerOptions()
 	REGISTER_OPTION(playerOptionsManager, DisableEngineSmoke, nVehicle, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableEngineFire, nVehicle, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, LeaveEngineOnWhenExitingVehicles, nVehicle, VER_UNK, true);
-	if (!GetPatchedCenterSteering()) { REGISTER_OPTION(playerOptionsManager, DisableWheelsAutoCenterOnCarExit, nVehicle, VER_UNK, true); }
 	REGISTER_OPTION(playerOptionsManager, KeepCarHydraulicsPosition, nVehicle, VER_1_0_2372_0_STEAM, true);
 	REGISTER_OPTION(playerOptionsManager, EnableBrakeLightsOnStoppedVehicle, nVehicle, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, EnableHeliWaterPhysics, nVehicle, VER_UNK, true);

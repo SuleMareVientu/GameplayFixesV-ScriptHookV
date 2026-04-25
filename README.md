@@ -27,9 +27,9 @@ To my knowledge it's also the only mod that fixes the "Low Priority Props" bug i
 - Allow low priority props to be spawned around the map.
     - It's disabled by default because in Enhanced it causes crashes after exiting a garage; enable it if using Legacy.
 - Disable the automatic centering of the wheels when a ped exits a vehicle. Applies to all vehicles (not only the player's).
-    - If the normal option (DisableWheelsAutoCenterOnCarExit) is enabled, this will override it. If the patch fails and the normal option it's also enabled, it will be used as a fallback.
 - Disable cops from randomly changing the player's vehicle steering angle while ramming during a chase.
 - Disable the slowdown and screen effects triggered by the weapon and the radio wheel.
+- Allow weapons inside the safehouse.
 
 **Player:**
 - Enable the unused crouched motion state.
@@ -70,15 +70,12 @@ To my knowledge it's also the only mod that fixes the "Low Priority Props" bug i
     - Definable minimum and maximum time for reaction.
     - Togglable when in cover.
     - Compatibility with other options that drop the player's weapon (so that the bullet reactions do not drop the player's weapon).
-- Allow weapons inside the safehouse.
-    - Uses function hooks and could break upon updating.
 
 **Player Vehicle:**
 - Disable mid-air car controls and the ability to rotate the player's vehicle while stuck/upside down.
 - Disable the automatic explosion after the player's vehicle collides with something at high speeds.
 - Disable engine fire/smoke.
 - Leave the engine on when exiting a vehicle unless the player keeps the exit vehicle button pressed for 250ms. Exactly like GTA:IV.
-- Disable the auto-centering of the player vehicle's wheels on exit.
 - Keeps the current position of the player vehicle's hydraulics on enter/exit.
     - **Requires at least b2372**.
 - Turn on brake lights while the player's vehicle is stopped.

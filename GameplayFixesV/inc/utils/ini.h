@@ -14,6 +14,7 @@ extern bool CenterSteeringPatch;
 extern bool CopBumpSteeringPatch;
 extern bool HUDWheelSlowdownPatch;
 extern bool HookGameFunctions;
+extern bool AllowWeaponsInsideSafeHouse;
 extern bool EnableLogging;
 //Player Settings
 extern bool EnableCrouching;
@@ -45,14 +46,12 @@ extern int MinimumRagdollTime;
 extern int MaximumRagdollTime;
 extern bool ShouldRagdollInCover;
 extern bool DontDropWeapon;
-extern bool AllowWeaponsInsideSafeHouse;
 //Player Vehicle
 extern bool DisableCarMidAirAndRollControl;
 extern bool DisableForcedCarExplosionOnImpact;
 extern bool DisableEngineSmoke;
 extern bool DisableEngineFire;
 extern bool LeaveEngineOnWhenExitingVehicles;
-extern bool DisableWheelsAutoCenterOnCarExit;
 extern bool KeepCarHydraulicsPosition;
 extern bool EnableBrakeLightsOnStoppedVehicle;
 extern bool EnableHeliWaterPhysics;
