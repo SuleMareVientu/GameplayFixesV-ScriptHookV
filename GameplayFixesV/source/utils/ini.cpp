@@ -26,12 +26,13 @@ namespace Ini
 unsigned long ReloadIniKey = VK_F12;
 //Memory Settings
 bool ApplyExePatches = true;
-bool LowPriorityPropsPatch = false;
+bool LowPriorityPropsPatch = true;
 bool CenterSteeringPatch = true;
 bool CopBumpSteeringPatch = true;
 bool HUDWheelSlowdownPatch = false;
 bool HookGameFunctions = true;
 bool AllowWeaponsInsideSafeHouse = true;
+bool ExtendGamePools = true;
 bool EnableLogging = false;
 //Player Settings
 bool EnableCrouching = true;
@@ -168,7 +169,7 @@ static CSimpleIniA ini;
 void ReadINI()
 {
 	if (!std::filesystem::exists(GetDllInstanceIniName()))
-		WriteINIResource(GetDllInstance(), IDR_INI, GetDllInstanceIniName());
+		WriteINIResource(GetDllInstance(), "INICONFIG", GetDllInstanceIniName());
 	
 	const SI_Error res = ini.LoadFile(GetDllInstanceIniName());
 	if (res != SI_OK)
@@ -186,6 +187,7 @@ void ReadINI()
 	Ini::HUDWheelSlowdownPatch = GET_INI_BOOL(ini, memoryGroup, HUDWheelSlowdownPatch);
 	Ini::HookGameFunctions = GET_INI_BOOL(ini, memoryGroup, HookGameFunctions);
 	Ini::AllowWeaponsInsideSafeHouse = GET_INI_BOOL(ini, memoryGroup, AllowWeaponsInsideSafeHouse);
+	Ini::ExtendGamePools = GET_INI_BOOL(ini, memoryGroup, ExtendGamePools);
 	Ini::EnableLogging = GET_INI_BOOL(ini, memoryGroup, EnableLogging);
 
 	//////////////////////////////////////Player//////////////////////////////////////////
@@ -323,9 +325,9 @@ void ReadINI()
 	return;
 }
 
-void WriteINIResource(HINSTANCE hInstance, int resourceID, const char* path)
+void WriteINIResource(HINSTANCE hInstance, const char* resource, const char* path)
 {
-	const HRSRC hRes = FindResource(hInstance, MAKEINTRESOURCE(resourceID), "INI");
+	const HRSRC hRes = FindResource(hInstance, resource, "INI");
 	if (!hRes) throw std::runtime_error("Resource not found");
 
 	const HGLOBAL hData = LoadResource(hInstance, hRes);

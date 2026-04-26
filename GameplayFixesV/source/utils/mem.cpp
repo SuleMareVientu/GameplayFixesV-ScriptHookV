@@ -11,6 +11,15 @@
 #include "utils\functions.h"
 #include "utils\mem.h"
 
+// Undefine Windows min/max macros
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
+#include <algorithm> // for std::max
+
 #pragma region Memory Utils
 ULONG_PTR FindPattern(std::string signature)
 {
@@ -431,9 +440,9 @@ void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, float x, float
 #pragma endregion
 
 #pragma region Memory Hooking
-typedef void(__fastcall* DoDisableInputType)(uint32_t* control, uint32_t input, const uint32_t* options, bool disableRelatedInputs);
-DoDisableInputType TrampolineDoDisableInput = nullptr;
-void __fastcall DetourDoDisableInput(uint32_t* control, uint32_t input, const uint32_t* options, bool disableRelatedInputs)
+typedef void(__fastcall* DoDisableInput_t)(void* _this, uint32_t input, const void* options, bool disableRelatedInputs);
+DoDisableInput_t TrampolineDoDisableInput = nullptr;
+void __fastcall DetourDoDisableInput(void* _this, uint32_t input, const void* options, bool disableRelatedInputs)
 {
 	if (IsPlayerInsideSafehouse())
 	{
@@ -451,13 +460,13 @@ void __fastcall DetourDoDisableInput(uint32_t* control, uint32_t input, const ui
 		}
 	}
 
-	TrampolineDoDisableInput(control, input, options, disableRelatedInputs);
+	TrampolineDoDisableInput(_this, input, options, disableRelatedInputs);
 	return;
 }
 
-typedef bool(__fastcall* EquipWeaponType)(uint32_t* wpmanager, uint32_t uWeaponNameHash, uint32_t iVehicleIndex, bool bCreateWeaponWhenLoaded, bool bProcessWeaponInstructions, uint32_t attach);
-EquipWeaponType TrampolineEquipWeapon = nullptr;
-bool __fastcall DetourEquipWeapon(uint32_t* wpmanager, uint32_t uWeaponNameHash, uint32_t iVehicleIndex, bool bCreateWeaponWhenLoaded, bool bProcessWeaponInstructions, uint32_t attach)
+typedef bool(__fastcall* EquipWeapon_t)(void* _this, uint32_t uWeaponNameHash, uint32_t iVehicleIndex, bool bCreateWeaponWhenLoaded, bool bProcessWeaponInstructions, uint32_t attach);
+EquipWeapon_t TrampolineEquipWeapon = nullptr;
+bool __fastcall DetourEquipWeapon(void* _this, uint32_t uWeaponNameHash, uint32_t iVehicleIndex, bool bCreateWeaponWhenLoaded, bool bProcessWeaponInstructions, uint32_t attach)
 {
 	if (IsPlayerInsideSafehouse())
 	{
@@ -465,7 +474,7 @@ bool __fastcall DetourEquipWeapon(uint32_t* wpmanager, uint32_t uWeaponNameHash,
 			return true;
 	}
 
-	return TrampolineEquipWeapon(wpmanager, uWeaponNameHash, iVehicleIndex, bCreateWeaponWhenLoaded, bProcessWeaponInstructions, attach);
+	return TrampolineEquipWeapon(_this, uWeaponNameHash, iVehicleIndex, bCreateWeaponWhenLoaded, bProcessWeaponInstructions, attach);
 }
 
 void AllowWeaponsInsideSafeHouse()
@@ -517,17 +526,28 @@ void AllowWeaponsInsideSafeHouse()
 	return;
 }
 
+bool hasInitializedHooks = false;
 void InitHooks()
 {
-	MH_Initialize();
-	if (!Ini::HookGameFunctions)
+	if (auto st = MH_Initialize(); st != MH_OK)
+	{
+		WriteLog("Error", "Minhook initialization failed. Error: [%d]", st);
 		return;
+	}
+
+	if (!Ini::HookGameFunctions)
+	{
+		WriteLog("Info", "Function hooks are disabled.");
+		hasInitializedHooks = true;
+		return;
+	}
 
 	WriteLog("Info", "------------------------- Enable Hooks -------------------------");
 
 	if (Ini::AllowWeaponsInsideSafeHouse) AllowWeaponsInsideSafeHouse();
 
 	MH_EnableHook(MH_ALL_HOOKS);
+	hasInitializedHooks = true;
 	return;
 }
 
@@ -536,6 +556,110 @@ void ShutdownHooks()
 	WriteLog("Info", "------------------------ Disable Hooks -------------------------");
 	MH_DisableHook(MH_ALL_HOOKS);
 	MH_Uninitialize();
+	return;
+}
+#pragma endregion
+
+#pragma region Game Pools
+std::unordered_map<uint32_t, uint32_t> poolIncrements;
+std::unordered_map<uint32_t, uint32_t> requiredPoolSizes;
+std::unordered_map<uint32_t, std::string> poolNames;
+bool hasPoolJsonLoaded = false;
+bool LoadPoolsJson()
+{
+	if (hasPoolJsonLoaded)
+		return true;
+
+	json j;
+	if (GetIsEnhancedVersion())
+		j = json::parse(LoadJSONResource(GetDllInstance(), "ENHANCEDPOOLS"));
+	else
+		j = json::parse(LoadJSONResource(GetDllInstance(), "LEGACYPOOLS"));
+
+	for (const auto& [pool, _value] : j.items())
+	{
+		if (!_value.is_string())
+			continue;
+
+		std::string value = _value.get<std::string>();
+		if (value.size() < 2)
+			continue;
+
+		uint32_t poolHash = Joaat(pool.c_str());
+		poolNames[poolHash] = pool;
+
+		uint32_t num = 0;
+		try
+		{
+			num = static_cast<uint32_t>(std::strtoul(value.c_str() + 1, nullptr, 0));
+		}
+		catch (...)
+		{
+			continue;
+		}
+
+		if (value[0] == '+')
+			poolIncrements[poolHash] += num;
+		else if (value[0] == '>')
+			requiredPoolSizes[poolHash] = std::max(requiredPoolSizes[poolHash], num);
+	}
+
+	hasPoolJsonLoaded = true;
+	return true;
+}
+
+typedef uint32_t(__fastcall* GetSizeOfPool_t)(void* _this, uint32_t poolNameHash, uint32_t defaultSize);
+GetSizeOfPool_t TrampolineGetSizeOfPool = nullptr;
+uint32_t __fastcall DetourGetSizeOfPool(void* _this, uint32_t poolNameHash, uint32_t defaultSize)
+{
+	uint32_t size = TrampolineGetSizeOfPool(_this, poolNameHash, defaultSize);
+	uint32_t add = 0; uint32_t min = 0;
+
+	if (auto it = poolIncrements.find(poolNameHash); it != poolIncrements.end())
+		add = it->second;
+
+	if (auto it = requiredPoolSizes.find(poolNameHash); it != requiredPoolSizes.end())
+		min = it->second;
+
+	uint32_t newSize = std::max(size + add, min);
+	if (newSize != size)
+		WriteLog("Operation", "Pool \"%s\" extended to %d (was %d)", poolNames[poolNameHash].c_str(), newSize, size);
+
+	return newSize;
+}
+
+bool hasExtendedGamePools = false;
+void ExtendGamePools()
+{
+	if (!Ini::ExtendGamePools)
+	{
+		WriteLog("Info", "Extended pools are disabled.");
+		hasExtendedGamePools = true;
+		return;
+	}
+
+	while (!LoadPoolsJson()) {}
+
+	WriteLog("Info", "------------------------- Extend Pools -------------------------");
+	WriteLog("Operation", "Finding \"GetSizeOfPool\" address...");
+
+	// Get address by CRoadBlock::InitPool and not directly since it doesn't seem to work
+	// Pattern is the same for Legacy and Enhanced
+	ULONG_PTR address = FindPattern("BA 01 C7 2C F7 41 ?? 01 00 00 00 E8");
+	//address = FindPatternGlobal("45 33 DB 44 8B D2 66 44 39 59 ?? 74 ?? 44 0F B7 49 ?? 33 D2 41 8B C2 41 F7 F1 48 8B 41 ?? 48 8B 0C D0 EB ?? 44 3B 11 74 ?? 48 8B 49");
+
+	if (address)
+	{
+		address += 11;
+		address = address + *reinterpret_cast<int32_t*>(address + 1) + 5;
+		WriteLog("Operation", "Found address of \"GetSizeOfPool\" at: 0x%X", address);
+		MH_CreateHook(reinterpret_cast<LPVOID>(address), reinterpret_cast<LPVOID>(DetourGetSizeOfPool), reinterpret_cast<LPVOID*>(&TrampolineGetSizeOfPool));
+		MH_EnableHook(reinterpret_cast<LPVOID>(address));
+	}
+	else
+		WriteLog("Error", "Could not find address of \"GetSizeOfPool\"!");
+
+	hasExtendedGamePools = true;
 	return;
 }
 #pragma endregion
@@ -557,7 +681,21 @@ void LowPriorityPropsPatch()
 
 	if (GetIsEnhancedVersion())
 	{
+		if (!Ini::ExtendGamePools)
+			return;
+
 		WriteLog("Operation", "Finding prop priority address...");
+
+		ULONG_PTR address = FindPattern("C7 05 ?? ?? ?? ?? 02 00 00 00 B8 02 00 00 00 89 05");
+		if (address)
+		{
+			WriteLog("Operation", "Found address at 0x%X! Patching 2 bytes...", address);
+			*reinterpret_cast<uint8_t*>(address + 6) = '\x03';
+			*reinterpret_cast<uint8_t*>(address + 11) = '\x03';
+			WriteLog("Operation", DefaultDoneMsg);	
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
 
 		// Patch "rage::fwMapDataContents::Entities_Create", should be updated to the same method as Legacy... (setting rage::fwMapData::ms_entityLevelCap)
 		//C7 05 0C ?? ?? ?? ?? 00 00 00 B8 02 00 00 00 89 05
@@ -574,17 +712,6 @@ void LowPriorityPropsPatch()
 		else
 			WriteLog("Error", DefaultFindAdressErr);
 		*/
-
-		ULONG_PTR address = FindPattern("C7 05 ?? ?? ?? ?? 02 00 00 00 B8 02 00 00 00 89 05");
-		if (address)
-		{
-			WriteLog("Operation", "Found address at 0x%X! Patching 2 bytes...", address);
-			*reinterpret_cast<uint8_t*>(address + 6) = '\x03';
-			*reinterpret_cast<uint8_t*>(address + 11) = '\x03';
-			WriteLog("Operation", DefaultDoneMsg);	
-		}
-		else
-			WriteLog("Error", DefaultFindAdressErr);
 
 		return;
 	}
@@ -862,6 +989,7 @@ void ApplyExePatches()
 	{
 		WriteLog("Info", "Memory patches are disabled.");
 		hasAppliedExePatches = true;
+		return;
 	}
 
 	if (Ini::LowPriorityPropsPatch) { LowPriorityPropsPatch(); }
@@ -869,7 +997,6 @@ void ApplyExePatches()
 	if (Ini::CopBumpSteeringPatch) { CopBumpSteeringPatch(); }
 	if (Ini::HUDWheelSlowdownPatch) { HUDWheelSlowdownPatch(); }
 
-	InitHooks();
 	hasAppliedExePatches = true;
 	return;
 }

@@ -132,6 +132,7 @@ void ClearLog()
 {
 	std::ofstream ofFile(GetDllInstanceLogName(), std::ofstream::out | std::ofstream::trunc);
 	ofFile.close();
+	return;
 }
 
 void RawLog(const std::string& szInfo, const std::string& szData)
@@ -152,6 +153,7 @@ void RawLog(const std::string& szInfo, const std::string& szData)
 
 		ofFile.close();
 	}
+	return;
 }
 
 bool hasWrittenToLog = false;
@@ -178,6 +180,7 @@ void WriteLog(const char* szInfo, const char* szFormat, ...)
 	vsnprintf(szBuf, logBufferSize, szFormat, args);
 	va_end(args);
 	RawLog(std::string(szInfo), std::string(szBuf));
+	return;
 }
 #pragma endregion
 
@@ -246,9 +249,9 @@ void from_json(const nlohmann::json& j, WeaponJson& w) {
 		w.Liveries = std::vector<WpLiveryJson>{};
 }
 
-std::string LoadJSONResource(HINSTANCE hInstance, int resourceID)
+std::string LoadJSONResource(HINSTANCE hInstance, const char* resource)
 {
-	HRSRC hRes = FindResource(hInstance, MAKEINTRESOURCE(resourceID), "JSON");
+	HRSRC hRes = FindResource(hInstance, resource, "JSON");
 	if (!hRes) throw std::runtime_error("Resource not found");
 
 	HGLOBAL hData = LoadResource(hInstance, hRes);
@@ -258,7 +261,6 @@ std::string LoadJSONResource(HINSTANCE hInstance, int resourceID)
 	if (!data) throw std::runtime_error("Failed to lock resource");
 
 	DWORD size = SizeofResource(hInstance, hRes);
-
 	return std::string(data, size);
 }
 
@@ -266,14 +268,13 @@ bool hasWeaponJsonLoaded = false;
 std::vector<WeaponJson> weaponInfo;
 bool LoadWeaponJson()
 {
-	if (!hasWeaponJsonLoaded)
-	{
-		std::string jsonText = LoadJSONResource(GetDllInstance(), IDR_WEAPONINFOJSON);
-		json j = json::parse(jsonText);
-		weaponInfo = j.get<std::vector<WeaponJson>>();
-		hasWeaponJsonLoaded = true;
-	}
-	return hasWeaponJsonLoaded;
+	if (hasWeaponJsonLoaded)
+		return true;
+
+	json j = json::parse(LoadJSONResource(GetDllInstance(), "WEAPONINFO"));
+	weaponInfo = j.get<std::vector<WeaponJson>>();
+	hasWeaponJsonLoaded = true;
+	return true;
 }
 #pragma endregion
 
@@ -1308,6 +1309,8 @@ bool IsPlayerInsideSafehouse()
 {
 	if (isPlayerInsideSafehouseThisFrame)
 		return true;
+	else if (!DOES_ENTITY_EXIST(GetPlayerPed()))
+		return false;
 
 	bool res = false;
 	const Vector3 tmpCoords = GetPlayerCoords();

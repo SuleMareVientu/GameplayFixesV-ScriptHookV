@@ -6,6 +6,7 @@ ULONG_PTR FindPattern(std::string signature);
 ULONG_PTR FindPatternGlobal(std::string signature);
 void InitHooks();
 void ShutdownHooks();
+void ExtendGamePools();
 #pragma endregion
 
 #pragma region Game Functions

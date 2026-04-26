@@ -15,6 +15,7 @@ extern bool CopBumpSteeringPatch;
 extern bool HUDWheelSlowdownPatch;
 extern bool HookGameFunctions;
 extern bool AllowWeaponsInsideSafeHouse;
+extern bool ExtendGamePools;
 extern bool EnableLogging;
 //Player Settings
 extern bool EnableCrouching;
@@ -142,5 +143,5 @@ extern float PedGlobalMeleeWeaponDamageModifier;
 }
 
 void ReadINI();
-void WriteINIResource(HINSTANCE hInstance, int resourceID, const char* path);
+void WriteINIResource(HINSTANCE hInstance, const char* resource, const char* path);
 std::vector<float> ParseFloats(const std::string& s);

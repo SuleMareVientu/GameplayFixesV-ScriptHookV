@@ -35,9 +35,11 @@ void InitializeScriptPatches()
 	isEnhancedVersion = (GetGameVersion() >= 1000);
 
 	ReadINI();
-	srand(static_cast<unsigned int>(GetTickCount64()));
+	srand(static_cast<uint32_t>(GetTickCount64()));
 
+	ExtendGamePools();
 	GetGameFunctionsAddresses();
+	InitHooks();
 	ApplyExePatches();
 }
 
@@ -47,14 +49,14 @@ BOOL APIENTRY DllMain(HMODULE hInstance, DWORD reason, LPVOID lpReserved)
 	switch (reason)
 	{
 	case DLL_PROCESS_ATTACH:
+		InitializeScriptPatches();
 		scriptRegister(hInstance, ScriptMain);
 		keyboardHandlerRegister(OnKeyboardMessage);
-		InitializeScriptPatches();
 		break;
 	case DLL_PROCESS_DETACH:
+		ShutdownHooks();
 		scriptUnregister(hInstance);
 		keyboardHandlerUnregister(OnKeyboardMessage);
-		ShutdownHooks();
 		break;
 	}		
 	return TRUE;

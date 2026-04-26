@@ -2,9 +2,6 @@
 // Microsoft Visual C++ generated include file.
 // Used by resource.rc
 //
-#define IDR_INI                         101
-#define IDR_WEAPONINFOJSON              102
-
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED

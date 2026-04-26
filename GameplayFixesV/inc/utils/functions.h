@@ -176,7 +176,7 @@ void WriteLog(const char* szInfo, const char* szFormat, ...);
 #pragma endregion
 
 #pragma region JSON
-std::string LoadJSONResource(HINSTANCE hInstance, int resourceID);
+std::string LoadJSONResource(HINSTANCE hInstance, const char* resource);
 bool LoadWeaponJson();
 #pragma endregion
 
