@@ -1,3 +1,7 @@
+# **v3.2**
+- Fix LowPriorityPropsPatch on Enhanced 
+- Misc improvements
+
 # **v3.1**
 - Add support for Enhanced memory patches 
     - Memory patches are now universal, tested from Legacy b1180 to b3521, and latest Enhanced (b1013).
