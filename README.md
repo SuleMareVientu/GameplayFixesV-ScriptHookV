@@ -25,7 +25,7 @@ To my knowledge it's also the only mod that fixes the "Low Priority Props" bug i
 
 **Memory:**
 - Allow low priority props to be spawned around the map.
-    - It's disabled by default because in Enhanced it causes crashes after exiting a garage; enable it if using Legacy.
+    - You must enable ExtendGamePools if using Enhanced.
 - Disable the automatic centering of the wheels when a ped exits a vehicle. Applies to all vehicles (not only the player's).
 - Disable cops from randomly changing the player's vehicle steering angle while ramming during a chase.
 - Disable the slowdown and screen effects triggered by the weapon and the radio wheel.

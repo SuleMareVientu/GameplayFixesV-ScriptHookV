@@ -37,10 +37,10 @@ void InitializeScriptPatches()
 	ReadINI();
 	srand(static_cast<uint32_t>(GetTickCount64()));
 
-	ExtendGamePools();
 	GetGameFunctionsAddresses();
 	InitHooks();
 	ApplyExePatches();
+	ExtendGamePools();
 }
 
 BOOL APIENTRY DllMain(HMODULE hInstance, DWORD reason, LPVOID lpReserved)

@@ -14,7 +14,7 @@ using json = nlohmann::json;
 #pragma region MACROS
 
 #define VER_MAX 3
-#define VER_MIN 0
+#define VER_MIN 2
 #define LOOP(i, n) for(int i = 0; i < n; ++i)
 
 #pragma endregion
@@ -73,8 +73,60 @@ union scrValue
 
 typedef struct { int R, G, B, A; } RGBA;
 
-typedef std::unique_ptr<unsigned char[]> NmMessage;
-typedef unsigned char* NmMessagePtr;
+namespace ART
+{
+	class MessageParamsBase
+	{
+	public:
+		enum class ParamType : int
+		{
+			Int = 0,
+			Float = 1,
+			Bool = 2,
+			String = 3,
+			Vec3 = 4,
+			Ref = 5
+		};
+
+		union Value  // sizeof=0x20
+		{
+			int         i;
+			float       f;
+			bool        b;
+			char        s[32];
+			float       vec[3];
+			const void* r;
+		};
+
+		struct Parameter  // sizeof=0x48
+		{
+			ParamType   m_type;            // 0x00
+			char        m_name[32];        // 0x04
+			// 4 bytes padding             // 0x24
+			Value       v;                 // 0x28
+		};                                 // total: 0x48
+
+		Parameter* m_params;               // 0x00
+		int         m_maxParamCount;       // 0x08
+		int         m_usedParamCount;      // 0x0C
+		bool        m_parameterOverflow;   // 0x10
+		// 7 bytes padding                 // 0x11
+	};                                     // total: 0x18
+
+	template <int N>
+	struct MessageParamsList : public MessageParamsBase  // sizeof(MessageParamsList<64>) = 0x1218
+	{
+		Parameter m_params[N];  // 0x18 — N * 0x48 bytes
+	};
+
+	static_assert(sizeof(MessageParamsBase::Value) == 0x20);
+	static_assert(sizeof(MessageParamsBase::Parameter) == 0x48);
+	static_assert(sizeof(MessageParamsBase) == 0x18);
+	static_assert(sizeof(MessageParamsList<64>) == 0x1218);
+}
+
+typedef std::unique_ptr<ART::MessageParamsList<64>> NmMessage;
+typedef ART::MessageParamsList<64>* NmMessagePtr;
 
 // Json stuff
 struct WpTintJson {

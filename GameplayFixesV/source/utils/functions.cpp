@@ -271,7 +271,19 @@ bool LoadWeaponJson()
 	if (hasWeaponJsonLoaded)
 		return true;
 
-	json j = json::parse(LoadJSONResource(GetDllInstance(), "WEAPONINFO"));
+	json j;
+	try
+	{
+		const std::string raw = LoadJSONResource(GetDllInstance(), "WEAPONINFO");
+		j = json::parse(raw);
+	}
+	catch (const std::exception& e)
+	{
+		WriteLog("Error", "Failed to parse weapon info JSON: %s", e.what());
+		hasWeaponJsonLoaded = true;
+		return false;
+	}
+
 	weaponInfo = j.get<std::vector<WeaponJson>>();
 	hasWeaponJsonLoaded = true;
 	return true;
