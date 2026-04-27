@@ -65,7 +65,6 @@ To my knowledge it's also the only mod that fixes the "Low Priority Props" bug i
     - When dropped, the weapon can be blipped on the minimap.
     - Definable max distance after which a dropped weapon is despawned.
 - Player Euphoria bullet reactions (the player will react to bullets with Euphoria like NPCs)
-    - **Not compatible with Enhanced.**
     - Definable 'reaction chance' when hit.
     - Definable minimum and maximum time for reaction.
     - Togglable when in cover.
