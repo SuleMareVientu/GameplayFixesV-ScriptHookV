@@ -26,6 +26,8 @@ namespace Ini
 unsigned long ReloadIniKey = VK_F12;
 //Memory Settings
 bool ApplyExePatches = true;
+bool DisableIntroScreens = true;
+bool DisableEnhancedLandingPage = true;
 bool LowPriorityPropsPatch = true;
 bool CenterSteeringPatch = true;
 bool CopBumpSteeringPatch = true;
@@ -181,6 +183,8 @@ void ReadINI()
 
 	//////////////////////////////////////Memory//////////////////////////////////////////
 	Ini::ApplyExePatches = GET_INI_BOOL(ini, memoryGroup, ApplyExePatches);
+	Ini::DisableIntroScreens = GET_INI_BOOL(ini, memoryGroup, DisableIntroScreens);
+	Ini::DisableEnhancedLandingPage = GET_INI_BOOL(ini, memoryGroup, DisableEnhancedLandingPage);
 	Ini::LowPriorityPropsPatch = GET_INI_BOOL(ini, memoryGroup, LowPriorityPropsPatch);
 	Ini::CenterSteeringPatch = GET_INI_BOOL(ini, memoryGroup, CenterSteeringPatch);
 	Ini::CopBumpSteeringPatch = GET_INI_BOOL(ini, memoryGroup, CopBumpSteeringPatch);

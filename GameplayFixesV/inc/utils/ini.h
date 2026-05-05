@@ -9,6 +9,8 @@ namespace Ini
 extern unsigned long ReloadIniKey;
 //Memory Settings
 extern bool ApplyExePatches;
+extern bool DisableIntroScreens;
+extern bool DisableEnhancedLandingPage;
 extern bool LowPriorityPropsPatch;
 extern bool CenterSteeringPatch;
 extern bool CopBumpSteeringPatch;

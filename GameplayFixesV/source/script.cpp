@@ -20,7 +20,7 @@ static void update()
 	//Update player options
 	UpdatePlayerOptions();
 
-	//Update ped pool every frame... was set to 500ms to save on performance but it's needed for ped disarm
+	//Update ped pool every frame
 	UpdatePedsPool();
 
 	//Remember to clear last damages

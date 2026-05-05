@@ -155,9 +155,8 @@ static bool SafeWrite(void* dst, T val)
 namespace nUnsafe
 {
 ULONG_PTR (*GetScriptEntity)(Entity) = nullptr;
-int         fragInstNmOffset = 0;
-ULONG_PTR (*CreateNmMessage)(ULONG_PTR, ULONG_PTR, int) = nullptr;
-void      (*GivePedNMMessage)(ULONG_PTR, const char*, ULONG_PTR) = nullptr;
+ULONG_PTR* pScriptArtMessageParams = 0;
+int32_t*  nMessageName = 0;
 bool      (*SetNMMessageInt)(ULONG_PTR, const char*, int) = nullptr;
 bool      (*SetNMMessageBool)(ULONG_PTR, const char*, bool) = nullptr;
 bool      (*SetNMMessageFloat)(ULONG_PTR, const char*, float) = nullptr;
@@ -209,57 +208,30 @@ void GetGameFunctionsAddresses()
 
 	WriteLog("Info", "------------------------- NM Functions -------------------------");
 
+	// Get pScriptArtMessageParams & nMessageName from native CREATE_NM_MESSAGE / GIVE_PED_NM_MESSAGE
 	adr = enhanced
-		? FindPattern("B3 ?? F6 87 ?? ?? ?? ?? ?? 74 ?? 48 8B 47")
-		: FindPattern("48 83 EC 28 48 8B 42 ?? 48 85 C0 74 09 48 3B 82 ?? ?? ?? ?? 74 21");
-
-	if (adr)
-	{
-		adr += enhanced ? 0x17 : 0x10;
-		nUnsafe::fragInstNmOffset = *reinterpret_cast<int32_t*>(adr);
-		WriteLog("Operation", "Found address of \"FragInstNmOffset\" at 0x%X!", nUnsafe::fragInstNmOffset);
-	}
-	else
-	{
-		WriteLog("Error", "Could not find address of \"FragInstNmOffset\"!");
-		foundNMFunctions = false;
-	}
-
-	// ART::MessageParamsBase::MessageParamsBase
-	adr = enhanced
-		? FindPattern("56 48 83 EC ?? 48 89 CE 48 89 11 44 89 41")
-		: FindPattern("40 53 48 83 EC 20 83 61 0C 00 44 89 41 08 49 63 C0");
-
-	if (adr)
-	{
-		nUnsafe::CreateNmMessage = reinterpret_cast<ULONG_PTR(*)(ULONG_PTR, ULONG_PTR, int)>(adr);
-		WriteLog("Operation", "Found address of \"CreateNmMessage\" at 0x%X!", nUnsafe::CreateNmMessage);
-	}
-	else
-	{
-		WriteLog("Error", "Could not find address of \"CreateNmMessage\"!");
-		foundNMFunctions = false;
-	}
-
-	// ART::MessageParamsBase::MessageParamsBase(ART::MessageParamsBase* this, ART::MessageParamsBase::Parameter* const params, int maxParamCount)
-	adr = enhanced
-		? FindPattern("44 8B 89 ?? ?? ?? ?? B9")
-		: FindPattern("0F 84 8B 00 00 00 48 8B 47 30 48 8B 48 10 48 8B 51 20 80 7A 10 0A");
+		? FindPattern("48 C7 05 ?? ?? ?? ?? 00 00 00 00 C7 05 ?? ?? ?? ?? FF FF FF FF E9")
+		: FindPattern("48 83 25 ?? ?? ?? ?? 00 44 89 2D");
 
 	if (adr)
 	{
 		if (enhanced)
-			nUnsafe::GivePedNMMessage = reinterpret_cast<void(*)(ULONG_PTR, const char*, ULONG_PTR)>(adr);
+		{
+			nUnsafe::pScriptArtMessageParams = reinterpret_cast<ULONG_PTR*>(adr + *reinterpret_cast<const int32_t*>(adr + 3) + 11);
+			adr += 11;
+			nUnsafe::nMessageName = reinterpret_cast<int32_t*>(adr + *reinterpret_cast<const int32_t*>(adr + 2) + 10);
+		}
 		else
 		{
-			const int32_t rel = *reinterpret_cast<const int32_t*>(adr - 0x1E);
-			nUnsafe::GivePedNMMessage = reinterpret_cast<void(*)(ULONG_PTR, const char*, ULONG_PTR)>((adr - 0x1A) + rel);
+			nUnsafe::pScriptArtMessageParams = reinterpret_cast<ULONG_PTR*>(adr + *reinterpret_cast<const int32_t*>(adr + 3) + 8);
+			adr += 8;
+			nUnsafe::nMessageName = reinterpret_cast<int32_t*>(adr + *reinterpret_cast<const int32_t*>(adr + 3) + 7);
 		}
-		WriteLog("Operation", "Found address of \"GiveNmMessage\" at 0x%X!", nUnsafe::GivePedNMMessage);
+		WriteLog("Operation", "Found address of \"pScriptArtMessageParams\" and \"nMessageName\" at 0x%X!", adr);
 	}
 	else
 	{
-		WriteLog("Error", "Could not find address of \"GiveNmMessage\"!");
+		WriteLog("Error", "Could not find address of \"pScriptArtMessageParams\" and \"nMessageName\"!");
 		foundNMFunctions = false;
 	}
 
@@ -353,7 +325,7 @@ void GetGameFunctionsAddresses()
 
 namespace nGame
 {
-	ULONG_PTR GetScriptEntity(Entity entity)
+	ULONG_PTR GetScriptEntity(const Entity entity)
 	{
 		if (!nUnsafe::GetScriptEntity)
 		{
@@ -363,40 +335,21 @@ namespace nGame
 		return nUnsafe::GetScriptEntity(entity);
 	}
 
-	int GetFragInstNmOffset()
+	ULONG_PTR CreateNmMessage()
 	{
-		if (!nUnsafe::fragInstNmOffset)
-		{
-			WriteLog("Error", "Script tried to access invalid variable \"fragInstNmOffset\"!");
-			return 0;
-		}
-		return nUnsafe::fragInstNmOffset;
-	}
-
-	NmMessage CreateNmMessage()
-	{
-		if (!nUnsafe::CreateNmMessage)
+		if (!nUnsafe::pScriptArtMessageParams || !nUnsafe::nMessageName)
 		{
 			WriteLog("Error", "Script tried to access invalid function \"CreateNmMessage\"!");
 			return {};
 		}
 
-		constexpr size_t listSize = 64;
-		NmMessage msgPtr = std::make_unique<ART::MessageParamsList<listSize>>();
-		if (!msgPtr)
-		{
-			WriteLog("Error", "Memory allocation for NM message failed!");
-			return {};
-		}
-		nUnsafe::CreateNmMessage(reinterpret_cast<ULONG_PTR>(msgPtr.get()),
-			reinterpret_cast<ULONG_PTR>(&msgPtr->m_params),
-			listSize);
-		return msgPtr;
+		CREATE_NM_MESSAGE(false, 0);
+		return *nUnsafe::pScriptArtMessageParams;
 	}
 
-	void GivePedNMMessage(NmMessage msgPtr, const Ped ped, const char* message)
+	void GivePedNMMessage(ULONG_PTR msgPtr, const Ped ped, eNMStr message)
 	{
-		if (!nUnsafe::GivePedNMMessage)
+		if (!nUnsafe::pScriptArtMessageParams || !nUnsafe::nMessageName)
 		{
 			WriteLog("Error", "Script tried to access invalid function \"GivePedNMMessage\"!");
 			return;
@@ -404,18 +357,12 @@ namespace nGame
 		else if (!msgPtr)
 			return;
 
-		const ULONG_PTR pedAddress = nGame::GetScriptEntity(ped);
-		if (!pedAddress)
-			return;
-
-		const ULONG_PTR fragInstNmGtaAddress =
-			*reinterpret_cast<ULONG_PTR*>(pedAddress + nGame::GetFragInstNmOffset());
-		nUnsafe::GivePedNMMessage(fragInstNmGtaAddress, message,
-			reinterpret_cast<ULONG_PTR>(msgPtr.get()));
+		*nUnsafe::nMessageName = message;
+		GIVE_PED_NM_MESSAGE(ped);
 		return;
 	}
 
-	void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, int i)
+	void SetNMMessageParam(ULONG_PTR msgPtr, const char* msgParam, int i)
 	{
 		if (!nUnsafe::SetNMMessageInt)
 		{
@@ -425,11 +372,11 @@ namespace nGame
 		else if (!msgPtr)
 			return;
 
-		nUnsafe::SetNMMessageInt(reinterpret_cast<ULONG_PTR>(msgPtr), msgParam, i);
+		nUnsafe::SetNMMessageInt(msgPtr, msgParam, i);
 		return;
 	}
 
-	void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, bool b)
+	void SetNMMessageParam(ULONG_PTR msgPtr, const char* msgParam, bool b)
 	{
 		if (!nUnsafe::SetNMMessageBool)
 		{
@@ -439,11 +386,11 @@ namespace nGame
 		else if (!msgPtr)
 			return;
 
-		nUnsafe::SetNMMessageBool(reinterpret_cast<ULONG_PTR>(msgPtr), msgParam, b);
+		nUnsafe::SetNMMessageBool(msgPtr, msgParam, b);
 		return;
 	}
 
-	void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, float f)
+	void SetNMMessageParam(ULONG_PTR msgPtr, const char* msgParam, float f)
 	{
 		if (!nUnsafe::SetNMMessageFloat)
 		{
@@ -453,11 +400,11 @@ namespace nGame
 		else if (!msgPtr)
 			return;
 
-		nUnsafe::SetNMMessageFloat(reinterpret_cast<ULONG_PTR>(msgPtr), msgParam, f);
+		nUnsafe::SetNMMessageFloat(msgPtr, msgParam, f);
 		return;
 	}
 
-	void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, const char* str)
+	void SetNMMessageParam(ULONG_PTR msgPtr, const char* msgParam, const char* str)
 	{
 		if (!nUnsafe::SetNMMessageString)
 		{
@@ -467,11 +414,11 @@ namespace nGame
 		else if (!msgPtr)
 			return;
 
-		nUnsafe::SetNMMessageString(reinterpret_cast<ULONG_PTR>(msgPtr), msgParam, str);
+		nUnsafe::SetNMMessageString(msgPtr, msgParam, str);
 		return;
 	}
 
-	void SetNMMessageParam(NmMessagePtr msgPtr, const char* msgParam, float x, float y, float z)
+	void SetNMMessageParam(ULONG_PTR msgPtr, const char* msgParam, float x, float y, float z)
 	{
 		if (!nUnsafe::SetNMMessageVec3)
 		{
@@ -481,7 +428,7 @@ namespace nGame
 		else if (!msgPtr)
 			return;
 
-		nUnsafe::SetNMMessageVec3(reinterpret_cast<ULONG_PTR>(msgPtr), msgParam, x, y, z);
+		nUnsafe::SetNMMessageVec3(msgPtr, msgParam, x, y, z);
 		return;
 	}
 }
@@ -736,6 +683,101 @@ void ExtendGamePools()
 constexpr const char* DefaultFindAdressErr = "Could not find address(es)!";
 constexpr const char* DefaultDoneMsg = "Done!";
 
+// Credits Chiheb-Bacha: https://github.com/Chiheb-Bacha/StraightToStoryMode/blob/master/Game.cpp
+void DisableIntroScreens()
+{
+	WriteLog("Info", "----------------------- Disable Intro Screens ------------------------");
+	WriteLog("Operation", "Finding intro screens addresses...");
+
+	if (GetIsEnhancedVersion())
+	{
+		// Splash Screen
+		ULONG_PTR address = FindPattern("0F 85 A9 00 00 00 48 8D 54");
+		if (address)
+		{
+			address -= 13;
+			constexpr uint8_t patch[] = { 0xE9, 0x86, 0x01, 0x00, 0x00, 0x90 };
+			WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, sizeof(patch));
+			SafeMemmove(reinterpret_cast<void*>(address), patch, sizeof(patch));
+
+			// Legal Warnings
+			address = FindPattern("00 E9 ?? 05 00 00 E8 ?? 07");
+			if (address)
+			{
+				address -= 15;
+				constexpr int nBytes = 6;
+				WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes);
+				SafeMemset(reinterpret_cast<void*>(address), 0x90, nBytes);
+				WriteLog("Operation", DefaultDoneMsg);
+			}
+			else
+				WriteLog("Error", DefaultFindAdressErr);
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
+
+		return;
+	}
+
+	// Splash Screen - CLoadingScreens::InitUpdateIntroMovie
+	ULONG_PTR address = FindPattern("48 8D 55 ?? E8 ?? ?? ?? ?? 84 C0 74 ?? 48 8B 05");
+	if (address)
+	{
+		address += 9;
+		constexpr uint8_t patch[] = { 0x90, 0x90, 0xEB };
+		WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, sizeof(patch));
+		SafeMemmove(reinterpret_cast<void*>(address), patch, sizeof(patch));
+
+		// Legal Warnings - CLoadingScreens::InitUpdateLegalMain
+		address = FindPattern("83 EC ?? 84 C9 74 ?? 83 25 ?? ?? ?? ?? 00 E8");
+		if (address)
+		{
+			constexpr int nBytes = 2;
+			WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes);
+			SafeMemset(reinterpret_cast<void*>(address), 0xC3, 1);
+			
+			// CLoadingScreens::ms_LegalPage
+			address += 7;
+			/* and dword ptr [rip + 0x????????], 0 --- 83 25 ?? ?? ?? ?? 00 */
+			int32_t* ms_LegalPageAddr = reinterpret_cast<int32_t*>(address + *reinterpret_cast<int32_t*>(address + 2) + 7);
+			*ms_LegalPageAddr = static_cast<int32_t>(0x02);
+			WriteLog("Operation", DefaultDoneMsg);
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
+	}
+	else
+		WriteLog("Error", DefaultFindAdressErr);
+
+	return;
+}
+
+void DisableEnhancedLandingPage()
+{
+	WriteLog("Info", "----------------------- Disable Landing Page ------------------------");
+
+	if (GetIsEnhancedVersion())
+	{
+		WriteLog("Operation", "Finding landing page address...");
+		constexpr int nBytes = 3;
+		ULONG_PTR address = FindPattern("E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 83 C1 ?? 84 C0");
+		if (address)
+		{
+			address = address + *reinterpret_cast<int32_t*>(address + 1) + 5;
+			WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes);
+			constexpr uint8_t patch[] = { 0x31, 0xC0, 0xC3 };
+			SafeMemmove(reinterpret_cast<void*>(address), patch, sizeof(patch));
+		}
+		else
+			WriteLog("Error", DefaultFindAdressErr);
+
+		return;
+	}
+
+	WriteLog("Info", "Patch skipped: game is not enhanced version");
+	return;
+}
+
 // Credits FiveM: https://github.com/citizenfx/fivem/blob/master/code/components/gta-streaming-five/src/UnkStuff.cpp
 void LowPriorityPropsPatch()
 {
@@ -866,6 +908,8 @@ void CenterSteeringPatch()
 	}
 	else
 		WriteLog("Error", DefaultFindAdressErr);
+
+	return;
 }
 
 // Credits aint-no-other-option: https://github.com/aint-no-other-option/CopBumpSteeringPatch
@@ -1051,6 +1095,8 @@ void ApplyExePatches()
 		return;
 	}
 
+	if (Ini::DisableIntroScreens) { DisableIntroScreens(); }
+	if (Ini::DisableEnhancedLandingPage) { DisableEnhancedLandingPage(); }
 	if (Ini::LowPriorityPropsPatch) { LowPriorityPropsPatch(); }
 	if (Ini::CenterSteeringPatch) { CenterSteeringPatch(); }
 	if (Ini::CopBumpSteeringPatch) { CopBumpSteeringPatch(); }

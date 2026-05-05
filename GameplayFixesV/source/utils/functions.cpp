@@ -967,7 +967,7 @@ void TaskNMShot(Ped ped, Hash wpHash, int partIndex, Vector3 hitLoc, Vector3 imp
 	if (!isAiming)
 		pointGun = false;
 
-	NmMessage msgPtr = nGame::CreateNmMessage();
+	ULONG_PTR msgPtr = nGame::CreateNmMessage();
 	NMMessageShot shot;
 	shot.initialNeckDamping = 0.5f;
 	shot.minArmsLooseness = 0.0f;
@@ -987,42 +987,42 @@ void TaskNMShot(Ped ped, Hash wpHash, int partIndex, Vector3 hitLoc, Vector3 imp
 	shot.initialWeaknessRampDuration = 0.2f;
 	shot.cStrUpperMin = 1.0f;
 	shot.cStrLowerMin = 1.0f;
-	shot(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "shot");
+	shot(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_SHOT_MSG);
 
 	msgPtr = nGame::CreateNmMessage();
-	NMMessageShotShockSpin shotShockSpin; shotShockSpin(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "shotShockSpin");
+	NMMessageShotShockSpin shotShockSpin; shotShockSpin(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_SHOTSHOCKSPIN_MSG);
 
 	msgPtr = nGame::CreateNmMessage();
-	NMMessageShotInGuts shotInGuts; shotInGuts(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "shotInGuts");
+	NMMessageShotInGuts shotInGuts; shotInGuts(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_SHOTINGUTS_MSG);
 
 	msgPtr = nGame::CreateNmMessage();
 	NMMessageShotConfigureArms shotConfigureArms;
 	shotConfigureArms.pointGun = pointGun;
 	shotConfigureArms.useArmsWindmill = GetWeightedBool(50) && !bulletProofVest && !pointGun;
-	shotConfigureArms(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "shotConfigureArms");
+	shotConfigureArms(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_SHOTCONFIGUREARMS_MSG);
 
 	msgPtr = nGame::CreateNmMessage();
-	NMMessageBodyBalance bodyBalance; bodyBalance(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "bodyBalance");
+	NMMessageBodyBalance bodyBalance; bodyBalance(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_BALANCE_MSG);
 
 	msgPtr = nGame::CreateNmMessage();
-	NMMessageStayUpright stayUpright; stayUpright(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "stayUpright");
+	NMMessageStayUpright stayUpright; stayUpright(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_STAYUPRIGHT_MSG);
 
 	msgPtr = nGame::CreateNmMessage();
-	NMMessageSetFallingReaction setFallingReaction; setFallingReaction(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "setFallingReaction");
+	NMMessageSetFallingReaction setFallingReaction; setFallingReaction(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_SET_FALLING_REACTION_MSG);
 
 	msgPtr = nGame::CreateNmMessage();
 	NMMessageShotNewBullet shotNewBullet;
@@ -1030,8 +1030,8 @@ void TaskNMShot(Ped ped, Hash wpHash, int partIndex, Vector3 hitLoc, Vector3 imp
 	shotNewBullet.bodyPart = partIndex;
 	shotNewBullet.hitPoint = hitLoc;
 	shotNewBullet.localHitPointInfo = false;
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "shotNewBullet");
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_SHOTNEWBULLET_MSG);
 
 	msgPtr = nGame::CreateNmMessage();
 	NMMessageApplyBulletImpulse applyBulletImpulse;
@@ -1041,42 +1041,42 @@ void TaskNMShot(Ped ped, Hash wpHash, int partIndex, Vector3 hitLoc, Vector3 imp
 	applyBulletImpulse.hitPoint = hitLoc;
 	applyBulletImpulse.localHitPointInfo = false;
 	applyBulletImpulse.extraShare = 0.25f;
-	applyBulletImpulse(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "localImpulseInfo", false);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "applyBulletImpulse");
+	applyBulletImpulse(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "localImpulseInfo", false);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_APPLYBULLETIMP_MSG);
 
 	msgPtr = nGame::CreateNmMessage();
 	NMMessageConfigureBullets configureBullets;
 	configureBullets.doCounterImpulse = GetWeightedBool(50);
-	configureBullets(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "configureBullets");
+	configureBullets(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_CONFIGUREBULLETS_MSG);
 	return;
 }
 
 void TaskNMElectrocute(Ped ped)
 {
-	NmMessage msgPtr = nGame::CreateNmMessage();
-	NMMessageElectrocute electrocute; electrocute(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "electrocute");
+	ULONG_PTR msgPtr = nGame::CreateNmMessage();
+	NMMessageElectrocute electrocute; electrocute(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_ELECTROCUTE_MSG);
 
 	msgPtr = nGame::CreateNmMessage();
-	NMMessageBodyBalance bodyBalance; bodyBalance(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "bodyBalance");
+	NMMessageBodyBalance bodyBalance; bodyBalance(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_BALANCE_MSG);
 	
 	msgPtr = nGame::CreateNmMessage();
 	NMMessageConfigureBalance configureBalance;
 	configureBalance.maxSteps = 15;
-	configureBalance(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "configureBalance");
+	configureBalance(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_CONFIGURE_BALANCE_MSG);
 
 	msgPtr = nGame::CreateNmMessage();
-	NMMessageStaggerFall staggerFall; staggerFall(msgPtr.get());
-	nGame::SetNMMessageParam(msgPtr.get(), "start", true);
-	nGame::GivePedNMMessage(std::move(msgPtr), ped, "staggerFall");
+	NMMessageStaggerFall staggerFall; staggerFall(msgPtr);
+	nGame::SetNMMessageParam(msgPtr, "start", true);
+	nGame::GivePedNMMessage(msgPtr, ped, NM_STAGGERFALL_MSG);
 	return;
 }
 #pragma endregion

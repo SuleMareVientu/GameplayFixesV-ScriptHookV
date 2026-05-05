@@ -298,6 +298,13 @@ void EnablePlayerNMReactionsWhenShot(const Ped shooter)
 	if (Ini::DontDropWeapon)
 		NMReactionTime = reactTime;	//Store for compatibility with player disarm
 
+	/*
+	if (GET_SCRIPT_TASK_STATUS(ped, SCRIPT_TASK_ANY) < FINISHED_TASK)
+	{
+		return;
+	}
+	*/
+
 	SET_PED_TO_RAGDOLL(ped, minShotReactTime, reactTime, TASK_NM_SCRIPT, true, true, false);
 	GIVE_PLAYER_RAGDOLL_CONTROL(GetPlayer(), true);
 	TaskNMShot(ped, weapon, partIndex, hitLoc, impulseNorm, isPedAiming, isPedCrouching);

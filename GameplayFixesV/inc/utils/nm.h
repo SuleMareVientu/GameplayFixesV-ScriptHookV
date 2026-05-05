@@ -10,7 +10,7 @@ struct NMMessageActivePose
     std::string mask = "fb";
     bool useGravityCompensation = false;
     int animSource = 0; // ART::kITSourceCurrent
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "mask", mask.c_str());
         nGame::SetNMMessageParam(msgPtr, "useGravityCompensation", useGravityCompensation);
@@ -28,7 +28,7 @@ struct NMMessageApplyImpulse
     bool localHitPointInfo = false;
     bool localImpulseInfo = false;
     bool angularImpulse = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "equalizeAmount", equalizeAmount);
         nGame::SetNMMessageParam(msgPtr, "partIndex", partIndex);
@@ -49,7 +49,7 @@ struct NMMessageApplyBulletImpulse
     Vector3 hitPoint{ 0.0f, 0.0f, 0.0f };
     bool localHitPointInfo = false;
     float extraShare = 0.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "equalizeAmount", equalizeAmount);
         nGame::SetNMMessageParam(msgPtr, "partIndex", partIndex);
@@ -68,7 +68,7 @@ struct NMMessageBodyRelax
     std::string mask = "fb";
     bool holdPose = false;
     bool disableJointDriving = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "relaxation", relaxation);
         nGame::SetNMMessageParam(msgPtr, "damping", damping);
@@ -145,7 +145,7 @@ struct NMMessageConfigureBalance
     float balanceAbortThresholdEnd = 0.6f;
     float giveUpRampDuration = -1.0f;
     float leanToAbort = 0.6f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "stepHeight", stepHeight);
         nGame::SetNMMessageParam(msgPtr, "stepHeightInc4Step", stepHeightInc4Step);
@@ -226,7 +226,7 @@ struct NMMessageConfigureSelfAvoidance
     bool overwriteTwist = false;
     bool usePolarPathAlgorithm = false;
     float radius = 0.3f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "useSelfAvoidance", useSelfAvoidance);
         nGame::SetNMMessageParam(msgPtr, "overwriteDragReduction", overwriteDragReduction);
@@ -302,7 +302,7 @@ struct NMMessageConfigureBullets
     float rbMaxBroomMomentArmOneLeg = 1.0f;
     int rbTwistAxis = 0;
     bool rbPivot = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "impulseSpreadOverParts", impulseSpreadOverParts);
         nGame::SetNMMessageParam(msgPtr, "impulseLeakageStrengthScaled", impulseLeakageStrengthScaled);
@@ -424,7 +424,7 @@ struct NMMessageConfigureBulletsExtra
     float rbMaxBroomMomentArmOneLeg = 1.0f;
     int rbTwistAxis = 0;
     bool rbPivot = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "impulseSpreadOverParts", impulseSpreadOverParts);
         nGame::SetNMMessageParam(msgPtr, "impulsePeriod", impulsePeriod);
@@ -497,7 +497,7 @@ struct NMMessageConfigureLimits
     float lean2 = 1.570796f;
     float twist = 1.570796f;
     float margin = 0.196350f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "mask", mask.c_str());
         nGame::SetNMMessageParam(msgPtr, "enable", enable);
@@ -521,7 +521,7 @@ struct NMMessageConfigureSoftLimit
     float limitAngle = 0.4f;
     int approachDirection = 1;
     bool velocityScaled = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "index", index);
         nGame::SetNMMessageParam(msgPtr, "stiffness", stiffness);
@@ -546,7 +546,7 @@ struct NMMessageConfigureShotInjuredArm
     float velForceStep = 0.8f;
     float velStepTurn = 0.8f;
     bool velScales = true;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "injuredArmTime", injuredArmTime);
         nGame::SetNMMessageParam(msgPtr, "hipYaw", hipYaw);
@@ -575,7 +575,7 @@ struct NMMessageConfigureShotInjuredLeg
     float legInjuryLiftHipPitch = 0.0f;
     float legInjurySpineBend = 0.3f;
     float legInjuryLiftSpineBend = 0.3f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "timeBeforeCollapseWoundLeg", timeBeforeCollapseWoundLeg);
         nGame::SetNMMessageParam(msgPtr, "legInjuryTime", legInjuryTime);
@@ -596,7 +596,7 @@ struct NMMessageDefineAttachedObject
     int partIndex = -1;
     float objectMass = 0.0f;
     Vector3 worldPos{ 0.0f, 0.0f, 0.0f };
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "partIndex", partIndex);
         nGame::SetNMMessageParam(msgPtr, "objectMass", objectMass);
@@ -610,7 +610,7 @@ struct NMMessageForceToBodyPart
     int partIndex = 0;
     Vector3 force{ 0.0f, -50.0f, 0.0f };
     bool forceDefinedInPartSpace = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "partIndex", partIndex);
         nGame::SetNMMessageParam(msgPtr, "force", force.x, force.y, force.z);
@@ -623,7 +623,7 @@ struct NMMessageLeanInDirection
 {
     float leanAmount = 0.2f;
     Vector3 dir{ 0.0f, 0.0f, 1.0f };
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leanAmount", leanAmount);
         nGame::SetNMMessageParam(msgPtr, "dir", dir.x, dir.y, dir.z);
@@ -637,7 +637,7 @@ struct NMMessageLeanRandom
     float leanAmountMax = 0.2f;
     float changeTimeMin = 0.5f;
     float changeTimeMax = 1.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leanAmountMin", leanAmountMin);
         nGame::SetNMMessageParam(msgPtr, "leanAmountMax", leanAmountMax);
@@ -651,7 +651,7 @@ struct NMMessageLeanToPosition
 {
     float leanAmount = 0.2f;
     Vector3 pos{ 0.0f, 0.0f, 0.0f };
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leanAmount", leanAmount);
         nGame::SetNMMessageParam(msgPtr, "pos", pos.x, pos.y, pos.z);
@@ -665,7 +665,7 @@ struct NMMessageLeanTowardsObject
     Vector3 offset{ 0.0f, 0.0f, 0.0f };
     int instanceIndex = -1;
     int boundIndex = 0;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leanAmount", leanAmount);
         nGame::SetNMMessageParam(msgPtr, "offset", offset.x, offset.y, offset.z);
@@ -679,7 +679,7 @@ struct NMMessageHipsLeanInDirection
 {
     float leanAmount = 0.2f;
     Vector3 dir{ 0.0f, 0.0f, 1.0f };
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leanAmount", leanAmount);
         nGame::SetNMMessageParam(msgPtr, "dir", dir.x, dir.y, dir.z);
@@ -693,7 +693,7 @@ struct NMMessageHipsLeanRandom
     float leanAmountMax = 0.4f;
     float changeTimeMin = 2.0f;
     float changeTimeMax = 4.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leanAmountMin", leanAmountMin);
         nGame::SetNMMessageParam(msgPtr, "leanAmountMax", leanAmountMax);
@@ -707,7 +707,7 @@ struct NMMessageHipsLeanToPosition
 {
     float leanAmount = 0.2f;
     Vector3 pos{ 0.0f, 0.0f, 0.0f };
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leanAmount", leanAmount);
         nGame::SetNMMessageParam(msgPtr, "pos", pos.x, pos.y, pos.z);
@@ -721,7 +721,7 @@ struct NMMessageHipsLeanTowardsObject
     Vector3 offset{ 0.0f, 0.0f, 0.0f };
     int instanceIndex = -1;
     int boundIndex = 0;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leanAmount", leanAmount);
         nGame::SetNMMessageParam(msgPtr, "offset", offset.x, offset.y, offset.z);
@@ -736,7 +736,7 @@ struct NMMessageForceLeanInDirection
     float leanAmount = 0.2f;
     Vector3 dir{ 0.0f, 0.0f, 1.0f };
     int bodyPart = 0;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leanAmount", leanAmount);
         nGame::SetNMMessageParam(msgPtr, "dir", dir.x, dir.y, dir.z);
@@ -752,7 +752,7 @@ struct NMMessageForceLeanRandom
     float changeTimeMin = 2.0f;
     float changeTimeMax = 4.0f;
     int bodyPart = 0;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leanAmountMin", leanAmountMin);
         nGame::SetNMMessageParam(msgPtr, "leanAmountMax", leanAmountMax);
@@ -768,7 +768,7 @@ struct NMMessageForceLeanToPosition
     float leanAmount = 0.2f;
     Vector3 pos{ 0.0f, 0.0f, 0.0f };
     int bodyPart = 0;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leanAmount", leanAmount);
         nGame::SetNMMessageParam(msgPtr, "pos", pos.x, pos.y, pos.z);
@@ -784,7 +784,7 @@ struct NMMessageForceLeanTowardsObject
     int instanceIndex = -1;
     int boundIndex = 0;
     int bodyPart = 0;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leanAmount", leanAmount);
         nGame::SetNMMessageParam(msgPtr, "offset", offset.x, offset.y, offset.z);
@@ -800,7 +800,7 @@ struct NMMessageSetStiffness
     float bodyStiffness = 2.0f;
     float damping = 1.0f;
     std::string mask = "fb";
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "bodyStiffness", bodyStiffness);
         nGame::SetNMMessageParam(msgPtr, "damping", damping);
@@ -813,7 +813,7 @@ struct NMMessageSetMuscleStiffness
 {
     float muscleStiffness = 1.0f;
     std::string mask = "fb";
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "muscleStiffness", muscleStiffness);
         nGame::SetNMMessageParam(msgPtr, "mask", mask.c_str());
@@ -824,7 +824,7 @@ struct NMMessageSetMuscleStiffness
 struct NMMessageSetWeaponMode
 {
     int weaponMode = 5;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "weaponMode", weaponMode);
         return;
@@ -842,7 +842,7 @@ struct NMMessageRegisterWeapon
     Vector3 gunToHandD{ 0.0f, 0.0f, 0.0f };
     Vector3 gunToMuzzleInGun{ 0.0f, 0.0f, 0.0f };
     Vector3 gunToButtInGun{ 0.0f, 0.0f, 0.0f };
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "hand", hand);
         nGame::SetNMMessageParam(msgPtr, "levelIndex", levelIndex);
@@ -861,7 +861,7 @@ struct NMMessageShotRelax
 {
     float relaxPeriodUpper = 0.2f;
     float relaxPeriodLower = 0.2f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "relaxPeriodUpper", relaxPeriodUpper);
         nGame::SetNMMessageParam(msgPtr, "relaxPeriodLower", relaxPeriodLower);
@@ -877,7 +877,7 @@ struct NMMessageFireWeapon
     float inhibitTime = 0.4f;
     Vector3 direction{ 0.0f, 0.0f, 0.0f };
     float split = 0.5f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "firedWeaponStrength", firedWeaponStrength);
         nGame::SetNMMessageParam(msgPtr, "gunHandEnum", gunHandEnum);
@@ -898,7 +898,7 @@ struct NMMessageConfigureConstraints
     int passiveMode = 0;
     bool bespokeBehaviour = false;
     float blend2ZeroPose = 0.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "handCuffs", handCuffs);
         nGame::SetNMMessageParam(msgPtr, "handCuffsBehindBack", handCuffsBehindBack);
@@ -941,7 +941,7 @@ struct NMMessageStayUpright
     float stepUpHelp = 0.0f;
     float stayUpAcc = 0.7f;
     float stayUpAccMax = 5.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "useForces", useForces);
         nGame::SetNMMessageParam(msgPtr, "useTorques", useTorques);
@@ -978,7 +978,7 @@ struct NMMessageStayUpright
 struct NMMessageSetCharacterStrength
 {
     float characterStrength = 1.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "characterStrength", characterStrength);
         return;
@@ -988,7 +988,7 @@ struct NMMessageSetCharacterStrength
 struct NMMessageSetCharacterHealth
 {
     float characterHealth = 1.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "characterHealth", characterHealth);
         return;
@@ -1018,7 +1018,7 @@ struct NMMessageSetFallingReaction
     bool antiPropWeak = false;
     bool headAsWeakAsArms = true;
     float successStrength = 1.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "handsAndKnees", handsAndKnees);
         nGame::SetNMMessageParam(msgPtr, "callRDS", callRDS);
@@ -1052,7 +1052,7 @@ struct NMMessageSetCharacterUnderwater
     float gravityFactor = 1.0f;
     float stroke = 0.0f;
     bool linearStroke = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "underwater", underwater);
         nGame::SetNMMessageParam(msgPtr, "viscosity", viscosity);
@@ -1074,7 +1074,7 @@ struct NMMessageSetCharacterCollisions
     bool applyToUpperArms = true;
     bool footSlip = true;
     int vehicleClass = 15;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "spin", spin);
         nGame::SetNMMessageParam(msgPtr, "maxVelocity", maxVelocity);
@@ -1097,7 +1097,7 @@ struct NMMessageSetCharacterDamping
     float cartwheelDamp = 0.0f;
     float vehicleCollisionTime = 0.0f;
     bool v2 = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "somersaultThresh", somersaultThresh);
         nGame::SetNMMessageParam(msgPtr, "somersaultDamp", somersaultDamp);
@@ -1115,7 +1115,7 @@ struct NMMessageSetFrictionScale
     float globalMin = 0.0f;
     float globalMax = 999999.0f;
     std::string mask = "fb";
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "scale", scale);
         nGame::SetNMMessageParam(msgPtr, "globalMin", globalMin);
@@ -1162,7 +1162,7 @@ struct NMMessageAnimPose
     int connectedRightFoot = -2;
     int animSource = 0; // ART::kITSourceCurrent
     int dampenSideMotionInstanceIndex = -1;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "muscleStiffness", muscleStiffness);
         nGame::SetNMMessageParam(msgPtr, "stiffness", stiffness);
@@ -1234,7 +1234,7 @@ struct NMMessageArmsWindmill
     bool useLeft = true;
     bool useRight = true;
     bool disableOnImpact = true;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "leftPartID", leftPartID);
         nGame::SetNMMessageParam(msgPtr, "leftRadius1", leftRadius1);
@@ -1288,7 +1288,7 @@ struct NMMessageArmsWindmillAdaptive
     bool bendLeftElbow = false;
     bool bendRightElbow = false;
     std::string mask = "ub";
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "angSpeed", angSpeed);
         nGame::SetNMMessageParam(msgPtr, "bodyStiffness", bodyStiffness);
@@ -1359,7 +1359,7 @@ struct NMMessageBalancerCollisionsReaction
     bool objectBehindVictim = false;
     Vector3 objectBehindVictimPos{ 0.0f, 0.0f, 0.0f };
     Vector3 objectBehindVictimNormal{ 0.0f, 0.0f, 0.0f };
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "numStepsTillSlump", numStepsTillSlump);
         nGame::SetNMMessageParam(msgPtr, "stable2SlumpTime", stable2SlumpTime);
@@ -1465,7 +1465,7 @@ struct NMMessageBodyBalance
     float moveRadius = 2.0f;
     float moveAmount = 0.8f;
     bool moveWhenBracing = true;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "armStiffness", armStiffness);
         nGame::SetNMMessageParam(msgPtr, "elbow", elbow);
@@ -1531,7 +1531,7 @@ struct NMMessageBodyFoetal
     int randomSeed = 100;
     float backTwist = 0.0f;
     std::string mask = "fb";
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "stiffness", stiffness);
         nGame::SetNMMessageParam(msgPtr, "dampingFactor", dampingFactor);
@@ -1557,7 +1557,7 @@ struct NMMessageBodyRollUp
     float velocityScale = 1.0f;
     float velocityOffset = 0.0f;
     bool applyMinMaxFriction = true;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "stiffness", stiffness);
         nGame::SetNMMessageParam(msgPtr, "useArmToSlowDown", useArmToSlowDown);
@@ -1605,7 +1605,7 @@ struct NMMessageBodyWrithe
     float rollTorqueScale = 150.0f;
     float maxRollOverTime = 8.0f;
     float rollOverRadius = 2.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "armStiffness", armStiffness);
         nGame::SetNMMessageParam(msgPtr, "backStiffness", backStiffness);
@@ -1688,7 +1688,7 @@ struct NMMessageBraceForImpact
     std::string gsFricMask1 = "fb";
     float gsFricScale2 = 0.2f;
     std::string gsFricMask2 = "la";
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "braceDistance", braceDistance);
         nGame::SetNMMessageParam(msgPtr, "targetPredictionTime", targetPredictionTime);
@@ -1751,7 +1751,7 @@ struct NMMessageBuoyancy
     bool righting = true;
     float rightingStrength = 25.0f;
     float rightingTime = 1.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "surfacePoint", surfacePoint.x, surfacePoint.y, surfacePoint.z);
         nGame::SetNMMessageParam(msgPtr, "surfaceNormal", surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
@@ -1776,7 +1776,7 @@ struct NMMessageCatchFall
     float extraSit = 1.0f;
     bool useHeadLook = true;
     std::string mask = "fb";
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "torsoStiffness", torsoStiffness);
         nGame::SetNMMessageParam(msgPtr, "legsStiffness", legsStiffness);
@@ -1814,7 +1814,7 @@ struct NMMessageElectrocute
     bool applyStiffness = true;
     bool useTorques = true;
     int hipType = 2;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "stunMag", stunMag);
         nGame::SetNMMessageParam(msgPtr, "initialMult", initialMult);
@@ -1871,7 +1871,7 @@ struct NMMessageFallOverWall
     float reachDistanceFromHitPoint = 0.3f;
     float minReachDistanceFromHitPoint = 0.1f;
     float angleTotallyBack = 15.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "bodyStiffness", bodyStiffness);
         nGame::SetNMMessageParam(msgPtr, "damping", damping);
@@ -1947,7 +1947,7 @@ struct NMMessageGrab
     bool useHeadLookToTarget = false;
     bool lookAtGrab = true;
     Vector3 targetForHeadLook{ 0.0f, 0.0f, 0.0f };
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "useLeft", useLeft);
         nGame::SetNMMessageParam(msgPtr, "useRight", useRight);
@@ -2005,7 +2005,7 @@ struct NMMessageHeadLook
     bool alwaysEyesHorizontal = true;
     bool keepHeadAwayFromGround = false;
     bool twistSpine = true;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "damping", damping);
         nGame::SetNMMessageParam(msgPtr, "stiffness", stiffness);
@@ -2060,7 +2060,7 @@ struct NMMessageHighFall
     float maxSpeedForRecoverableFall = 15.0f;
     float minSpeedForBrace = 10.0f;
     float landingNormal = 0.6f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "bodyStiffness", bodyStiffness);
         nGame::SetNMMessageParam(msgPtr, "bodydamping", bodydamping);
@@ -2116,7 +2116,7 @@ struct NMMessageInjuredOnGround
     bool dontReachWithLeft = false;
     bool dontReachWithRight = false;
     bool strongRollForce = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "numInjuries", numInjuries);
         nGame::SetNMMessageParam(msgPtr, "injury1Component", injury1Component);
@@ -2137,7 +2137,7 @@ struct NMMessageDangle
 {
     bool doGrab = true;
     float grabFrequency = 1.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "doGrab", doGrab);
         nGame::SetNMMessageParam(msgPtr, "grabFrequency", grabFrequency);
@@ -2162,7 +2162,7 @@ struct NMMessageOnFire
     float predictTime = 0.1f;
     float maxRollOverTime = 60.0f;
     float rollOverRadius = 5.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "staggerTime", staggerTime);
         nGame::SetNMMessageParam(msgPtr, "staggerLeanRate", staggerLeanRate);
@@ -2205,7 +2205,7 @@ struct NMMessagePedalLegs
     float dragReduction = 0.250f;
     float spread = 0.0f;
     bool hula = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "pedalLeftLeg", pedalLeftLeg);
         nGame::SetNMMessageParam(msgPtr, "pedalRightLeg", pedalRightLeg);
@@ -2251,7 +2251,7 @@ struct NMMessagePointArm
     int instanceIndexRight = -1;
     float pointSwingLimitRight = 1.5f;
     bool useZeroPoseWhenNotPointingRight = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "targetLeft", targetLeft.x, targetLeft.y, targetLeft.z);
         nGame::SetNMMessageParam(msgPtr, "twistLeft", twistLeft);
@@ -2344,7 +2344,7 @@ struct NMMessagePointGun
     float rifleConstraintMinDistance = 0.2f;
     bool disableArmCollisions = false;
     bool disableRifleCollisions = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "enableRight", enableRight);
         nGame::SetNMMessageParam(msgPtr, "enableLeft", enableLeft);
@@ -2428,7 +2428,7 @@ struct NMMessagePointGunExtra
     float oriDamp = 0.0f;
     float posStiff = 0.0f;
     float posDamp = 0.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "constraintStrength", constraintStrength);
         nGame::SetNMMessageParam(msgPtr, "constraintThresh", constraintThresh);
@@ -2479,7 +2479,7 @@ struct NMMessageRollDownStairs
     float airborneReduction = 0.0f;
     bool applyMinMaxFriction = true;
     bool limitSpinReduction = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "stiffness", stiffness);
         nGame::SetNMMessageParam(msgPtr, "damping", damping);
@@ -2578,7 +2578,7 @@ struct NMMessageShot
     float cStrLowerMin = 0.1f;
     float cStrLowerMax = 1.0f;
     float deathTime = -1.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "bodyStiffness", bodyStiffness);
         nGame::SetNMMessageParam(msgPtr, "spineDamping", spineDamping);
@@ -2648,7 +2648,7 @@ struct NMMessageShotNewBullet
     Vector3 normal{ 0.0f, 0.0f, -1.0f };
     Vector3 hitPoint{ 0.0f, 0.0f, 0.0f };
     Vector3 bulletVel{ 0.0f, 0.0f, 0.0f };
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "bodyPart", bodyPart);
         nGame::SetNMMessageParam(msgPtr, "localHitPointInfo", localHitPointInfo);
@@ -2681,7 +2681,7 @@ struct NMMessageShotSnap
     float unSnapInterval = 0.010f;
     float unSnapRatio = 0.7f;
     bool snapUseTorques = true;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "snap", snap);
         nGame::SetNMMessageParam(msgPtr, "snapMag", snapMag);
@@ -2723,7 +2723,7 @@ struct NMMessageShotShockSpin
     float shockSpin1FootMult = 1.0f;
     float shockSpinFootGripMult = 1.0f;
     float bracedSideSpinMult = 1.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "addShockSpin", addShockSpin);
         nGame::SetNMMessageParam(msgPtr, "randomizeShockSpinDirection", randomizeShockSpinDirection);
@@ -2770,7 +2770,7 @@ struct NMMessageShotFallToKnees
     bool ftkReachForWound = true;
     bool ftkReleasePointGun = false;
     bool ftkFailMustCollide = true;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "fallToKnees", fallToKnees);
         nGame::SetNMMessageParam(msgPtr, "ftkAlwaysChangeFall", ftkAlwaysChangeFall);
@@ -2814,7 +2814,7 @@ struct NMMessageShotFromBehind
     float sfbKneesOnset = 0.0f;
     float sfbNoiseGain = 0.0f;
     int sfbIgnoreFail = 0;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "shotFromBehind", shotFromBehind);
         nGame::SetNMMessageParam(msgPtr, "sfbSpineAmount", sfbSpineAmount);
@@ -2841,7 +2841,7 @@ struct NMMessageShotInGuts
     float sigPeriod = 2.0f;
     float sigForceBalancePeriod = 0.0f;
     float sigKneesOnset = 0.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "shotInGuts", shotInGuts);
         nGame::SetNMMessageParam(msgPtr, "sigSpineAmount", sigSpineAmount);
@@ -2863,7 +2863,7 @@ struct NMMessageShotHeadLook
     float headLookAtWoundMaxTimer = 0.8f;
     float headLookAtHeadPosMaxTimer = 1.7f;
     float headLookAtHeadPosMinTimer = 0.6f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "useHeadLook", useHeadLook);
         nGame::SetNMMessageParam(msgPtr, "headLook", headLook.x, headLook.y, headLook.z);
@@ -2914,7 +2914,7 @@ struct NMMessageShotConfigureArms
     float bustElbowLift = 0.7f;
     float cupSize = 0.1f;
     bool cupBust = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "brace", brace);
         nGame::SetNMMessageParam(msgPtr, "pointGun", pointGun);
@@ -3015,7 +3015,7 @@ struct NMMessageSmartFall
     float splatWhenStopped = 0.0f;
     float blendHeadWhenStopped = 0.0f;
     float spreadLegs = 0.1f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "bodyStiffness", bodyStiffness);
         nGame::SetNMMessageParam(msgPtr, "bodydamping", bodydamping);
@@ -3121,7 +3121,7 @@ struct NMMessageStaggerFall
     float turnRightProb = 0.2f;
     bool useBodyTurn = false;
     bool upperBodyReaction = false;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "armStiffness", armStiffness);
         nGame::SetNMMessageParam(msgPtr, "armDamping", armDamping);
@@ -3181,7 +3181,7 @@ struct NMMessageTeeter
     float leanAwayTime = 1.0f;
     float leanAwayScale = 0.5f;
     float teeterTime = 1.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "edgeLeft", edgeLeft.x, edgeLeft.y, edgeLeft.z);
         nGame::SetNMMessageParam(msgPtr, "edgeRight", edgeRight.x, edgeRight.y, edgeRight.z);
@@ -3216,7 +3216,7 @@ struct NMMessageUpperBodyFlinch
     bool useHeadLook = true;
     int turnTowards = 1;
     Vector3 pos{ 0.0f, 0.0f, 0.0f };
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "handDistanceLeftRight", handDistanceLeftRight);
         nGame::SetNMMessageParam(msgPtr, "handDistanceFrontBack", handDistanceFrontBack);
@@ -3281,7 +3281,7 @@ struct NMMessageYanked
     float groundArmDamping = 0.5f;
     float groundSpineDamping = 0.5f;
     float groundFriction = 8.0f;
-    void operator()(NmMessagePtr msgPtr)
+    void operator()(ULONG_PTR msgPtr)
     {
         nGame::SetNMMessageParam(msgPtr, "armStiffness", armStiffness);
         nGame::SetNMMessageParam(msgPtr, "armDamping", armDamping);
