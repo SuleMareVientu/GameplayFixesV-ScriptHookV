@@ -868,7 +868,7 @@ void EnableBrakeLightsOnStoppedVehicle()
 		return;
 
 	// Preferrably, do NOT use IS_VEHICLE_STOPPED: "Returns true if the vehicle's current speed is less than, or equal to 0.0025f."
-	if (GET_IS_VEHICLE_ENGINE_RUNNING(veh) && GET_ENTITY_SPEED(veh) < 0.1f)
+	if (GET_IS_VEHICLE_ENGINE_RUNNING(veh) && GET_ENTITY_SPEED(veh) < 0.1f && !HAS_ENTITY_COLLIDED_WITH_ANYTHING(veh))
 		SET_VEHICLE_BRAKE_LIGHTS(veh, true);
 
 	return;
@@ -1852,14 +1852,13 @@ void EnablePedShove()
 			STOP_CURRENT_PLAYING_AMBIENT_SPEECH(shoveHitEntity);
 			PLAY_PED_AMBIENT_SPEECH_NATIVE(shoveHitEntity, "GENERIC_CURSE_MED", "SPEECH_PARAMS_FORCE", false);
 
-			/*
-			const int pedType = GET_PED_TYPE(shoveHitEntity);
-			if ((pedType != PEDTYPE_CIVMALE && pedType != PEDTYPE_CIVFEMALE) || IS_PED_ARMED(shoveHitEntity, 1 | 4))
-				TASK_COMBAT_PED(shoveHitEntity, GetPlayerPed(), 0, 16);
-			*/
-
-			const Vector3 loc = GetPlayerCoords();
-			ADD_SHOCKING_EVENT_AT_POSITION(EVENT_SHOCKING_SEEN_CONFRONTATION, loc.x, loc.y, loc.z, -1.0f);
+			if (IsPedACop(shoveHitEntity) && !IS_PLAYER_WANTED_LEVEL_GREATER(GetPlayer(), 2))
+			{
+				SET_PLAYER_WANTED_LEVEL(GetPlayer(), 2, false);
+				SET_PLAYER_WANTED_LEVEL_NOW(GetPlayer(), false);
+			}
+			else if (GetGameVersion() >= VER_1_0_877_1_STEAM)
+				TASK_AGITATED_ACTION_CONFRONT_RESPONSE(shoveHitEntity, GetPlayerPed());
 
 			if (!IS_PED_RAGDOLL(shoveHitEntity))
 				SET_PED_TO_RAGDOLL(shoveHitEntity, -1, GetRandomNumberInRange(500, 1500), TASK_NM_BALANCE, true, true, false);
@@ -2037,8 +2036,8 @@ void RegisterPlayerOptions()
 
 	///////////////////////////////////////////HUD/////////////////////////////////////////
 	REGISTER_OPTION(playerOptionsManager, AllowGameExecutionOnPauseMenu, nHUD, VER_UNK, true);
-	REGISTER_OPTION(playerOptionsManager, DisableHUDPostFX, nHUD, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisablePauseMenuPostFX, nHUD, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DisableHUDPostFX, nHUD, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisableSpecialAbilityPostFX, nHUD, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, EnableBigMapToggle, nHUD, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, MinimapSpeedometer, nHUD, VER_UNK, true);
@@ -2063,6 +2062,7 @@ void RegisterPlayerOptions()
 	REGISTER_OPTION(playerOptionsManager, DisablePoliceScanner, nAudio, VER_UNK, true);
 	REGISTER_OPTION_INI(playerOptionsManager, DisableFlightMusic, nAudio, DisableFlyingMusic, VER_UNK, true);
 	REGISTER_OPTION_INI(playerOptionsManager, SetRadiosMusicOnly, nAudio, DisableRadioInterruptions, VER_UNK, true);
+	REGISTER_OPTION(playerOptionsManager, DefaultVehicleRadioOff, nAudio, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, MuteSounds, nAudio, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, MuteArtificialAmbientSounds, nAudio, VER_UNK, true);
 	REGISTER_OPTION(playerOptionsManager, DisablePlayerPainAudio, nAudio, VER_UNK, true);

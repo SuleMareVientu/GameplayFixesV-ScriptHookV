@@ -1,3 +1,9 @@
+# **v3.3**
+- Add DisableIntroScreens & DisableEnhancedLandingPage
+- Improve NM reactions code to prevent game crashes
+- Fix DefaultVehicleRadioOff not working correctly
+- Improve EnableBrakeLightsOnStoppedVehicle
+
 # **v3.2**
 - Fix LowPriorityPropsPatch on Enhanced 
 - Misc improvements

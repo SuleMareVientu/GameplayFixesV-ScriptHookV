@@ -686,7 +686,7 @@ constexpr const char* DefaultDoneMsg = "Done!";
 // Credits Chiheb-Bacha: https://github.com/Chiheb-Bacha/StraightToStoryMode/blob/master/Game.cpp
 void DisableIntroScreens()
 {
-	WriteLog("Info", "----------------------- Disable Intro Screens ------------------------");
+	WriteLog("Info", "-------------------- Disable Intro Screens ---------------------");
 	WriteLog("Operation", "Finding intro screens addresses...");
 
 	if (GetIsEnhancedVersion())
@@ -754,7 +754,7 @@ void DisableIntroScreens()
 
 void DisableEnhancedLandingPage()
 {
-	WriteLog("Info", "----------------------- Disable Landing Page ------------------------");
+	WriteLog("Info", "--------------------- Disable Landing Page ---------------------");
 
 	if (GetIsEnhancedVersion())
 	{
@@ -842,6 +842,7 @@ void LowPriorityPropsPatch()
 			constexpr int nBytes2 = 7;
 			WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2);
 			// Don't disable low-priority objects when LOD distance is <20%
+			// CInstancePriority::ms_bForceLowestPriority = this->m_settings.m_graphics.m_LodScale <= 0.2;
 			SafeMemset(reinterpret_cast<void*>(address + 4), 0x90, nBytes2);
 			WriteLog("Operation", DefaultDoneMsg);
 		}

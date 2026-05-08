@@ -24,6 +24,8 @@ To my knowledge it's also the only mod that fixes the "Low Priority Props" bug i
 - Reload the INI config with F12 (key can be changed).
 
 **Memory:**
+- Skip intro and legal messages at the start of the game.
+- Skip the landing page that defaults to Online mode on the Enhanced version.
 - Allow low priority props to be spawned around the map.
     - You must enable ExtendGamePools if using Enhanced.
 - Disable the automatic centering of the wheels when a ped exits a vehicle. Applies to all vehicles (not only the player's).
