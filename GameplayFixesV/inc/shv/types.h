@@ -196,5 +196,10 @@ typedef struct Vector3
         }
         return Vector3();
     }
+
+    // Dot product
+    float Dot(const Vector3& other) {
+        return x * other.x + y * other.y + z * other.z;
+    }
 } Vector3;
 #pragma pack(pop)

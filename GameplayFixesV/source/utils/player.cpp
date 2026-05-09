@@ -157,25 +157,32 @@ void EnableCrouching()
 	return;
 }
 
+Timer midAirLedgeGrabRagdollTimer;
+constexpr int midAirLedgeGrabMaxRagdollTime = 300;
 int mainClimbSTHandle = NULL; bool mainClimbSTHit = false; Vector3 mainClimbSTHitCoords = Vector3();
 int heightClimbSTHandle = NULL; bool heightClimbSTHit = false;
-int surfaceClimbSTHandle = NULL; bool surfaceClimbSTHit = false;
-int surface2ndClimbSTHandle = NULL; bool surface2ndClimbSTHit = false;
 void EnableMidAirLedgeGrab()
 {
 	constexpr float fwdOff = 0.3f;
-	constexpr float upOff = 2.0f;
+	constexpr int STFlags = SCRIPT_INCLUDE_ALL & ~SCRIPT_INCLUDE_RIVER & ~SCRIPT_INCLUDE_FOLIAGE;
 
-	if (DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())) || IS_PED_RAGDOLL(GetPlayerPed()) ||
+	if (DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())) ||
 		(!IS_ENTITY_IN_AIR(GetPlayerPed()) && !IS_PED_FALLING(GetPlayerPed())))
+		return;
+
+	if (!IS_PED_RAGDOLL(GetPlayerPed()))
+		midAirLedgeGrabRagdollTimer.Reset();
+	else if (midAirLedgeGrabRagdollTimer.Get() > midAirLedgeGrabMaxRagdollTime)
 		return;
 
 	Vector3 fwdVec = Vector3(); Vector3 rightVec = Vector3(); Vector3 upVec = Vector3(); Vector3 locVec = Vector3();
 	GET_ENTITY_MATRIX(GetPlayerPed(), &fwdVec, &rightVec, &upVec, &locVec);
-	Vector3 min = Vector3(); Vector3 max = Vector3();
-	GET_MODEL_DIMENSIONS(GET_ENTITY_MODEL(GetPlayerPed()), &min, &max);
-	const float radius = (max.x - min.x) * 0.35f;
-	Vector3 start = GET_PED_BONE_COORDS(GetPlayerPed(), BONETAG_SPINE3, 0.0f, 0.0f, 0.0f);
+	Vector3 modelMin = Vector3(); Vector3 modelMax = Vector3();
+	GET_MODEL_DIMENSIONS(GET_ENTITY_MODEL(GetPlayerPed()), &modelMin, &modelMax);
+	const float radius = (modelMax.x - modelMin.x) * 0.35f;
+	const float height = (modelMax.z - modelMin.z) * 0.45f;
+	const Vector3 spineCoords = GET_PED_BONE_COORDS(GetPlayerPed(), BONETAG_SPINE3, 0.0f, 0.0f, 0.0f);
+	Vector3 start = spineCoords;
 	Vector3 end = start + (fwdVec * 1.25f);
 	if (mainClimbSTHandle != NULL)
 	{
@@ -183,88 +190,95 @@ void EnableMidAirLedgeGrab()
 		if (GET_SHAPE_TEST_RESULT(mainClimbSTHandle, &mainClimbSTHit, &mainClimbSTHitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 		{
 			//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
-			mainClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, start.z, radius, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+			mainClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, start.z, radius, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
 		}
 	}
 	else
-		mainClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, start.z, radius, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+		mainClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, start.z, radius, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
 
 	if (!mainClimbSTHit)
 		return;
 
-	//Print("main", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
+	//Print("main", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, start.z, 255, 87, 51, 200);
 
-	start = mainClimbSTHitCoords + (fwdVec * fwdOff); start.z = mainClimbSTHitCoords.z + upOff;
-	end = start; end.z += 1.0f;
-	if (heightClimbSTHandle != NULL)
-	{
-		Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
-		if (GET_SHAPE_TEST_RESULT(heightClimbSTHandle, &heightClimbSTHit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
-		{
-			//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
-			heightClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, end.z, radius, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
-		}
-	}
-	else
-		heightClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, end.z, radius, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
-
-	if (heightClimbSTHit)
-		return;
-
-	//Print("height", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
 	start = mainClimbSTHitCoords + (fwdVec * fwdOff);
-	start += (rightVec * radius);
+	start += (rightVec * (radius - 0.25f));
 	start.z = mainClimbSTHitCoords.z;
 	end = start;
-	start.z += upOff + 1.0f;
-	if (surfaceClimbSTHandle != NULL)
+	start.z += height + 1.0f;
+
+	bool surfaceClimbSTHit = false;
+	Vector3 surfaceClimbSTHitCoords = Vector3();
+	Vector3 surfaceClimbSTHitNormal = Vector3();
+	int surfaceClimbSTHandle = START_EXPENSIVE_SYNCHRONOUS_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+	if (surfaceClimbSTHandle)
 	{
-		Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
-		if (GET_SHAPE_TEST_RESULT(surfaceClimbSTHandle, &surfaceClimbSTHit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
-		{
-			//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
-			surfaceClimbSTHandle = START_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
-		}
+		Entity hitEntity = NULL;
+		GET_SHAPE_TEST_RESULT(surfaceClimbSTHandle, &surfaceClimbSTHit, &surfaceClimbSTHitCoords, &surfaceClimbSTHitNormal, &hitEntity);
 	}
-	else
-		surfaceClimbSTHandle = START_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+
+	//Print("surface", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
 
 	if (!surfaceClimbSTHit)
 		return;
 
-	//Print("surface", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
-
 	start = mainClimbSTHitCoords + (fwdVec * fwdOff);
-	start -= (rightVec * radius);
+	start -= (rightVec * (radius - 0.25f));
 	start.z = mainClimbSTHitCoords.z;
 	end = start;
-	start.z += upOff + 1.0f;
-	if (surface2ndClimbSTHandle != NULL)
+	start.z += height + 1.0f;
+
+	bool surface2ndClimbSTHit = false;
+	Vector3 surface2ndClimbSTHitCoords = Vector3();
+	Vector3 surface2ndClimbSTHitNormal = Vector3();
+	int surface2ndClimbSTHandle = START_EXPENSIVE_SYNCHRONOUS_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+	if (surface2ndClimbSTHandle)
 	{
-		Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
-		if (GET_SHAPE_TEST_RESULT(surface2ndClimbSTHandle, &surface2ndClimbSTHit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
-		{
-			//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
-			surface2ndClimbSTHandle = START_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
-		}
+		Entity hitEntity = NULL;
+		GET_SHAPE_TEST_RESULT(surface2ndClimbSTHandle, &surface2ndClimbSTHit, &surface2ndClimbSTHitCoords, &surface2ndClimbSTHitNormal, &hitEntity);
 	}
-	else
-		surface2ndClimbSTHandle = START_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, SCRIPT_INCLUDE_ALL, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+
+	//Print("2nd", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
 
 	if (!surface2ndClimbSTHit)
 		return;
 
-	//Print("2nd", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
+	start = (surfaceClimbSTHitCoords + surface2ndClimbSTHitCoords) / 2.0f; start.z += height;
+	end = start; end.z = min(surfaceClimbSTHitCoords.z, surface2ndClimbSTHitCoords.z);
+	Vector3 heightClimbSTHitCoords = Vector3();
+	Vector3 heightClimbSTHitNormal = Vector3();
+	if (heightClimbSTHandle != NULL)
+	{
+		Entity hitEntity = NULL;
+		if (GET_SHAPE_TEST_RESULT(heightClimbSTHandle, &heightClimbSTHit, &heightClimbSTHitCoords, &heightClimbSTHitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
+		{
+			//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
+			heightClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, end.z, radius, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+		}
+	}
+	else
+		heightClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, end.z, radius, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+
+	/*
+	Vector3 min_corner = { min(start.x, end.x) - radius, min(start.y, end.y) - radius, min(start.z, end.z) - radius };
+	Vector3 max_corner = { max(start.x, end.x) + radius, max(start.y, end.y) + radius, max(start.z, end.z) + radius };
+	Print("height", 0); DRAW_BOX(min_corner.x, min_corner.y, min_corner.z, max_corner.x, max_corner.y, max_corner.z, 255, 87, 51, 200);
+	*/
+
+	float avgHeight = (surfaceClimbSTHitCoords.z + surface2ndClimbSTHitCoords.z) / 2.0f;
+	Vector3 avgNormal = (surfaceClimbSTHitNormal + surface2ndClimbSTHitNormal + heightClimbSTHitNormal) / 3.0f;
+	if (!heightClimbSTHit || abs(heightClimbSTHitCoords.z - avgHeight) > 0.35f ||
+		abs(heightClimbSTHitCoords.z - spineCoords.z) > 1.5f || avgNormal.Dot(Vector3(0.0f, 0.0f, 1.0f)) < 0.4f)
+		return;
 
 	if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_JUMP) && !IS_PED_CLIMBING(GetPlayerPed()) && !IS_PED_VAULTING(GetPlayerPed()) &&
 		GET_SCRIPT_TASK_STATUS(GetPlayerPed(), SCRIPT_TASK_CLIMB) == FINISHED_TASK)
 	{
-		constexpr float force = 10.0f;
 		const Vector3 vel = GET_ENTITY_VELOCITY(GetPlayerPed());
 		if (vel.z < 0.0f)
 			SET_ENTITY_VELOCITY(GetPlayerPed(), vel.x, vel.y, 0.0f);
 
-		APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(GetPlayerPed(), APPLY_TYPE_IMPULSE, 0.0f, 0.0f, force, RAGDOLL_PELVIS, false, true, false);
+		APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(GetPlayerPed(), APPLY_TYPE_IMPULSE, 0.0f, 0.0f, 5.0f, RAGDOLL_PELVIS, false, true, false);
 		CLEAR_PED_TASKS_IMMEDIATELY(GetPlayerPed());
 		TASK_CLIMB(GetPlayerPed(), false);
 	}
@@ -295,7 +309,7 @@ void DynamicallyCleanWoundsAndDirt()
 {
 	if (IS_PLAYER_SWITCH_IN_PROGRESS())
 	{
-		timerDirtDecal.Set(180000);
+		timerDirtDecal.Set(timeClearDirtDecal);
 		return;
 	}
 

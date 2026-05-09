@@ -636,6 +636,37 @@ uint32_t __fastcall DetourGetSizeOfPool(void* _this, uint32_t poolNameHash, uint
 	return newSize;
 }
 
+bool IsFunctionHooked(LPVOID funcPtr) {
+	if (!funcPtr)
+		return false;
+
+	const uint8_t* bytes = reinterpret_cast<const uint8_t*>(funcPtr);
+
+	// Relative JMP (E9 xx xx xx xx)
+	if (bytes[0] == 0xE9)
+		return true;
+
+	// Absolute JMP via MOV+JMP, 64-bit hooks
+	// FF 25 00 00 00 00 — JMP [RIP+0]
+	if (bytes[0] == 0xFF && bytes[1] == 0x25)
+		return true;
+
+	// PUSH+RET (68 xx xx xx xx C3), 32-bit absolute jump
+	if (bytes[0] == 0x68 && bytes[5] == 0xC3)
+		return true;
+
+	return false;
+}
+
+inline void MH_CreateEnableHook_Safe(LPVOID address, LPVOID detour, LPVOID* trampoline)
+{
+	if (address && !IsFunctionHooked(address))
+	{
+		MH_CreateHook(reinterpret_cast<LPVOID>(address), detour, trampoline);
+		MH_EnableHook(reinterpret_cast<LPVOID>(address));
+	}
+}
+
 bool hasExtendedGamePools = false;
 void ExtendGamePools()
 {
