@@ -13,12 +13,12 @@
 #include <sstream>
 #include <limits>
 
-static constexpr char* inputGroup = "Input";
-static constexpr char* memoryGroup = "Memory";
-static constexpr char* playerGroup = "Player";
-static constexpr char* HUDGroup = "HUD";
-static constexpr char* AudioGroup = "Audio";
-static constexpr char* pedsGroup = "Peds";
+static constexpr const char* inputGroup = "Input";
+static constexpr const char* memoryGroup = "Memory";
+static constexpr const char* playerGroup = "Player";
+static constexpr const char* HUDGroup = "HUD";
+static constexpr const char* AudioGroup = "Audio";
+static constexpr const char* pedsGroup = "Peds";
 
 namespace Ini
 {
@@ -162,24 +162,35 @@ float PedGlobalMeleeWeaponDamageModifier = -1.0f;
 }
 using namespace Ini;
 
-#define GET_INI_BOOL(ini, group, value) ini.GetBoolValue(group, #value, Ini::value);
-#define GET_INI_INT(ini, group, value) static_cast<int>(ini.GetLongValue(group, #value, Ini::value));
-#define GET_INI_FLOAT(ini, group, value) static_cast<float>(ini.GetDoubleValue(group, #value, Ini::value));
-#define GET_INI_STRING(ini, group, value) ini.GetValue(group, #value, Ini::value.c_str());
+#define GET_INI_BOOL(ini, group, value) ini.GetBoolValue(group, #value, Ini::value)
+#define GET_INI_INT(ini, group, value) static_cast<int>(ini.GetLongValue(group, #value, Ini::value))
+#define GET_INI_FLOAT(ini, group, value) static_cast<float>(ini.GetDoubleValue(group, #value, Ini::value))
+#define GET_INI_STRING(ini, group, value) ini.GetValue(group, #value, Ini::value.c_str())
 
 static CSimpleIniA ini;
 void ReadINI()
 {
 	if (!std::filesystem::exists(GetDllInstanceIniName()))
-		WriteINIResource(GetDllInstance(), "INICONFIG", GetDllInstanceIniName());
+	{
+		try
+		{
+			WriteINIResource(GetDllInstance(), "INICONFIG", GetDllInstanceIniName());
+		}
+		catch (const std::exception& e)
+		{
+			WriteLog("Error", "Failed to extract default INI resource: %s", e.what());
+		}
+	}
 	
 	const SI_Error res = ini.LoadFile(GetDllInstanceIniName());
 	if (res != SI_OK)
 		return;
 
-	constexpr char* DefaultReloadIniKeyStr = "F12"; std::string tmpStrArr[1]{};
-	SplitString(const_cast<char*>(ini.GetValue(inputGroup, "ReloadIniKey", DefaultReloadIniKeyStr)), tmpStrArr, 1);
-	ReloadIniKey = GetVKFromString(tmpStrArr[0]);
+	constexpr const char* DefaultReloadIniKeyStr = "F12";
+	std::string tmpStrArr[1]{};
+	SplitString(ini.GetValue(inputGroup, "ReloadIniKey", DefaultReloadIniKeyStr), tmpStrArr, 1);
+	const int parsedKey = GetVKFromString(tmpStrArr[0]);
+	ReloadIniKey = (parsedKey > 0) ? static_cast<unsigned long>(parsedKey) : VK_F12;
 
 	//////////////////////////////////////Memory//////////////////////////////////////////
 	Ini::ApplyExePatches = GET_INI_BOOL(ini, memoryGroup, ApplyExePatches);
@@ -357,10 +368,10 @@ std::vector<float> ParseFloats(const std::string& s)
 	std::string segment;
 
 	while (std::getline(ss, segment, ',')) {
-		std::stringstream segment_ss(segment);
-		float f;
-		if (segment_ss >> f)
-			floatArray.push_back(f);
+		try {
+			floatArray.push_back(std::stof(segment));
+		}
+		catch (...) {}
 	}
 	return floatArray;
 }

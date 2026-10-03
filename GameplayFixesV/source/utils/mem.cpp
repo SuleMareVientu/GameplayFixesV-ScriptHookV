@@ -21,22 +21,31 @@
 #include <algorithm> // for std::max
 
 #pragma region Memory Utils
-ULONG_PTR FindPattern(std::string signature)
+static const MODULEINFO& GetMainModuleInfo()
 {
-	MODULEINFO modInfo;
-	if (GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL), &modInfo, sizeof(MODULEINFO)))
+	static MODULEINFO modInfo = []() {
+		MODULEINFO info{};
+		if (!GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL), &info, sizeof(info)))
+			WriteLog("Error", "GetModuleInformation() failed! [%d]", GetLastError());
+		return info;
+	}();
+	return modInfo;
+}
+
+ULONG_PTR FindPattern(const std::string& signature)
+{
+	const MODULEINFO& modInfo = GetMainModuleInfo();
+	if (modInfo.lpBaseOfDll)
 	{
 		void* result = Pattern16::scan(modInfo.lpBaseOfDll, modInfo.SizeOfImage, signature);
 		if (result)
 			return reinterpret_cast<ULONG_PTR>(result);
 	}
-	else
-		WriteLog("Error", "GetModuleInformation() failed! [%d]", GetLastError());
 
 	return 0; // Pattern not found
 }
 
-ULONG_PTR FindPatternGlobal(std::string signature)
+ULONG_PTR FindPatternGlobal(const std::string& signature)
 {
 	SYSTEM_INFO sysInfo;
 	GetSystemInfo(&sysInfo);
@@ -44,12 +53,9 @@ ULONG_PTR FindPatternGlobal(std::string signature)
 	const SIZE_T minAddr = reinterpret_cast<SIZE_T>(sysInfo.lpMinimumApplicationAddress);
 	const SIZE_T maxAddr = reinterpret_cast<SIZE_T>(sysInfo.lpMaximumApplicationAddress);
 
-	MODULEINFO modInfo = {};
-	if (!GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL), &modInfo, sizeof(MODULEINFO)))
-	{
-		WriteLog("Error", "GetModuleInformation() failed! [%d]", GetLastError());
+	const MODULEINFO& modInfo = GetMainModuleInfo();
+	if (!modInfo.lpBaseOfDll)
 		return 0;
-	}
 
 	const SIZE_T exeStart = reinterpret_cast<SIZE_T>(modInfo.lpBaseOfDll);
 	const SIZE_T exeEnd = exeStart + modInfo.SizeOfImage;
@@ -97,7 +103,7 @@ public:
 	{
 		m_ok = VirtualProtect(m_addr, m_size, PAGE_EXECUTE_READWRITE, &m_old) != FALSE;
 		if (!m_ok)
-			WriteLog("Error", "VirtualProtect(RWX) failed at 0x%X [%d]", m_addr, GetLastError());
+			WriteLog("Error", "VirtualProtect(RWX) failed at 0x%p [%d]", m_addr, GetLastError());
 	}
 	~ScopedPageWrite()
 	{
@@ -198,7 +204,7 @@ void GetGameFunctionsAddresses()
 		const int32_t rel = *reinterpret_cast<const int32_t*>(adr + (enhanced ? 0x06 : 0x07));
 		const ULONG_PTR next = adr + (enhanced ? 0x0A : 0x0B);
 		nUnsafe::GetScriptEntity = reinterpret_cast<ULONG_PTR(*)(Entity)>(next + rel);
-		WriteLog("Operation", "Found address of \"GetScriptEntity\" at 0x%X!", nUnsafe::GetScriptEntity);
+		WriteLog("Operation", "Found address of \"GetScriptEntity\" at 0x%p!", (void*)nUnsafe::GetScriptEntity);
 	}
 	else
 	{
@@ -227,7 +233,7 @@ void GetGameFunctionsAddresses()
 			adr += 8;
 			nUnsafe::nMessageName = reinterpret_cast<int32_t*>(adr + *reinterpret_cast<const int32_t*>(adr + 3) + 7);
 		}
-		WriteLog("Operation", "Found address of \"pScriptArtMessageParams\" and \"nMessageName\" at 0x%X!", adr);
+		WriteLog("Operation", "Found address of \"pScriptArtMessageParams\" and \"nMessageName\" at 0x%llX!", (unsigned long long)adr);
 	}
 	else
 	{
@@ -244,7 +250,7 @@ void GetGameFunctionsAddresses()
 	{
 		if (enhanced) adr -= 0x14;
 		nUnsafe::SetNMMessageInt = reinterpret_cast<bool(*)(ULONG_PTR, const char*, int)>(adr);
-		WriteLog("Operation", "Found address of \"SetNmParameterInt\" at 0x%X!", nUnsafe::SetNMMessageInt);
+		WriteLog("Operation", "Found address of \"SetNmParameterInt\" at 0x%p!", (void*)nUnsafe::SetNMMessageInt);
 	}
 	else
 	{
@@ -261,7 +267,7 @@ void GetGameFunctionsAddresses()
 	{
 		if (enhanced) adr -= 0x14;
 		nUnsafe::SetNMMessageBool = reinterpret_cast<bool(*)(ULONG_PTR, const char*, bool)>(adr);
-		WriteLog("Operation", "Found address of \"SetNmParameterBool\" at 0x%X!", nUnsafe::SetNMMessageBool);
+		WriteLog("Operation", "Found address of \"SetNmParameterBool\" at 0x%p!", (void*)nUnsafe::SetNMMessageBool);
 	}
 	else
 	{
@@ -277,7 +283,7 @@ void GetGameFunctionsAddresses()
 	if (adr)
 	{
 		nUnsafe::SetNMMessageFloat = reinterpret_cast<bool(*)(ULONG_PTR, const char*, float)>(adr);
-		WriteLog("Operation", "Found address of \"SetNmParameterFloat\" at 0x%X!", nUnsafe::SetNMMessageFloat);
+		WriteLog("Operation", "Found address of \"SetNmParameterFloat\" at 0x%p!", (void*)nUnsafe::SetNMMessageFloat);
 	}
 	else
 	{
@@ -294,7 +300,7 @@ void GetGameFunctionsAddresses()
 	{
 		if (!enhanced) adr -= 0x0F;
 		nUnsafe::SetNMMessageString = reinterpret_cast<bool(*)(ULONG_PTR, const char*, const char*)>(adr);
-		WriteLog("Operation", "Found address of \"SetNmParameterString\" at 0x%X!", nUnsafe::SetNMMessageString);
+		WriteLog("Operation", "Found address of \"SetNmParameterString\" at 0x%p!", (void*)nUnsafe::SetNMMessageString);
 	}
 	else
 	{
@@ -311,7 +317,7 @@ void GetGameFunctionsAddresses()
 	{
 		if (enhanced) adr -= 0x0F;
 		nUnsafe::SetNMMessageVec3 = reinterpret_cast<bool(*)(ULONG_PTR, const char*, float, float, float)>(adr);
-		WriteLog("Operation", "Found address of \"SetNmParameterVector\" at 0x%X!", nUnsafe::SetNMMessageVec3);
+		WriteLog("Operation", "Found address of \"SetNmParameterVector\" at 0x%p!", (void*)nUnsafe::SetNMMessageVec3);
 	}
 	else
 	{
@@ -489,7 +495,7 @@ void AllowWeaponsInsideSafeHouse()
 	{
 		target += 11; // offset is same for both versions currently
 		target = target + *reinterpret_cast<int32_t*>(target + 1) + 5;
-		WriteLog("Operation", "Found address of \"DoDisableInput\" at 0x%X!", target);
+		WriteLog("Operation", "Found address of \"DoDisableInput\" at 0x%p!", (void*)target);
 		MH_CreateHook(reinterpret_cast<LPVOID>(target),
 			reinterpret_cast<LPVOID>(DetourDoDisableInput),
 			reinterpret_cast<LPVOID*>(&TrampolineDoDisableInput));
@@ -511,7 +517,7 @@ void AllowWeaponsInsideSafeHouse()
 		else
 			target -= 59;
 
-		WriteLog("Operation", "Found address of \"EquipWeapon\" at 0x%X!", target);
+		WriteLog("Operation", "Found address of \"EquipWeapon\" at 0x%p!", (void*)target);
 		MH_CreateHook(reinterpret_cast<LPVOID>(target),
 			reinterpret_cast<LPVOID>(DetourEquipWeapon),
 			reinterpret_cast<LPVOID*>(&TrampolineEquipWeapon));
@@ -630,8 +636,12 @@ uint32_t __fastcall DetourGetSizeOfPool(void* _this, uint32_t poolNameHash, uint
 
 	const uint32_t newSize = std::max(size + add, min);
 	if (newSize != size)
+	{
+		const auto it = poolNames.find(poolNameHash);
+		const char* name = (it != poolNames.end()) ? it->second.c_str() : "Unknown";
 		WriteLog("Operation", "Pool \"%s\" extended to %u (was %u)",
-			poolNames[poolNameHash].c_str(), newSize, size);
+			name, newSize, size);
+	}
 
 	return newSize;
 }
@@ -696,7 +706,7 @@ void ExtendGamePools()
 	{
 		address += 11;
 		address = address + *reinterpret_cast<int32_t*>(address + 1) + 5;
-		WriteLog("Operation", "Found address of \"GetSizeOfPool\" at: 0x%X", address);
+		WriteLog("Operation", "Found address of \"GetSizeOfPool\" at: 0x%llX", (unsigned long long)address);
 		MH_CreateHook(reinterpret_cast<LPVOID>(address),
 			reinterpret_cast<LPVOID>(DetourGetSizeOfPool),
 			reinterpret_cast<LPVOID*>(&TrampolineGetSizeOfPool));
@@ -728,7 +738,7 @@ void DisableIntroScreens()
 		{
 			address -= 13;
 			constexpr uint8_t patch[] = { 0xE9, 0x86, 0x01, 0x00, 0x00, 0x90 };
-			WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, sizeof(patch));
+			WriteLog("Operation", "Found address 1 at 0x%llX! Patching %d bytes...", (unsigned long long)address, sizeof(patch));
 			SafeMemmove(reinterpret_cast<void*>(address), patch, sizeof(patch));
 
 			// Legal Warnings
@@ -737,7 +747,7 @@ void DisableIntroScreens()
 			{
 				address -= 15;
 				constexpr int nBytes = 6;
-				WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes);
+				WriteLog("Operation", "Found address 2 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes);
 				SafeMemset(reinterpret_cast<void*>(address), 0x90, nBytes);
 				WriteLog("Operation", DefaultDoneMsg);
 			}
@@ -756,7 +766,7 @@ void DisableIntroScreens()
 	{
 		address += 9;
 		constexpr uint8_t patch[] = { 0x90, 0x90, 0xEB };
-		WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, sizeof(patch));
+		WriteLog("Operation", "Found address 1 at 0x%llX! Patching %d bytes...", (unsigned long long)address, sizeof(patch));
 		SafeMemmove(reinterpret_cast<void*>(address), patch, sizeof(patch));
 
 		// Legal Warnings - CLoadingScreens::InitUpdateLegalMain
@@ -764,14 +774,14 @@ void DisableIntroScreens()
 		if (address)
 		{
 			constexpr int nBytes = 2;
-			WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes);
+			WriteLog("Operation", "Found address 2 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes);
 			SafeMemset(reinterpret_cast<void*>(address), 0xC3, 1);
 			
 			// CLoadingScreens::ms_LegalPage
 			address += 7;
 			/* and dword ptr [rip + 0x????????], 0 --- 83 25 ?? ?? ?? ?? 00 */
 			int32_t* ms_LegalPageAddr = reinterpret_cast<int32_t*>(address + *reinterpret_cast<int32_t*>(address + 2) + 7);
-			*ms_LegalPageAddr = static_cast<int32_t>(0x02);
+			SafeWrite<int32_t>(ms_LegalPageAddr, 0x02);
 			WriteLog("Operation", DefaultDoneMsg);
 		}
 		else
@@ -795,7 +805,7 @@ void DisableEnhancedLandingPage()
 		if (address)
 		{
 			address = address + *reinterpret_cast<int32_t*>(address + 1) + 5;
-			WriteLog("Operation", "Found address at 0x%X! Patching %d bytes...", address, nBytes);
+			WriteLog("Operation", "Found address at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes);
 			constexpr uint8_t patch[] = { 0x31, 0xC0, 0xC3 };
 			SafeMemmove(reinterpret_cast<void*>(address), patch, sizeof(patch));
 		}
@@ -830,7 +840,7 @@ void LowPriorityPropsPatch()
 		ULONG_PTR address = FindPattern("C7 05 ?? ?? ?? ?? 02 00 00 00 B8 02 00 00 00 89 05");
 		if (address)
 		{
-			WriteLog("Operation", "Found address at 0x%X! Patching 2 bytes...", address);
+			WriteLog("Operation", "Found address at 0x%llX! Patching 2 bytes...", (unsigned long long)address);
 			SafeWrite<uint8_t>(reinterpret_cast<void*>(address + 6), 0x03);
 			SafeWrite<uint8_t>(reinterpret_cast<void*>(address + 11), 0x03);
 			WriteLog("Operation", DefaultDoneMsg);
@@ -861,7 +871,7 @@ void LowPriorityPropsPatch()
 	ULONG_PTR address = FindPattern("BB 02 00 00 00 39 1D");
 	if (address)
 	{
-		WriteLog("Operation", "Found address 1 at 0x%X! Patching 1 byte...", address);
+		WriteLog("Operation", "Found address 1 at 0x%llX! Patching 1 byte...", (unsigned long long)address);
 
 		// rage::fwEntityDef.m_priorityLevel
 		// Make GTA default rage::fwMapData::ms_entityLevelCap to PRI_OPTIONAL_LOW, not PRI_OPTIONAL_MEDIUM (RAGE suite defaults)
@@ -871,7 +881,7 @@ void LowPriorityPropsPatch()
 		if (address)
 		{
 			constexpr int nBytes2 = 7;
-			WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2);
+			WriteLog("Operation", "Found address 2 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes2);
 			// Don't disable low-priority objects when LOD distance is <20%
 			// CInstancePriority::ms_bForceLowestPriority = this->m_settings.m_graphics.m_LodScale <= 0.2;
 			SafeMemset(reinterpret_cast<void*>(address + 4), 0x90, nBytes2);
@@ -898,14 +908,14 @@ void CenterSteeringPatch()
 		ULONG_PTR address = FindPattern("C7 86 DC 09 00 00 00 00 00 00 E9");
 		if (address)
 		{
-			WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, nBytes);
+			WriteLog("Operation", "Found address 1 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes);
 			SafeMemset(reinterpret_cast<void*>(address), 0x90, nBytes);
 
 			// mov dword ptr [rsi+9DCh], 0  (dive-out path)
 			address = FindPattern("C7 86 DC 09 00 00 00 00 00 00 31 C0");
 			if (address)
 			{
-				WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes);
+				WriteLog("Operation", "Found address 2 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes);
 				SafeMemset(reinterpret_cast<void*>(address), 0x90, nBytes);
 				WriteLog("Operation", DefaultDoneMsg);
 			}
@@ -923,7 +933,7 @@ void CenterSteeringPatch()
 	if (address)
 	{
 		constexpr int nBytes1 = 7;
-		WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, nBytes1);
+		WriteLog("Operation", "Found address 1 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes1);
 		SafeMemset(reinterpret_cast<void*>(address + 6), 0x90, nBytes1);
 
 		/* Address of centering when diving out */
@@ -931,7 +941,7 @@ void CenterSteeringPatch()
 		if (address)
 		{
 			constexpr int nBytes2 = 6;
-			WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2);
+			WriteLog("Operation", "Found address 2 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes2);
 			SafeMemset(reinterpret_cast<void*>(address), 0x90, nBytes2);
 			WriteLog("Operation", DefaultDoneMsg);
 		}
@@ -956,14 +966,14 @@ void CopBumpSteeringPatch()
 		if (address)
 		{
 			constexpr int nBytes1 = 9;
-			WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, nBytes1);
+			WriteLog("Operation", "Found address 1 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes1);
 			SafeMemset(reinterpret_cast<void*>(address), 0x90, nBytes1);
 
 			address = FindPattern("F3 41 0F 11 B5 3C 1A 00 00 F3");
 			if (address)
 			{
 				constexpr int nBytes2 = 9;
-				WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2);
+				WriteLog("Operation", "Found address 2 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes2);
 				SafeMemset(reinterpret_cast<void*>(address), 0x90, nBytes2);
 				WriteLog("Operation", DefaultDoneMsg);
 			}
@@ -980,14 +990,14 @@ void CopBumpSteeringPatch()
 	if (address)
 	{
 		constexpr int nBytes1 = 8;
-		WriteLog("Operation", "Found address 1 at 0x%X! Patching %d bytes...", address, nBytes1);
+		WriteLog("Operation", "Found address 1 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes1);
 		SafeMemset(reinterpret_cast<void*>(address), 0x90, nBytes1);
 
 		address = FindPattern("EB 08 F3 0F 59 35 ?? ?? ?? 00 F3 0F 11");
 		if (address)
 		{
 			constexpr int nBytes2 = 8;
-			WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2);
+			WriteLog("Operation", "Found address 2 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes2);
 			SafeMemset(reinterpret_cast<void*>(address + 10), 0x90, nBytes2);
 			WriteLog("Operation", DefaultDoneMsg);
 		}
@@ -1025,7 +1035,7 @@ void HUDWheelSlowdownPatch()
 		ULONG_PTR address = FindPattern("80 ?? 64 01 74");
 		if (address)
 		{
-			WriteLog("Operation", "Found address 1 at 0x%X!", address);
+			WriteLog("Operation", "Found address 1 at 0x%llX!", (unsigned long long)address);
 
 			// Remove vignetting: patch CSelectionWheel::TriggerFadeOutEffect to ret immediately
 			ULONG_PTR tempAdr = address + 33;
@@ -1048,7 +1058,7 @@ void HUDWheelSlowdownPatch()
 			if (address)
 			{
 				constexpr int nBytes2 = 10;
-				WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2 + 1);
+				WriteLog("Operation", "Found address 2 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes2 + 1);
 				SafeMemset(reinterpret_cast<void*>(address - 1), 0x90, nBytes2);
 				SafeWrite<uint8_t>(reinterpret_cast<void*>(address - 11), 0x00);
 			}
@@ -1078,7 +1088,7 @@ void HUDWheelSlowdownPatch()
 	ULONG_PTR address = FindPattern("38 51 64 74 19");
 	if (address)
 	{
-		WriteLog("Operation", "Found address 1 at 0x%X!", address);
+		WriteLog("Operation", "Found address 1 at 0x%llX!", (unsigned long long)address);
 
 		// Remove vignetting: CSelectionWheel::TriggerFadeOutEffect → ret
 		ULONG_PTR tempAdr = address + 25;
@@ -1099,7 +1109,7 @@ void HUDWheelSlowdownPatch()
 		if (address)
 		{
 			constexpr int nBytes2 = 10;
-			WriteLog("Operation", "Found address 2 at 0x%X! Patching %d bytes...", address, nBytes2 + 1);
+			WriteLog("Operation", "Found address 2 at 0x%llX! Patching %d bytes...", (unsigned long long)address, nBytes2 + 1);
 			SafeMemset(reinterpret_cast<void*>(address - 1), 0x90, nBytes2);
 			SafeWrite<uint8_t>(reinterpret_cast<void*>(address - 4), 0x00);
 		}

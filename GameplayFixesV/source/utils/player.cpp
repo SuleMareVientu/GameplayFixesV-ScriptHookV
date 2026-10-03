@@ -22,139 +22,153 @@
 #include "utils\peds.h"
 
 // Globals
-bool isPlayerCrouching = false;
-bool GetIsPlayerCrouching() { return isPlayerCrouching; }
+class CrouchController
+{
+public:
+	static constexpr const char* MovementClipSet = "move_ped_crouched";
+	static constexpr const char* StrafingClipSet = "move_ped_crouched_strafing";
+	static constexpr float BlendSpeed = 0.55f;
+	static constexpr int HoldDurationMs = 250;
+
+	bool IsCrouching() const { return m_isCrouching; }
+
+	void SetCrouch(Ped ped, bool state)
+	{
+		if (state)
+		{
+			DisablePedConfigFlag(ped, PCF_OpenDoorArmIK);
+			EnablePedConfigFlag(ped, PCF_PhoneDisableTextingAnimations);
+			EnablePedConfigFlag(ped, PCF_PhoneDisableTalkingAnimations);
+			EnablePedConfigFlag(ped, PCF_PhoneDisableCameraAnimations);
+
+			m_isCrouching = true;
+			SET_PED_MOVEMENT_CLIPSET(ped, MovementClipSet, BlendSpeed);
+			SET_PED_STRAFE_CLIPSET(ped, StrafingClipSet);
+		}
+		else
+		{
+			m_isCrouching = false;
+			SET_PED_STEALTH_MOVEMENT(ped, false, NULL);
+			RESET_PED_MOVEMENT_CLIPSET(ped, BlendSpeed);
+			RESET_PED_STRAFE_CLIPSET(ped);
+			EnablePedConfigFlag(ped, PCF_OpenDoorArmIK);
+			DisablePedConfigFlag(ped, PCF_PhoneDisableTextingAnimations);
+			DisablePedConfigFlag(ped, PCF_PhoneDisableTalkingAnimations);
+			DisablePedConfigFlag(ped, PCF_PhoneDisableCameraAnimations);
+			SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, true);
+			SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, true);
+			SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, true);
+			SET_PLAYER_NOISE_MULTIPLIER(GetPlayer(), 1.0f);
+		}
+	}
+
+	bool CanCrouch(Ped ped) const
+	{
+		if (!DOES_ENTITY_EXIST(ped) || IS_ENTITY_DEAD(ped, false) || IS_PED_DEAD_OR_DYING(ped, true) ||
+			IS_PED_INJURED(ped) || IS_PED_USING_ANY_SCENARIO(ped) || IS_PED_RAGDOLL(ped) ||
+			IS_PED_GETTING_UP(ped) || IS_PED_FALLING(ped) || IS_PED_JUMPING(ped) ||
+			IS_PED_DIVING(ped) || IS_PED_SWIMMING(ped) || IS_PED_GOING_INTO_COVER(ped) ||
+			IS_PED_CLIMBING(ped) || IS_PED_VAULTING(ped) || IS_PED_HANGING_ON_TO_VEHICLE(ped) ||
+			IS_PED_IN_ANY_VEHICLE(ped, true) || IS_PED_IN_COVER(ped, false) || !IS_PED_ON_FOOT(ped) ||
+			IS_PED_TAKING_OFF_HELMET(ped) || GET_ENTITY_SUBMERGED_LEVEL(ped) >= 0.7f || IS_PED_PERFORMING_MELEE_ACTION(ped))
+			return false;
+
+		return true;
+	}
+
+	void Update()
+	{
+		if (!RequestClipSet(const_cast<char*>(MovementClipSet)) || !RequestClipSet(const_cast<char*>(StrafingClipSet)))
+			return;
+
+		const Ped playerPed = GetPlayerPed();
+		if (!IS_PED_HUMAN(playerPed))
+			return;
+
+		if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_DUCK))
+		{
+			if (m_isCrouching)
+				SetCrouch(playerPed, false);
+			else
+			{
+				m_timer.Reset();
+				if (GET_PED_STEALTH_MOVEMENT(playerPed))
+				{
+					m_stealthState = true;
+					SET_PED_STEALTH_MOVEMENT(playerPed, false, NULL);	// Fixes bug when crouching near objects where the player would not be able to stand up
+				}
+			}
+		}
+		else if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_DUCK) && Between(m_timer.Get(), 0, HoldDurationMs) && m_stealthState)
+		{
+			m_stealthState = false;
+			// Enable stealth mode if control is released early and ensure compatibility with non-story peds
+			if (IsPedMainProtagonist(playerPed))
+				SET_PED_STEALTH_MOVEMENT(playerPed, true, NULL);
+			else if (Ini::EnablePlayerActionsForAllPeds)
+				SET_PED_STEALTH_MOVEMENT(playerPed, true, "DEFAULT_ACTION");
+		}
+		else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_DUCK) && m_timer.Get() > HoldDurationMs)
+		{
+			m_timer.Set(INT_MIN);
+			if (!m_isCrouching && CanCrouch(playerPed))
+				SetCrouch(playerPed, true);
+		}
+
+		if (m_isCrouching)
+		{
+			if (!CanCrouch(playerPed))
+				SetCrouch(playerPed, false);
+			else
+			{
+				EnablePedResetFlag(playerPed, PRF_DisableActionMode);
+				EnablePedResetFlag(playerPed, PRF_DontUseSprintEnergy);
+				EnablePedResetFlag(playerPed, PRF_ScriptDisableSecondaryAnimationTasks);
+				EnablePedResetFlag(playerPed, PRF_DisableDustOffAnims);
+				EnablePedResetFlag(playerPed, PRF_DisableWallHitAnimation);
+
+				SET_PED_CAN_PLAY_AMBIENT_IDLES(playerPed, true, true);	// Resets every frame
+				SET_PED_CAN_PLAY_GESTURE_ANIMS(playerPed, false);
+				SET_PED_CAN_PLAY_AMBIENT_ANIMS(playerPed, false);
+				SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(playerPed, false);
+
+				SET_PLAYER_NOISE_MULTIPLIER(GetPlayer(), 0.0f);
+				DISABLE_ON_FOOT_FIRST_PERSON_VIEW_THIS_UPDATE();
+
+				if (IsPlayerAiming(true, true) || IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_ATTACK) || IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_ATTACK2))
+					SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, 0.25f);
+				else
+					SET_PED_MAX_MOVE_BLEND_RATIO(playerPed, PEDMOVEBLENDRATIO_RUN);
+			}
+		}
+
+		// Ensure action compatibility with non-story peds. THIS MUST BE AT THE BOTTOM
+		if (Ini::EnablePlayerActionsForAllPeds && !IsPedMainProtagonist(playerPed) && !m_isCrouching)
+		{
+			if (!GET_PED_STEALTH_MOVEMENT(playerPed) && !m_stealthState)
+			{
+				if (IS_PED_IN_MELEE_COMBAT(playerPed) || COUNT_PEDS_IN_COMBAT_WITH_TARGET(playerPed) > 0 || IS_PED_SHOOTING(playerPed))
+					SET_PED_USING_ACTION_MODE(playerPed, true, 10000, "DEFAULT_ACTION");
+			}
+		}
+		return;
+	}
+
+private:
+	bool m_isCrouching = false;
+	bool m_stealthState = false;
+	Timer m_timer;
+};
+
+static CrouchController g_crouchController;
+bool GetIsPlayerCrouching() { return g_crouchController.IsCrouching(); }
 
 /////////////////////////////////////////////Player//////////////////////////////////////////////
 namespace nGeneral
 {
-bool CanCrouch(Ped ped)
-{
-	if (!DOES_ENTITY_EXIST(ped) || IS_ENTITY_DEAD(ped, false) || IS_PED_DEAD_OR_DYING(ped, true) ||
-		IS_PED_INJURED(ped) || IS_PED_USING_ANY_SCENARIO(ped) || IS_PED_RAGDOLL(ped) ||
-		IS_PED_GETTING_UP(ped) || IS_PED_FALLING(ped) || IS_PED_JUMPING(ped) ||
-		IS_PED_DIVING(ped) || IS_PED_SWIMMING(ped) || IS_PED_GOING_INTO_COVER(ped) ||
-		IS_PED_CLIMBING(ped) || IS_PED_VAULTING(ped) || IS_PED_HANGING_ON_TO_VEHICLE(ped) ||
-		IS_PED_IN_ANY_VEHICLE(ped, true) || IS_PED_IN_COVER(ped, false) || !IS_PED_ON_FOOT(ped) ||
-		IS_PED_TAKING_OFF_HELMET(ped) || GET_ENTITY_SUBMERGED_LEVEL(ped) >= 0.7f || IS_PED_PERFORMING_MELEE_ACTION(ped))
-		return false;
-
-	return true;
-}
-
-// Ensure that movement clipsets are loaded before applying them
-constexpr char* crouchedMovementClipSet = "move_ped_crouched";
-constexpr char* crouchedStrafingClipSet = "move_ped_crouched_strafing";
-constexpr float blendSpeedCrouched = 0.55f;
-void SetCrouch(Ped ped, bool state)
-{
-	if (state)
-	{
-		DisablePedConfigFlag(ped, PCF_OpenDoorArmIK);
-		EnablePedConfigFlag(ped, PCF_PhoneDisableTextingAnimations);
-		EnablePedConfigFlag(ped, PCF_PhoneDisableTalkingAnimations);
-		EnablePedConfigFlag(ped, PCF_PhoneDisableCameraAnimations);
-
-		isPlayerCrouching = true;
-		SET_PED_MOVEMENT_CLIPSET(ped, crouchedMovementClipSet, blendSpeedCrouched);
-		SET_PED_STRAFE_CLIPSET(ped, crouchedStrafingClipSet);
-	}
-	else
-	{
-		isPlayerCrouching = false;
-		SET_PED_STEALTH_MOVEMENT(ped, false, NULL);
-		RESET_PED_MOVEMENT_CLIPSET(ped, blendSpeedCrouched);
-		RESET_PED_STRAFE_CLIPSET(ped);
-		EnablePedConfigFlag(ped, PCF_OpenDoorArmIK);
-		DisablePedConfigFlag(ped, PCF_PhoneDisableTextingAnimations);
-		DisablePedConfigFlag(ped, PCF_PhoneDisableTalkingAnimations);
-		DisablePedConfigFlag(ped, PCF_PhoneDisableCameraAnimations);
-		SET_PED_CAN_PLAY_GESTURE_ANIMS(ped, true);
-		SET_PED_CAN_PLAY_AMBIENT_ANIMS(ped, true);
-		SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(ped, true);
-		SET_PLAYER_NOISE_MULTIPLIER(GetPlayer(), 1.0f);
-	}
-	return;
-}
-
-Timer timerCrouch;
-constexpr int crouchHold = 250;
-bool stealthState = false;
 void EnableCrouching()
 {
-	if (!RequestClipSet(crouchedMovementClipSet) || !RequestClipSet(crouchedStrafingClipSet))
-		return;
-
-	if (!IS_PED_HUMAN(GetPlayerPed()))
-		return;
-
-	if (IS_CONTROL_JUST_PRESSED(PLAYER_CONTROL, INPUT_DUCK))
-	{
-		if (isPlayerCrouching)
-			SetCrouch(GetPlayerPed(), false);
-		else
-		{
-			timerCrouch.Reset();
-			if (GET_PED_STEALTH_MOVEMENT(GetPlayerPed()))
-			{
-				stealthState = true;
-				SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), false, NULL);	// Fixes bug when crouching near objects where the player would not be able to stand up
-			}
-		}
-	}
-	else if (IS_CONTROL_JUST_RELEASED(PLAYER_CONTROL, INPUT_DUCK) && Between(timerCrouch.Get(), 0, crouchHold) && stealthState)
-	{
-		stealthState = false;
-		// Enable stealth mode if control is released early and ensure compatibility with non-story peds
-		if (IsPedMainProtagonist(GetPlayerPed()))
-			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, NULL);
-		else if (Ini::EnablePlayerActionsForAllPeds)
-			SET_PED_STEALTH_MOVEMENT(GetPlayerPed(), true, "DEFAULT_ACTION");
-	}
-	else if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_DUCK) && timerCrouch.Get() > crouchHold)
-	{
-		timerCrouch.Set(INT_MIN);
-		if (!isPlayerCrouching && CanCrouch(GetPlayerPed()))
-			SetCrouch(GetPlayerPed(), true);
-	}
-
-	if (isPlayerCrouching)
-	{
-		if (!CanCrouch(GetPlayerPed()))
-			SetCrouch(GetPlayerPed(), false);
-		else
-		{
-			EnablePedResetFlag(GetPlayerPed(), PRF_DisableActionMode);
-			EnablePedResetFlag(GetPlayerPed(), PRF_DontUseSprintEnergy);
-			EnablePedResetFlag(GetPlayerPed(), PRF_ScriptDisableSecondaryAnimationTasks);
-			EnablePedResetFlag(GetPlayerPed(), PRF_DisableDustOffAnims);
-			EnablePedResetFlag(GetPlayerPed(), PRF_DisableWallHitAnimation);
-
-			SET_PED_CAN_PLAY_AMBIENT_IDLES(GetPlayerPed(), true, true);	// Resets every frame
-			SET_PED_CAN_PLAY_GESTURE_ANIMS(GetPlayerPed(), false);
-			SET_PED_CAN_PLAY_AMBIENT_ANIMS(GetPlayerPed(), false);
-			SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(GetPlayerPed(), false);
-
-			SET_PLAYER_NOISE_MULTIPLIER(GetPlayer(), 0.0f);
-			DISABLE_ON_FOOT_FIRST_PERSON_VIEW_THIS_UPDATE();
-
-			if (IsPlayerAiming(true, true) || IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_ATTACK) || IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_ATTACK2))
-				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), 0.25f);
-			else
-				SET_PED_MAX_MOVE_BLEND_RATIO(GetPlayerPed(), PEDMOVEBLENDRATIO_RUN);
-		}
-	}
-
-	// Ensure action compatibility with non-story peds. THIS MUST BE AT THE BOTTOM
-	if (Ini::EnablePlayerActionsForAllPeds && !IsPedMainProtagonist(GetPlayerPed()) && !GetIsPlayerCrouching())
-	{
-		if (!GET_PED_STEALTH_MOVEMENT(GetPlayerPed()) && !stealthState)
-		{
-			if (IS_PED_IN_MELEE_COMBAT(GetPlayerPed()) || COUNT_PEDS_IN_COMBAT_WITH_TARGET(GetPlayerPed()) > 0 || IS_PED_SHOOTING(GetPlayerPed()))
-				SET_PED_USING_ACTION_MODE(GetPlayerPed(), true, 10000, "DEFAULT_ACTION");
-		}
-	}
-	return;
+	g_crouchController.Update();
 }
 
 Timer midAirLedgeGrabRagdollTimer;
@@ -164,7 +178,7 @@ int heightClimbSTHandle = NULL; bool heightClimbSTHit = false;
 void EnableMidAirLedgeGrab()
 {
 	constexpr float fwdOff = 0.3f;
-	constexpr int STFlags = SCRIPT_INCLUDE_ALL & ~SCRIPT_INCLUDE_RIVER & ~SCRIPT_INCLUDE_FOLIAGE;
+	constexpr int STFlags = SCRIPT_INCLUDE_ALL & ~SCRIPT_INCLUDE_PED & ~SCRIPT_INCLUDE_RIVER & ~SCRIPT_INCLUDE_FOLIAGE;
 
 	if (DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())) ||
 		(!IS_ENTITY_IN_AIR(GetPlayerPed()) && !IS_PED_FALLING(GetPlayerPed())))
@@ -188,10 +202,7 @@ void EnableMidAirLedgeGrab()
 	{
 		Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
 		if (GET_SHAPE_TEST_RESULT(mainClimbSTHandle, &mainClimbSTHit, &mainClimbSTHitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
-		{
-			//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 			mainClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, start.z, radius, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
-		}
 	}
 	else
 		mainClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, start.z, radius, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
@@ -251,10 +262,7 @@ void EnableMidAirLedgeGrab()
 	{
 		Entity hitEntity = NULL;
 		if (GET_SHAPE_TEST_RESULT(heightClimbSTHandle, &heightClimbSTHit, &heightClimbSTHitCoords, &heightClimbSTHitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
-		{
-			//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
 			heightClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, end.z, radius, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
-		}
 	}
 	else
 		heightClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, end.z, radius, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
@@ -267,8 +275,8 @@ void EnableMidAirLedgeGrab()
 
 	float avgHeight = (surfaceClimbSTHitCoords.z + surface2ndClimbSTHitCoords.z) / 2.0f;
 	Vector3 avgNormal = (surfaceClimbSTHitNormal + surface2ndClimbSTHitNormal + heightClimbSTHitNormal) / 3.0f;
-	if (!heightClimbSTHit || abs(heightClimbSTHitCoords.z - avgHeight) > 0.35f ||
-		abs(heightClimbSTHitCoords.z - spineCoords.z) > 1.5f || avgNormal.Dot(Vector3(0.0f, 0.0f, 1.0f)) < 0.4f)
+	if (!heightClimbSTHit || std::abs(heightClimbSTHitCoords.z - avgHeight) > 0.35f ||
+		std::abs(heightClimbSTHitCoords.z - spineCoords.z) > 1.5f || avgNormal.Dot(Vector3(0.0f, 0.0f, 1.0f)) < 0.4f)
 		return;
 
 	if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_JUMP) && !IS_PED_CLIMBING(GetPlayerPed()) && !IS_PED_VAULTING(GetPlayerPed()) &&
@@ -301,6 +309,49 @@ void EnablePlayerActionsForAllPeds()
 }
 
 inline void DisableActionMode() { EnablePedResetFlag(GetPlayerPed(), PRF_DisableActionMode); return; }
+
+/*
+Timer KeepClothesEnterTimer;
+Timer KeepClothesExitTimer;
+bool wasInWaterLastFrame = false;
+constexpr int maxClothesVariations = 12;
+int drawables[maxClothesVariations] = { 0 }; int textures[maxClothesVariations] = { 0 };
+void KeepClothesWhenSwimming()
+{
+	const bool isInWater = IS_ENTITY_IN_WATER(GetPlayerPed());
+	if (isInWater && !wasInWaterLastFrame && KeepClothesEnterTimer.Get() >= 250)
+	{
+		for (int i = 0; i < maxClothesVariations; i++)
+		{
+			drawables[i] = PED::GET_PED_DRAWABLE_VARIATION(GetPlayerPed(), i);
+			textures[i] = PED::GET_PED_TEXTURE_VARIATION(GetPlayerPed(), i);
+		}
+		KeepClothesEnterTimer.Reset();
+	}
+	else if (!isInWater && wasInWaterLastFrame && KeepClothesExitTimer.Get() >= 250)
+	{
+		for (int i = 0; i < maxClothesVariations; i++)
+		{
+			drawables[i] = GET_PED_DRAWABLE_VARIATION(GetPlayerPed(), i);
+			textures[i] = GET_PED_TEXTURE_VARIATION(GetPlayerPed(), i);
+		}
+		KeepClothesExitTimer.Reset();
+	}
+
+	if ((isInWater && KeepClothesEnterTimer.Get() < 250) ||
+		(!isInWater && KeepClothesExitTimer.Get() < 250))
+	{
+		for (int i = 0; i < maxClothesVariations; i++)
+		{
+			if (GET_PED_DRAWABLE_VARIATION(GetPlayerPed(), i) != drawables[i])
+				SET_PED_COMPONENT_VARIATION(GetPlayerPed(), i, drawables[i], textures[i], 0);
+		}
+	}
+
+	wasInWaterLastFrame = isInWater;
+	return;
+}
+*/
 
 constexpr int timeClearDirtDecal = 180000;	//3min
 Timer timerDirtDecal(timeClearDirtDecal);
@@ -522,17 +573,20 @@ void EnableWeaponRecoil()
 	}
 
 	const Vector3 handLoc = GET_PED_BONE_COORDS(GetPlayerPed(), BONETAG_PH_L_HAND, 0.0f, 0.0f, 0.0f);
-	if (std::abs(GET_OFFSET_FROM_ENTITY_GIVEN_WORLD_COORDS(wpObj, handLoc.x, handLoc.y, handLoc.z).y) < 0.4f)	// Check offset for two-handed weapons
-		recoilMult *= multTwoHanded;
-	else
-		recoilMult *= multOneHanded;
+	if (DOES_ENTITY_EXIST(wpObj))
+	{
+		if (std::abs(GET_OFFSET_FROM_ENTITY_GIVEN_WORLD_COORDS(wpObj, handLoc.x, handLoc.y, handLoc.z).y) < 0.4f)	// Check offset for two-handed weapons
+			recoilMult *= multTwoHanded;
+		else
+			recoilMult *= multOneHanded;
 
-	Vector3 min; Vector3 max; GET_MODEL_DIMENSIONS(GET_ENTITY_MODEL(wpObj), &min, &max);
-	const Vector3 dim = max - min;
-	if (dim.x > 0.5f)
-		recoilMult *= multLongGuns;
-	else if (dim.x <= 0.2f)
-		recoilMult *= multShortGuns;
+		Vector3 min; Vector3 max; GET_MODEL_DIMENSIONS(GET_ENTITY_MODEL(wpObj), &min, &max);
+		const Vector3 dim = max - min;
+		if (dim.x > 0.5f)
+			recoilMult *= multLongGuns;
+		else if (dim.x <= 0.2f)
+			recoilMult *= multShortGuns;
+	}
 
 	if (IsPlayerAiming(false, false))
 		recoilMult *= multAimedShot;
@@ -614,15 +668,16 @@ void DropPlayerWeaponWhenRagdolling()
 		lastNMReactionTime = GetNMReactionTime();
 		NMReactionTimer.Reset();
 	}
+	if (lastRagdollWp != NULL && IS_PED_RAGDOLL(GetPlayerPed()) && NMReactionTimer.Get() > (GetNMReactionTime() + 100))
+	{
+		if (ShouldWeaponSpawnPickupWhenDropped(lastRagdollWp, true))
+			DropPlayerWeapon(lastRagdollWp, false, lastRagdollWpRot);
+
+		lastRagdollWp = NULL;
+	}
 
 	Hash tmp = NULL;
 	const bool res = GET_CURRENT_PED_WEAPON(GetPlayerPed(), &tmp, false);
-
-	if (tmp == lastRagdollWp && NMReactionTimer.Get() > (GetNMReactionTime() + 100))
-	{
-		if (IS_PED_RAGDOLL(GetPlayerPed()) && ShouldWeaponSpawnPickupWhenDropped(lastRagdollWp, true))
-			DropPlayerWeapon(lastRagdollWp, false, lastRagdollWpRot);
-	}
 
 	// GET_CURRENT_PED_WEAPON returns true when a weapon is usable (i.e. in their hand). We do this to check if
 	// the player was holding the gun correctly (since for two-handed weapons their model is hidden on the same frame a ragdoll starts)
@@ -631,7 +686,7 @@ void DropPlayerWeaponWhenRagdolling()
 		lastRagdollWp = tmp;
 		lastRagdollWpRot = GET_ENTITY_ROTATION(GET_CURRENT_PED_WEAPON_ENTITY_INDEX(GetPlayerPed(), false), EULER_YXZ);
 	}
-	else
+	else if (!IS_PED_RAGDOLL(GetPlayerPed()))
 	{
 		lastRagdollWp = NULL;
 		lastRagdollWpRot = { 0.0f, 0.0f, 0.0f };
@@ -648,11 +703,24 @@ void DisableCarMidAirAndRollControl()
 {
 	Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
 	if (!DOES_ENTITY_EXIST(veh))
+	{
+		if (DOES_ENTITY_EXIST(lastVeh))
+		{
+			if (DOES_VEHICLE_HAVE_STUCK_VEHICLE_CHECK(lastVeh))
+				REMOVE_VEHICLE_STUCK_CHECK(lastVeh);
+			lastVeh = NULL;
+		}
 		return;
+	}
 
 	//Clean up old veh stuck checks, since the game is limited to ~16 of them
-	if (lastVeh != veh && DOES_ENTITY_EXIST(lastVeh) && DOES_VEHICLE_HAVE_STUCK_VEHICLE_CHECK(veh))
-		REMOVE_VEHICLE_STUCK_CHECK(veh);
+	if (lastVeh != veh)
+	{
+		if (DOES_ENTITY_EXIST(lastVeh) && DOES_VEHICLE_HAVE_STUCK_VEHICLE_CHECK(lastVeh))
+			REMOVE_VEHICLE_STUCK_CHECK(lastVeh);
+
+		lastVeh = veh;
+	}
 
 	//Check if veh is car and is driveable then proceed
 	constexpr int time = 100;
@@ -685,13 +753,20 @@ void DisableCarMidAirAndRollControl()
 	return;
 }
 
-bool wasSetAsMissionEntity = false;
+Vehicle lastMissionVeh = NULL;
 Timer timerCarExplosion;
 void DisableForcedCarExplosionOnImpact()
 {
 	Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
 	if (!DOES_ENTITY_EXIST(veh))
+	{
+		if (DOES_ENTITY_EXIST(lastMissionVeh))
+		{
+			SET_ENTITY_AS_NO_LONGER_NEEDED(&lastMissionVeh);
+			lastMissionVeh = NULL;
+		}
 		return;
+	}
 
 	//Check if vehicle is boat/car
 	Hash vehModel = GET_ENTITY_MODEL(veh);
@@ -702,10 +777,10 @@ void DisableForcedCarExplosionOnImpact()
 	if (!IS_ENTITY_IN_AIR(veh) || GET_ENTITY_SPEED(veh) < 10.0f)
 	{
 		//Wait 500ms before setting vehicle as no longer needed
-		if (timerCarExplosion.Get() > 500 && IS_ENTITY_A_MISSION_ENTITY(veh) && wasSetAsMissionEntity)
+		if (timerCarExplosion.Get() > 500 && veh == lastMissionVeh && IS_ENTITY_A_MISSION_ENTITY(veh))
 		{
-			wasSetAsMissionEntity = false;
 			SET_ENTITY_AS_NO_LONGER_NEEDED(&veh);
+			lastMissionVeh = NULL;
 		}
 		return;
 	}
@@ -713,7 +788,7 @@ void DisableForcedCarExplosionOnImpact()
 	timerCarExplosion.Reset();
 	if (!IS_ENTITY_A_MISSION_ENTITY(veh))
 	{
-		wasSetAsMissionEntity = true;
+		lastMissionVeh = veh;
 		SET_ENTITY_AS_MISSION_ENTITY(veh, true, false);
 	}
 	return;
@@ -789,85 +864,92 @@ void LeaveEngineOnWhenExitingVehicles()
 	return;
 }
 
-struct VehicleHydraulicsState {
-	Vehicle veh = NULL;
-	bool update = false;
-	float hydState[MAX_WHEELS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-	bool operator==(const Vehicle& v) const { return (veh == v); }
+class VehicleHydraulicsManager
+{
+public:
+	void Update(Ped playerPed)
+	{
+		Vehicle veh = GetVehiclePedIsUsing(playerPed);
+		if (DOES_ENTITY_EXIST(veh) && IS_VEHICLE_DRIVEABLE(veh, false))
+		{
+			VehicleHydraulicsState* ptr = FindOrAdd(veh);
+			if (GetVehiclePedIsEnteringOrExiting(playerPed) == veh && ptr)
+			{
+				if (!m_wasEnteringOrExitingLastFrame)
+				{
+					LOOP(i, MAX_WHEELS)
+						ptr->hydState[i] = GET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(ptr->veh, i);
+				}
+
+				ptr->update = true;
+				LOOP(i, MAX_WHEELS)
+					SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(ptr->veh, i, ptr->hydState[i]);
+
+				m_wasEnteringOrExitingLastFrame = true;
+			}
+			else
+				m_wasEnteringOrExitingLastFrame = false;
+		}
+
+		for (auto it = m_states.begin(); it != m_states.end();)
+		{
+			if (!DOES_ENTITY_EXIST(it->veh))
+			{
+				it = m_states.erase(it);
+				continue;
+			}
+
+			if (it->veh != veh && it->update)
+			{
+				it->update = false;
+				LOOP(i, MAX_WHEELS)
+					SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(it->veh, i, it->hydState[i]);
+			}
+			++it;
+		}
+	}
+
+private:
+	struct VehicleHydraulicsState {
+		Vehicle veh = 0;
+		bool update = false;
+		float hydState[MAX_WHEELS] = { 0.0f };
+		bool operator==(const Vehicle& v) const { return (veh == v); }
+	};
+
+	VehicleHydraulicsState* FindOrAdd(Vehicle veh)
+	{
+		const auto itr = std::find(m_states.begin(), m_states.end(), veh);
+		if (itr != m_states.end())
+			return &(*itr);
+
+		VehicleHydraulicsState state;
+		state.veh = veh;
+		bool isHydraulic = false;
+		LOOP(i, MAX_WHEELS)
+		{
+			state.hydState[i] = GET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(veh, i);
+			if (state.hydState[i] != 0.0f)
+				isHydraulic = true;
+		}
+
+		if (isHydraulic)
+		{
+			m_states.push_back(state);
+			return &m_states.back();
+		}
+		return nullptr;
+	}
+
+	std::vector<VehicleHydraulicsState> m_states;
+	bool m_wasEnteringOrExitingLastFrame = false;
 };
 
-std::vector<VehicleHydraulicsState> VehHydraulics;
-bool wasPlayerEnteringOrExitingVehLastFrame = false;
+static VehicleHydraulicsManager g_hydraulicsManager;
+
 void KeepCarHydraulicsPosition()
 {
-	Vehicle veh = GetVehiclePedIsUsing(GetPlayerPed());
-	if (DOES_ENTITY_EXIST(veh) &&
-		IS_VEHICLE_DRIVEABLE(veh, false))
-	{
-		VehicleHydraulicsState* ptr = nullptr;
-		const auto itr = std::find(VehHydraulics.begin(), VehHydraulics.end(), veh);
-		if (itr == VehHydraulics.end())
-		{
-			VehicleHydraulicsState state;
-			state.veh = veh;
-			bool isHydraulic = false;
-			LOOP(i, MAX_WHEELS)
-			{
-				state.hydState[i] = GET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(veh, i);
-				if (state.hydState[i] != NULL)
-					isHydraulic = true;
-			}
-
-			if (isHydraulic)
-			{
-				VehHydraulics.push_back(state);
-				ptr = &VehHydraulics.back();
-			}
-		}
-		else
-			ptr = &(*itr);
-
-		if (GetVehiclePedIsEnteringOrExiting(GetPlayerPed()) == veh && ptr)
-		{
-			if (!wasPlayerEnteringOrExitingVehLastFrame)
-			{
-				LOOP(i, MAX_WHEELS)
-				{
-					ptr->hydState[i] = GET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(ptr->veh, i);
-				}
-			}
-
-			ptr->update = true;
-			LOOP(i, MAX_WHEELS)
-			{
-				SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(ptr->veh, i, ptr->hydState[i]);
-			}
-
-			wasPlayerEnteringOrExitingVehLastFrame = true;
-		}
-		else
-			wasPlayerEnteringOrExitingVehLastFrame = false;
-	}
-
-	for (auto it = VehHydraulics.begin(); it != VehHydraulics.end(); )
-	{
-		if (!DOES_ENTITY_EXIST(it->veh))
-		{
-			it = VehHydraulics.erase(it);
-			continue;
-		}
-
-		if (it->veh != veh && it->update)
-		{
-			it->update = false;
-			LOOP(i, MAX_WHEELS)
-			{
-				SET_HYDRAULIC_SUSPENSION_RAISE_FACTOR(it->veh, i, it->hydState[i]);
-			}
-		}
-		++it; // Remember to increment iterator
-	}
-	return;
+	g_hydraulicsManager.Update(GetPlayerPed());
 }
 
 void EnableBrakeLightsOnStoppedVehicle()
@@ -945,97 +1027,116 @@ void EnableHeliWaterPhysics()
 	return;
 }
 
-int rainShapetestHandle = NULL;
-bool rainShapetestLastRes = false;
-void DynamicallyCleanVehicles()
+class VehicleCleaner
 {
-	auto WashRain = [](const Vehicle veh, const float cleanRatePerSecond, const float speedMult)
-		{
-			// Rain level: 0.0f -> 1.0f
-			const float rain = GET_RAIN_LEVEL();
-			if (rain <= 0.001f)
-				return;
-
-			const float rainMult = 1.0f + rain;
-			const float rateDirt = cleanRatePerSecond * speedMult * rainMult * GET_FRAME_TIME();	// In scale 0.0f -> 1.0f
-			const float rateDecals = rateDirt / 2.0f;	// Clean decals at half the rate of dirt
-
-			// There's no way to check for decals, so always wash them
-			WASH_DECALS_FROM_VEHICLE(veh, rateDecals);
-
-			// Dirt level: 0.0f -> 15.0f
-			const float dirt = GET_VEHICLE_DIRT_LEVEL(veh) / 15.0f;
-			if (dirt > 0.0f)
-			{
-				const float newDirtLevel = (dirt - rateDirt) * 15.0f;
-				SET_VEHICLE_DIRT_LEVEL(veh, newDirtLevel);
-			}
-			return;
-		};
-
-	auto WashSubmerged = [](const Vehicle veh, const float cleanRatePerSecond, const float speedMult)
-		{
-			if (GET_ENTITY_SUBMERGED_LEVEL(veh) <= 0.25f)
-				return;
-
-			const float rate = cleanRatePerSecond * (speedMult * 20.0f) * GET_FRAME_TIME();	// Speedup
-			WASH_DECALS_FROM_VEHICLE(veh, rate);
-			const float dirt = GET_VEHICLE_DIRT_LEVEL(veh) / 15.0f;
-			if (dirt > 0.0f)
-			{
-				const float newDirtLevel = (dirt - rate) * 15.0f;
-				SET_VEHICLE_DIRT_LEVEL(veh, newDirtLevel);
-			}
-			return;
-		};
-
-	constexpr int nearbyVehsSize = 17;	// GET_PED_NEARBY_VEHICLES wont return more than 16 vehicles. It includes the player vehicle
-	scrValue nearbyVehs[nearbyVehsSize];
-	nearbyVehs[0].Int = nearbyVehsSize; // First value has to be initialized as the size of the array, and it will stay that way
-	const int count = GET_PED_NEARBY_VEHICLES(GetPlayerPed(), reinterpret_cast<Any*>(nearbyVehs));
-	const Vehicle playerVeh = GetVehiclePedIsUsing(GetPlayerPed());
-	for (int i = 1; i <= count; ++i)	// Start at index 1, since index 0 is the size of the array. The "i <= count" is NOT an error
+public:
+	void Update(Ped playerPed)
 	{
-		const Hash model = GET_ENTITY_MODEL(nearbyVehs[i].Uns);
-		if (IS_THIS_MODEL_A_BOAT(model) || IS_THIS_MODEL_A_PLANE(model) ||
-			IS_THIS_MODEL_A_HELI(model) || IS_THIS_MODEL_A_TRAIN(model))
-			continue;
+		constexpr int nearbyVehsSize = 17;	// GET_PED_NEARBY_VEHICLES wont return more than 16 vehicles. It includes the player vehicle
+		scrValue nearbyVehs[nearbyVehsSize];
+		nearbyVehs[0].Int = nearbyVehsSize; // First value has to be initialized as the size of the array, and it will stay that way
+		const int count = GET_PED_NEARBY_VEHICLES(playerPed, reinterpret_cast<Any*>(nearbyVehs));
+		const Vehicle playerVeh = GetVehiclePedIsUsing(playerPed);
 
-		bool shouldSkipRain = false;
-		if (GET_INTERIOR_FROM_ENTITY(nearbyVehs[i].Uns))
-			shouldSkipRain = true;
-		else if (playerVeh == nearbyVehs[i].Uns && GET_RAIN_LEVEL() > 0.001f)
+		for (int i = 1; i <= count; ++i)	// Start at index 1, since index 0 is the size of the array. The "i <= count" is NOT an error
 		{
-			if (rainShapetestHandle != NULL)
+			const Vehicle veh = nearbyVehs[i].Uns;
+			const Hash model = GET_ENTITY_MODEL(veh);
+			if (IS_THIS_MODEL_A_BOAT(model) || IS_THIS_MODEL_A_PLANE(model) ||
+				IS_THIS_MODEL_A_HELI(model) || IS_THIS_MODEL_A_TRAIN(model))
+				continue;
+
+			bool shouldSkipRain = false;
+			if (GET_INTERIOR_FROM_ENTITY(veh))
+				shouldSkipRain = true;
+			else if (playerVeh == veh && GET_RAIN_LEVEL() > 0.001f)
 			{
-				bool hit = false; Vector3 hitCoords = Vector3(); Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
-				if (GET_SHAPE_TEST_RESULT(rainShapetestHandle, &hit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
-				{
-					rainShapetestLastRes = hit;
-					//RELEASE_SCRIPT_GUID_FROM_ENTITY(hitEntity);
-					const Vector3 loc = GET_ENTITY_COORDS(nearbyVehs[i].Uns, false);
-					rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, nearbyVehs[i].Uns, SCRIPT_SHAPETEST_OPTION_DEFAULT);
-				}
+				UpdateRainShapetest(veh);
 			}
-			else
+
+			constexpr float maxSpeed = 100.0f;
+			const float speed = std::clamp(GET_ENTITY_SPEED(veh) * 3.6f, 0.0f, maxSpeed);
+
+			constexpr float cleanRatePerSecond = 0.005555555f; // 0.0085f is around 2min (one in-game hour) to clean a vehicle with max dirt level
+			const float speedMult = 1.0f + (speed / maxSpeed);
+
+			if (!shouldSkipRain && !m_rainShapetestLastRes)
+				WashRain(veh, cleanRatePerSecond, speedMult);
+
+			WashSubmerged(veh, cleanRatePerSecond, speedMult);
+		}
+	}
+
+private:
+	int m_rainShapetestHandle = NULL;
+	bool m_rainShapetestLastRes = false;
+
+	void UpdateRainShapetest(Vehicle veh)
+	{
+		if (m_rainShapetestHandle != NULL)
+		{
+			bool hit = false;
+			Vector3 hitCoords = Vector3();
+			Vector3 hitNormal = Vector3();
+			Entity hitEntity = NULL;
+			if (GET_SHAPE_TEST_RESULT(m_rainShapetestHandle, &hit, &hitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
 			{
-				const Vector3 loc = GET_ENTITY_COORDS(nearbyVehs[i].Uns, false);
-				rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, nearbyVehs[i].Uns, SCRIPT_SHAPETEST_OPTION_DEFAULT);
+				m_rainShapetestLastRes = hit;
+				const Vector3 loc = GET_ENTITY_COORDS(veh, false);
+				m_rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, veh, SCRIPT_SHAPETEST_OPTION_DEFAULT);
 			}
 		}
-
-		constexpr float maxSpeed = 100.0f;
-		const float speed = std::clamp(GET_ENTITY_SPEED(nearbyVehs[i].Uns) * 3.6f, 0.0f, maxSpeed);
-
-		constexpr float cleanRatePerSecond = 0.005555555f; // 0.0085f is around 2min (one in-game hour) to clean a vehicle with max dirt level
-		const float speedMult = 1.0f + (speed / maxSpeed);
-
-		if (!shouldSkipRain && !rainShapetestLastRes)
-			WashRain(nearbyVehs[i].Uns, cleanRatePerSecond, speedMult);
-
-		WashSubmerged(nearbyVehs[i].Uns, cleanRatePerSecond, speedMult);
+		else
+		{
+			const Vector3 loc = GET_ENTITY_COORDS(veh, false);
+			m_rainShapetestHandle = START_SHAPE_TEST_LOS_PROBE(loc.x, loc.y, loc.z, loc.x, loc.y, (loc.z + 10.0f), SCRIPT_INCLUDE_ALL, veh, SCRIPT_SHAPETEST_OPTION_DEFAULT);
+		}
 	}
-	return;
+
+	static void WashRain(const Vehicle veh, const float cleanRatePerSecond, const float speedMult)
+	{
+		// Rain level: 0.0f -> 1.0f
+		const float rain = GET_RAIN_LEVEL();
+		if (rain <= 0.001f)
+			return;
+
+		const float rainMult = 1.0f + rain;
+		const float rateDirt = cleanRatePerSecond * speedMult * rainMult * GET_FRAME_TIME();	// In scale 0.0f -> 1.0f
+		const float rateDecals = rateDirt / 2.0f;	// Clean decals at half the rate of dirt
+
+		// There's no way to check for decals, so always wash them
+		WASH_DECALS_FROM_VEHICLE(veh, rateDecals);
+
+		// Dirt level: 0.0f -> 15.0f
+		const float dirt = GET_VEHICLE_DIRT_LEVEL(veh) / 15.0f;
+		if (dirt > 0.0f)
+		{
+			const float newDirtLevel = (dirt - rateDirt) * 15.0f;
+			SET_VEHICLE_DIRT_LEVEL(veh, newDirtLevel);
+		}
+	}
+
+	static void WashSubmerged(const Vehicle veh, const float cleanRatePerSecond, const float speedMult)
+	{
+		if (GET_ENTITY_SUBMERGED_LEVEL(veh) <= 0.25f)
+			return;
+
+		const float rate = cleanRatePerSecond * (speedMult * 20.0f) * GET_FRAME_TIME();	// Speedup
+		WASH_DECALS_FROM_VEHICLE(veh, rate);
+		const float dirt = GET_VEHICLE_DIRT_LEVEL(veh) / 15.0f;
+		if (dirt > 0.0f)
+		{
+			const float newDirtLevel = (dirt - rate) * 15.0f;
+			SET_VEHICLE_DIRT_LEVEL(veh, newDirtLevel);
+		}
+	}
+};
+
+static VehicleCleaner g_vehicleCleaner;
+
+void DynamicallyCleanVehicles()
+{
+	g_vehicleCleaner.Update(GetPlayerPed());
 }
 
 void DisableRagdollOnVehicleRoof()
@@ -1445,17 +1546,11 @@ void MinimapSpeedometer()
 		speedTimer.Reset();
 	}
 
-	std::string text = "";
+	char text[32];
 	if (SHOULD_USE_METRIC_MEASUREMENTS())
-	{
-		text = std::to_string(speed * 3.6f);
-		text = text.substr(0, (text.find(".") + 2)) + "km/h";
-	}
+		snprintf(text, sizeof(text), "%.1fkm/h", speed * 3.6f);
 	else
-	{
-		text = std::to_string(speed * 2.236936f);
-		text = text.substr(0, (text.find(".") + 2)) + "mph";
-	}
+		snprintf(text, sizeof(text), "%.1fmph", speed * 2.236936f);
 
 	float txtX = 0.0f, txtY = 0.0f;
 	float n = (16.0f / 9.0f) / GET_SCREEN_ASPECT_RATIO();	// Scale X axis if ratio differs from 16/9
@@ -1470,7 +1565,7 @@ void MinimapSpeedometer()
 	SetTextStyle(TextStyle{ FONT_CONDENSED, 0.44f, 0.44f, RGBA{250, 250, 250, 180}, DROPSTYLE_DROPSHADOWONLY, false, 0.0f, 1.0f });
 
 	BEGIN_TEXT_COMMAND_DISPLAY_TEXT("STRING");
-	ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(text.c_str());
+	ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(text);
 	END_TEXT_COMMAND_DISPLAY_TEXT(txtX, txtY, false);
 	return;
 }
@@ -1559,8 +1654,11 @@ void ReplaceArmourBarWithStamina()
 	{
 		int health = GET_ENTITY_HEALTH(GetPlayerPed()) - 100 + GET_PED_ARMOUR(GetPlayerPed());				//We need to subtract 100 because the player fatal health is 100 not 0
 		int maxHealth = GET_ENTITY_MAX_HEALTH(GetPlayerPed()) - 100 + GET_PLAYER_MAX_ARMOUR(GetPlayer());
+		if (maxHealth <= 0) maxHealth = 1;
 		int newHealthPercentage = ROUND(health * 100.0f / maxHealth);										//Always ensure a 100 offset to fix hud ratio
-		int realHealthPercentage = ROUND((GET_ENTITY_HEALTH(GetPlayerPed()) - 100.0f) * 100.0f / (GET_ENTITY_MAX_HEALTH(GetPlayerPed()) - 100.0f));
+		float baseMaxHealth = static_cast<float>(GET_ENTITY_MAX_HEALTH(GetPlayerPed()) - 100);
+		if (baseMaxHealth <= 0.0f) baseMaxHealth = 1.0f;
+		int realHealthPercentage = ROUND((GET_ENTITY_HEALTH(GetPlayerPed()) - 100.0f) * 100.0f / baseMaxHealth);
 
 		//Flash health bar every 400ms if health is below 25%
 		if (realHealthPercentage > 25 || timerFlashHealth.Get() > flashHealthInterval)
@@ -1590,11 +1688,14 @@ void ReplaceArmourBarWithStamina()
 
 bool InitializedHideHudComponents = false;
 std::string hudComponentsStrArr[MAX_HUD_COMPONENTS]{};
-unsigned int hudComponentsArr[MAX_HUD_COMPONENTS]{};
+int hudComponentsArr[MAX_HUD_COMPONENTS]{};
 void HideHudComponents()
 {
 	if (!InitializedHideHudComponents)
 	{
+		LOOP(i, MAX_HUD_COMPONENTS)
+			hudComponentsArr[i] = -1;
+
 		SplitString(Ini::HudComponents.c_str(), hudComponentsStrArr, MAX_HUD_COMPONENTS, true);
 		LOOP(i, MAX_HUD_COMPONENTS)
 		{

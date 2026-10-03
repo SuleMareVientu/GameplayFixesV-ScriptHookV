@@ -1,42 +1,85 @@
 #include "utils\keyboard.h"
 
-constexpr int KEYS_SIZE = 255;
+class KeyboardManager
+{
+public:
+	static constexpr int KeyCount = 256;
+	static constexpr int NowPeriodMs = 100;
+	static constexpr int MaxDownMs = 5000;
 
-struct {
-	ULONGLONG time;
-	BOOL isWithAlt;
-	BOOL wasDownBefore;
-	BOOL isUpNow;
-} keyStates[KEYS_SIZE];
+	struct KeyState {
+		ULONGLONG time = 0;
+		BOOL isWithAlt = FALSE;
+		BOOL wasDownBefore = FALSE;
+		BOOL isUpNow = FALSE;
+	};
+
+	static KeyboardManager& Instance()
+	{
+		static KeyboardManager instance;
+		return instance;
+	}
+
+	void OnMessage(DWORD key, WORD repeats, BYTE scanCode, BOOL isExtended, BOOL isWithAlt, BOOL wasDownBefore, BOOL isUpNow)
+	{
+		if (IsValidKey(key))
+		{
+			m_keyStates[key].time = GetTickCount64();
+			m_keyStates[key].isWithAlt = isWithAlt;
+			m_keyStates[key].wasDownBefore = wasDownBefore;
+			m_keyStates[key].isUpNow = isUpNow;
+		}
+	}
+
+	bool IsDown(DWORD key) const
+	{
+		if (!IsValidKey(key) || m_keyStates[key].time == 0)
+			return false;
+
+		return (GetTickCount64() < m_keyStates[key].time + MaxDownMs) && !m_keyStates[key].isUpNow;
+	}
+
+	bool IsJustUp(DWORD key, bool exclusive = true)
+	{
+		if (!IsValidKey(key) || m_keyStates[key].time == 0)
+			return false;
+
+		const bool justUp = (GetTickCount64() < m_keyStates[key].time + NowPeriodMs) && m_keyStates[key].isUpNow;
+		if (justUp && exclusive)
+			Reset(key);
+
+		return justUp;
+	}
+
+	void Reset(DWORD key)
+	{
+		if (IsValidKey(key))
+			m_keyStates[key] = KeyState{};
+	}
+
+private:
+	KeyboardManager() = default;
+	static constexpr bool IsValidKey(DWORD key) { return key >= 1 && key < KeyCount; }
+
+	KeyState m_keyStates[KeyCount]{};
+};
 
 void OnKeyboardMessage(DWORD key, WORD repeats, BYTE scanCode, BOOL isExtended, BOOL isWithAlt, BOOL wasDownBefore, BOOL isUpNow)
 {
-	if (key >= 1 && key < KEYS_SIZE)
-	{
-		keyStates[key].time = GetTickCount64();
-		keyStates[key].isWithAlt = isWithAlt;
-		keyStates[key].wasDownBefore = wasDownBefore;
-		keyStates[key].isUpNow = isUpNow;
-	}
+	KeyboardManager::Instance().OnMessage(key, repeats, scanCode, isExtended, isWithAlt, wasDownBefore, isUpNow);
 }
-
-constexpr int NOW_PERIOD = 100, MAX_DOWN = 5000; // ms
 
 bool IsKeyDown(DWORD key)
 {
-	return (key >= 1 && key < KEYS_SIZE) ? ((GetTickCount64() < keyStates[key].time + MAX_DOWN) && !keyStates[key].isUpNow) : false;
+	return KeyboardManager::Instance().IsDown(key);
 }
 
 bool IsKeyJustUp(DWORD key, bool exclusive)
 {
-	bool b = (key >= 1 && key < KEYS_SIZE) ? (GetTickCount64() < keyStates[key].time + NOW_PERIOD && keyStates[key].isUpNow) : false;
-	if (b && exclusive)
-		ResetKeyState(key);
-	return b;
+	return KeyboardManager::Instance().IsJustUp(key, exclusive);
 }
 
 void ResetKeyState(DWORD key)
 {
-	if (key >= 1 && key < KEYS_SIZE)
-		memset(&keyStates[key], 0, sizeof(keyStates[0]));
+	KeyboardManager::Instance().Reset(key);
 }

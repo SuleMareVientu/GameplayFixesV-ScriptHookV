@@ -27,8 +27,8 @@ void InitializeScriptPatches()
 {
 	//Initialize globals
 	const std::filesystem::path modulePath = AbsoluteModulePath(GetDllInstance());
-	dllInstanceName = modulePath.filename().u8string();
-	dllInstanceNameNoExt = modulePath.filename().replace_extension().u8string();
+	dllInstanceName = modulePath.filename().string();
+	dllInstanceNameNoExt = modulePath.stem().string();
 	dllInstanceIniName = dllInstanceNameNoExt + ".ini";
 	dllInstanceLogName = dllInstanceNameNoExt + ".log";
 	gameVersion = getGameVersion();

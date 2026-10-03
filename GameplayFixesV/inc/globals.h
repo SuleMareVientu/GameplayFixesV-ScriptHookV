@@ -44,7 +44,7 @@ constexpr unsigned int Joaat(const char* str)
 	hash ^= hash >> 11;
 	hash += hash << 15;
 	return hash;
-};
+}
 
 HINSTANCE GetDllInstance();
 const char* GetDllInstanceName();
@@ -113,6 +113,7 @@ struct WeaponPickup {
 	Blip PickupBlip = 0;
 	int TintIndex = -1;
 	int CamoIndex = -1;
+	bool Initialized = false;
 	std::vector<Hash> Components = {};
 	std::vector<WpPickupLivery> Liveries = {};
 	bool operator==(const Hash& h) const { return (WpHash == h); }

@@ -18,7 +18,7 @@ namespace
 struct PedBrolly
 {
 	Ped ped = 0;
-	Object brolly = 0;
+	mutable Object brolly = 0;
 	constexpr bool operator==(const Ped _ped) const { return (ped == _ped); }
 	constexpr bool operator==(const PedBrolly& s) const { return (ped == s.ped); }
 	constexpr bool operator<(const PedBrolly& s) const { return (ped < s.ped); }
@@ -194,7 +194,7 @@ void SetPedsAccuracy(Ped ped)
 	const int minAcc = Ini::MinAccuracy;
 	const int maxAcc = Ini::MaxAccuracy;
 
-	const int shootRateMode = Ini::PedShootRateMode;;
+	const int shootRateMode = Ini::PedShootRateMode;
 	const int minSR = Ini::MinShootRate;
 	const int maxSR = Ini::MaxShootRate;
 
@@ -278,8 +278,9 @@ void EnablePlayerNMReactionsWhenShot(const Ped shooter)
 
 	Vector3 shotStartLoc = { 0.0f, 0.0f, 0.0f };
 	const Entity wpObject = GET_CURRENT_PED_WEAPON_ENTITY_INDEX(shooter, false);
-	if (!DOES_ENTITY_EXIST(wpObject))
-		shotStartLoc = GET_WORLD_POSITION_OF_ENTITY_BONE(wpObject, GET_ENTITY_BONE_INDEX_BY_NAME(wpObject, "Gun_Muzzle"));	//  "Gun_Muzzle" is the correct one
+	int muzzleBone = -1;
+	if (DOES_ENTITY_EXIST(wpObject) && (muzzleBone = GET_ENTITY_BONE_INDEX_BY_NAME(wpObject, "Gun_Muzzle")) != -1)
+		shotStartLoc = GET_WORLD_POSITION_OF_ENTITY_BONE(wpObject, muzzleBone);
 	else
 		shotStartLoc = GET_PED_BONE_COORDS(shooter, BONETAG_PH_R_HAND, 0.0f, 0.0f, 0.0f);
 
@@ -292,7 +293,7 @@ void EnablePlayerNMReactionsWhenShot(const Ped shooter)
 
 	int minShotReactTime = Ini::MinimumRagdollTime;	// CTaskNMShot MinimumShotReactionTimePlayerMS 450
 	int maxShotReactTime = Ini::MaximumRagdollTime;
-	InvertIfGreater(maxShotReactTime, maxShotReactTime);
+	InvertIfGreater(minShotReactTime, maxShotReactTime);
 	const int reactTime = GetRandomNumberInRange(minShotReactTime, maxShotReactTime);
 	
 	if (Ini::DontDropWeapon)
@@ -353,8 +354,14 @@ void UpdatePedsNextFrame()
 				}
 				else if ((!GET_CAN_PED_BE_GRABBED_BY_SCRIPT(it->ped, true, false, false, true, true, false, false, PEDTYPE_INVALID) &&
 						!IS_PED_USING_SCENARIO(it->ped, "CODE_HUMAN_CROSS_ROAD_WAIT")) || IS_PED_RAGDOLL(it->ped))
-					DeleteBrolly(it->ped, it->brolly);
-				else
+				{
+					if (it->brolly != 0)
+					{
+						DeleteBrolly(it->ped, it->brolly);
+						it->brolly = 0;
+					}
+				}
+				else if (it->brolly != 0)
 				{
 					SET_PED_CAN_PLAY_AMBIENT_ANIMS(it->ped, false);
 					SET_PED_CAN_PLAY_AMBIENT_BASE_ANIMS(it->ped, false);
@@ -418,7 +425,6 @@ void RegisterPedOptions()
 	pedOptionsManager.UnregisterAllOptions();
 
 	REGISTER_OPTION_INI(pedOptionsManager, EnablePedUmbrellas, &currentPed, PedUmbrellas);
-
 	REGISTER_OPTION(pedOptionsManager, DisableWrithe, &currentPed);
 	REGISTER_OPTION(pedOptionsManager, DisableHurt, &currentPed);
 	REGISTER_OPTION(pedOptionsManager, DisableShootFromGround, &currentPed);
@@ -453,9 +459,9 @@ void UpdatePedsPool()
 
 	//Get all peds
 	constexpr int pedsSize = 1024;
-	std::unique_ptr<Ped[]> peds = std::make_unique<Ped[]>(pedsSize);	// Allocate on the heap
-	const int count = worldGetAllPeds(peds.get(), pedsSize);
-	LOOP(i, count)
+	static Ped peds[pedsSize];
+	const int count = worldGetAllPeds(peds, pedsSize);
+	for (int i = 0; i < count; ++i)
 	{
 		if (!IS_ENTITY_A_PED(peds[i]) || !IS_PED_HUMAN(peds[i]) || IS_ENTITY_DEAD(peds[i], false) || IS_PED_A_PLAYER(peds[i]))
 			continue;

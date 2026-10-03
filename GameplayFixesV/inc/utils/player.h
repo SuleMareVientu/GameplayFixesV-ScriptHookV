@@ -81,7 +81,7 @@ public:
 			return (m_iniFlag.value.Float >= 0.0f);
 			break;
 		case IVT_STRING:
-			return (m_iniFlag.value.String == nullptr || m_iniFlag.value.String == "");
+			return (m_iniFlag.value.String != nullptr && m_iniFlag.value.String[0] != '\0');
 			break;
 		case IVT_BOOL:
 			return m_iniFlag.value.Bool;
