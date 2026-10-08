@@ -227,3 +227,8 @@ int GetBoneTagFromNMPartIndex(const int partIndex);
 #pragma endregion
 
 void UpdatePlayerVars();
+void ResetWeaponDrops();
+void ResetLastDamages();
+extern bool isPlayerInsideSafehouse;
+extern bool isPlayerArmed;
+void ResetSafehouseState();

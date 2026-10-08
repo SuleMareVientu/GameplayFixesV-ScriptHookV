@@ -57,6 +57,8 @@ bool GetIsEnhancedVersion();
 bool GetFoundNMFunctions();
 bool GetIsPlayerCrouching();
 int GetNMReactionTime();
+
+extern uintptr_t playerPedAddress;
 #pragma endregion
 
 #pragma region Custom Types and Structures

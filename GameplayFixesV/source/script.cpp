@@ -7,29 +7,63 @@
 #include "utils\functions.h"
 #include "utils\player.h"
 #include "utils\peds.h"
+#include "utils\mem.h"
+#include "utils\ini.h"
+#include "utils\profiler.h"
 #include "globals.h"
+
+static void ResetScriptState()
+{
+	Profiler::Reset();
+	ResetWeaponDrops();
+	ResetLastDamages();
+	ResetPedState();
+	ResetPlayerState();
+	ResetSafehouseState();
+}
 
 static void update()
 {
-	// Check if player ped exists
-	if (!DOES_ENTITY_EXIST(GetPlayerPed()))
+	// Guard against uninitialized state during save load, screen transitions, or dead/inactive player
+	if (DLC::GET_IS_LOADING_SCREEN_ACTIVE() || !PLAYER::IS_PLAYER_PLAYING(PLAYER::PLAYER_ID()) || !DOES_ENTITY_EXIST(GetPlayerPed()))
+	{
+		ResetScriptState();
 		return;
+	}
 
-	RefreshIni();
+	Profiler::BeginFrame();
+
+	{
+		PROFILE_SCOPE("RefreshIni");
+		RefreshIni();
+	}
 
 	//Update player options
-	UpdatePlayerOptions();
+	{
+		PROFILE_SCOPE("UpdatePlayerOptions (Total)");
+		UpdatePlayerOptions();
+	}
 
 	//Update ped pool every frame
-	UpdatePedsPool();
+	{
+		PROFILE_SCOPE("UpdatePedsPool (Total)");
+		UpdatePedsPool();
+	}
 
 	//Remember to clear last damages
-	ClearLastDamages();
+	{
+		PROFILE_SCOPE("ClearLastDamages");
+		ClearLastDamages();
+	}
+
+	Profiler::EndFrame();
 	return;
 }
 
 void ScriptMain()
 {
+	ResetScriptState();
+
 	while (true)
 	{
 		update();

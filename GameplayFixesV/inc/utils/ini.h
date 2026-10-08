@@ -19,6 +19,7 @@ extern bool HookGameFunctions;
 extern bool AllowWeaponsInsideSafeHouse;
 extern bool ExtendGamePools;
 extern bool EnableLogging;
+extern bool EnableDebugProfiler;
 //Player Settings
 extern bool EnableCrouching;
 extern bool EnableMidAirLedgeGrab;
@@ -87,6 +88,7 @@ extern bool DisableHUDPostFX;
 extern bool DisableSpecialAbilityPostFX;
 extern bool EnableBigMapToggle;
 extern bool MinimapSpeedometer;
+extern bool HideSpeedometerDecimals;
 extern float SetRadarZoom;
 extern bool DisableMinimapTilt;
 extern bool HideMinimapFog;

@@ -36,6 +36,7 @@ bool HookGameFunctions = true;
 bool AllowWeaponsInsideSafeHouse = true;
 bool ExtendGamePools = true;
 bool EnableLogging = false;
+bool EnableDebugProfiler = false;
 //Player Settings
 bool EnableCrouching = true;
 bool EnableMidAirLedgeGrab = true;
@@ -104,6 +105,7 @@ bool DisableHUDPostFX = false;
 bool DisableSpecialAbilityPostFX = false;
 bool EnableBigMapToggle = true;
 bool MinimapSpeedometer = true;
+bool HideSpeedometerDecimals = false;
 float SetRadarZoom = -1.0f;
 bool DisableMinimapTilt = false;
 bool HideMinimapFog = true;
@@ -204,6 +206,7 @@ void ReadINI()
 	Ini::AllowWeaponsInsideSafeHouse = GET_INI_BOOL(ini, memoryGroup, AllowWeaponsInsideSafeHouse);
 	Ini::ExtendGamePools = GET_INI_BOOL(ini, memoryGroup, ExtendGamePools);
 	Ini::EnableLogging = GET_INI_BOOL(ini, memoryGroup, EnableLogging);
+	Ini::EnableDebugProfiler = GET_INI_BOOL(ini, memoryGroup, EnableDebugProfiler);
 
 	//////////////////////////////////////Player//////////////////////////////////////////
 	Ini::EnableCrouching = GET_INI_BOOL(ini, playerGroup, EnableCrouching);
@@ -279,6 +282,7 @@ void ReadINI()
 	Ini::DisableSpecialAbilityPostFX = GET_INI_BOOL(ini, HUDGroup, DisableSpecialAbilityPostFX);
 	Ini::EnableBigMapToggle = GET_INI_BOOL(ini, HUDGroup, EnableBigMapToggle);
 	Ini::MinimapSpeedometer = GET_INI_BOOL(ini, HUDGroup, MinimapSpeedometer);
+	Ini::HideSpeedometerDecimals = GET_INI_BOOL(ini, HUDGroup, HideSpeedometerDecimals);
 	Ini::SetRadarZoom = GET_INI_FLOAT(ini, HUDGroup, SetRadarZoom);
 	Ini::DisableMinimapTilt = GET_INI_BOOL(ini, HUDGroup, DisableMinimapTilt);
 	Ini::HideMinimapFog = GET_INI_BOOL(ini, HUDGroup, HideMinimapFog);

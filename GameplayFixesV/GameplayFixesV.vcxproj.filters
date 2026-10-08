@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="source\main.cpp" />
@@ -105,6 +105,9 @@
       <Filter>inc\utils</Filter>
     </ClInclude>
     <ClInclude Include="inc\utils\peds.h">
+      <Filter>inc\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\utils\profiler.h">
       <Filter>inc\utils</Filter>
     </ClInclude>
     <ClInclude Include="inc\utils\nm.h">

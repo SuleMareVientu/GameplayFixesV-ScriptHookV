@@ -202,7 +202,7 @@ void ClearLog()
 
 void RawLog(const std::string& szInfo, const std::string& szData)
 {
-	if (!Ini::EnableLogging)
+	if (!Ini::EnableLogging && !Ini::EnableDebugProfiler)
 		return;
 
 	std::ofstream ofFile(GetDllInstanceLogName(), std::ios_base::out | std::ios_base::app);
@@ -228,7 +228,7 @@ bool hasWrittenToLog = false;
 constexpr int logBufferSize = 2048;
 void WriteLog(const char* szInfo, const char* szFormat, ...)
 {
-	if (!Ini::EnableLogging)
+	if (!Ini::EnableLogging && !Ini::EnableDebugProfiler)
 		return;
 
 	if (!hasWrittenToLog)
@@ -560,6 +560,13 @@ void ClearLastDamages()
 		lastWeaponDamage.clear();
 	}
 	return;
+}
+
+void ResetLastDamages()
+{
+	lastDamageEntity.clear();
+	lastDamageBone.clear();
+	lastWeaponDamage.clear();
 }
 
 bool HasEntityBeenDamagedByWeaponThisFrame(Ped ped, Hash weaponHash, int weaponType)
@@ -1036,9 +1043,31 @@ public:
 		s_retrievedWeaponThisFrame = false;
 	}
 
+	static void Clear()
+	{
+		s_retrievedWeaponThisFrame = false;
+		if (!DLC::GET_IS_LOADING_SCREEN_ACTIVE())
+		{
+			for (auto& wp : droppedWeapons)
+			{
+				if (wp.PickupBlip && DOES_BLIP_EXIST(wp.PickupBlip))
+					REMOVE_BLIP(&wp.PickupBlip);
+
+				if (wp.PickupIndex && DOES_PICKUP_EXIST(wp.PickupIndex))
+					REMOVE_PICKUP(wp.PickupIndex);
+			}
+		}
+		droppedWeapons.clear();
+	}
+
 private:
 	static inline bool s_retrievedWeaponThisFrame = false;
 };
+
+void ResetWeaponDrops()
+{
+	WeaponDropManager::Clear();
+}
 
 void DropPlayerWeapon(Hash weaponHash, const bool shouldCurse, Vector3 wpRot)
 {
@@ -1414,13 +1443,13 @@ bool IsPlayerAiming(bool includeAimGunTask, bool includeShooting)
 	return false;
 }
 
+bool isPlayerInsideSafehouse = false;
+bool isPlayerArmed = false;
 
-bool isPlayerInsideSafehouseThisFrame = false;
 bool IsPlayerInsideSafehouse()
 {
-	if (isPlayerInsideSafehouseThisFrame)
-		return true;
-	else if (!DOES_ENTITY_EXIST(GetPlayerPed()))
+	const Ped playerPed = GetPlayerPed();
+	if (!DOES_ENTITY_EXIST(playerPed) || GET_INTERIOR_FROM_ENTITY(playerPed) == 0)
 		return false;
 
 	const Vector3 tmpCoords = GetPlayerCoords();
@@ -1435,18 +1464,12 @@ bool IsPlayerInsideSafehouse()
 	for (const char* sh : safehouses)
 	{
 		if (GET_INTERIOR_AT_COORDS_WITH_TYPE(tmpCoords.x, tmpCoords.y, tmpCoords.z, sh))
-		{
-			isPlayerInsideSafehouseThisFrame = true;
 			return true;
-		}
 	}
 
 	//Special check for Trevor's office inside the strip club
-	if (GET_ROOM_KEY_FROM_ENTITY(GetPlayerPed()) == strp3off)	//room key for "strp3off"
-	{
-		isPlayerInsideSafehouseThisFrame = true;
+	if (GET_ROOM_KEY_FROM_ENTITY(playerPed) == strp3off)	//room key for "strp3off"
 		return true;
-	}
 
 	return false;
 }
@@ -1690,6 +1713,35 @@ int GetBoneTagFromNMPartIndex(const int partIndex)
 void UpdatePlayerVars()
 {
 	WeaponDropManager::ResetFrame();
-	isPlayerInsideSafehouseThisFrame = false;
+
+	if (Ini::AllowWeaponsInsideSafeHouse)
+	{
+		const Ped playerPed = GetPlayerPed();
+		if (DOES_ENTITY_EXIST(playerPed))
+		{
+			playerPedAddress = reinterpret_cast<uintptr_t>(getScriptHandleBaseAddress(playerPed));
+			isPlayerInsideSafehouse = IsPlayerInsideSafehouse();
+			isPlayerArmed = (GET_SELECTED_PED_WEAPON(playerPed) != WEAPON_UNARMED);
+		}
+		else
+		{
+			playerPedAddress = 0;
+			isPlayerInsideSafehouse = false;
+			isPlayerArmed = false;
+		}
+	}
+	else
+	{
+		playerPedAddress = 0;
+		isPlayerInsideSafehouse = false;
+		isPlayerArmed = false;
+	}
 	return;
+}
+
+void ResetSafehouseState()
+{
+	isPlayerInsideSafehouse = false;
+	isPlayerArmed = false;
+	playerPedAddress = 0;
 }

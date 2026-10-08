@@ -445,7 +445,7 @@ typedef void(__fastcall* DoDisableInput_t)(void*, uint32_t, const void*, bool);
 DoDisableInput_t TrampolineDoDisableInput = nullptr;
 void __fastcall DetourDoDisableInput(void* _this, uint32_t input, const void* options, bool disableRelatedInputs)
 {
-	if (IsPlayerInsideSafehouse())
+	if (isPlayerInsideSafehouse)
 	{
 		switch (input)
 		{
@@ -460,7 +460,8 @@ void __fastcall DetourDoDisableInput(void* _this, uint32_t input, const void* op
 			break;
 		}
 	}
-	TrampolineDoDisableInput(_this, input, options, disableRelatedInputs);
+	if (TrampolineDoDisableInput)
+		TrampolineDoDisableInput(_this, input, options, disableRelatedInputs);
 	return;
 }
 
@@ -469,14 +470,19 @@ EquipWeapon_t TrampolineEquipWeapon = nullptr;
 bool __fastcall DetourEquipWeapon(void* _this, uint32_t uWeaponNameHash, uint32_t iVehicleIndex,
 	bool bCreateWeaponWhenLoaded, bool bProcessWeaponInstructions, uint32_t attach)
 {
-	if (IsPlayerInsideSafehouse())
+
+	if (_this && isPlayerInsideSafehouse && uWeaponNameHash == WEAPON_UNARMED && isPlayerArmed)
 	{
-		if (uWeaponNameHash == WEAPON_UNARMED &&
-			GET_SELECTED_PED_WEAPON(GetPlayerPed()) != WEAPON_UNARMED)
-			return true;
+		const uintptr_t pedPtr = *reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(_this) + 0x10);
+		if (pedPtr && pedPtr == playerPedAddress)
+			return false;
 	}
-	return TrampolineEquipWeapon(_this, uWeaponNameHash, iVehicleIndex,
-		bCreateWeaponWhenLoaded, bProcessWeaponInstructions, attach);
+
+	if (TrampolineEquipWeapon)
+		return TrampolineEquipWeapon(_this, uWeaponNameHash, iVehicleIndex,
+			bCreateWeaponWhenLoaded, bProcessWeaponInstructions, attach);
+
+	return false;
 }
 
 void AllowWeaponsInsideSafeHouse()
@@ -496,9 +502,11 @@ void AllowWeaponsInsideSafeHouse()
 		target += 11; // offset is same for both versions currently
 		target = target + *reinterpret_cast<int32_t*>(target + 1) + 5;
 		WriteLog("Operation", "Found address of \"DoDisableInput\" at 0x%p!", (void*)target);
-		MH_CreateHook(reinterpret_cast<LPVOID>(target),
+		MH_STATUS st = MH_CreateHook(reinterpret_cast<LPVOID>(target),
 			reinterpret_cast<LPVOID>(DetourDoDisableInput),
 			reinterpret_cast<LPVOID*>(&TrampolineDoDisableInput));
+		if (st != MH_OK)
+			WriteLog("Error", "MH_CreateHook for \"DoDisableInput\" failed with error [%d]!", st);
 	}
 	else
 		WriteLog("Error", "Could not find address of \"DoDisableInput\"!");

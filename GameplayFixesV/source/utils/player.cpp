@@ -62,6 +62,12 @@ public:
 		}
 	}
 
+	void ResetState()
+	{
+		m_isCrouching = false;
+		m_timer.Reset();
+	}
+
 	bool CanCrouch(Ped ped) const
 	{
 		if (!DOES_ENTITY_EXIST(ped) || IS_ENTITY_DEAD(ped, false) || IS_PED_DEAD_OR_DYING(ped, true) ||
@@ -364,34 +370,35 @@ void DynamicallyCleanWoundsAndDirt()
 		return;
 	}
 
-	const float subLevel = GET_ENTITY_SUBMERGED_LEVEL(GetPlayerPed());
+	const Ped playerPed = GetPlayerPed();
+	const float subLevel = GET_ENTITY_SUBMERGED_LEVEL(playerPed);
 	if (subLevel >= 0.3f)
 	{
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_RIGHT_LEG);
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_LEFT_LEG);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(playerPed, PDZ_RIGHT_LEG);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(playerPed, PDZ_LEFT_LEG);
 	}
 
-	if (subLevel >= 0.7f || IS_PED_SWIMMING(GetPlayerPed()))
+	if (subLevel >= 0.7f || IS_PED_SWIMMING(playerPed))
 	{
 		timerDirtDecal.Reset();
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_TORSO);
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_RIGHT_ARM);
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_LEFT_ARM);
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_MEDALS);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(playerPed, PDZ_TORSO);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(playerPed, PDZ_RIGHT_ARM);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(playerPed, PDZ_LEFT_ARM);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(playerPed, PDZ_MEDALS);
 	}
 
 	if (subLevel > 0.9f)
-		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(GetPlayerPed(), PDZ_HEAD);
+		CLEAR_PED_BLOOD_DAMAGE_BY_ZONE(playerPed, PDZ_HEAD);
 
-	if (subLevel == 1.0f || IS_PED_SWIMMING_UNDER_WATER(GetPlayerPed()))
-		CLEAR_PED_BLOOD_DAMAGE(GetPlayerPed());
+	if (subLevel == 1.0f || IS_PED_SWIMMING_UNDER_WATER(playerPed))
+		CLEAR_PED_BLOOD_DAMAGE(playerPed);
 
 	// Also clean when player picks up a medkit
-	const int health = GET_ENTITY_HEALTH(GetPlayerPed());
-	if (health > oldHealthWounds && health == GET_ENTITY_MAX_HEALTH(GetPlayerPed()))
+	const int health = GET_ENTITY_HEALTH(playerPed);
+	if (health > oldHealthWounds && health == GET_ENTITY_MAX_HEALTH(playerPed))
 	{
 		timerDirtDecal.Reset();
-		CLEAR_PED_BLOOD_DAMAGE(GetPlayerPed());
+		CLEAR_PED_BLOOD_DAMAGE(playerPed);
 	}
 
 	// Dirt and oldHealth should always be at the bottom
@@ -399,11 +406,11 @@ void DynamicallyCleanWoundsAndDirt()
 	if (timerDirtDecal.Get() <= timeClearDirtDecal)
 	{
 		if (timerDirtDecal.Get() <= (timeClearDirtDecal / 2))
-			SET_PED_SWEAT(GetPlayerPed(), 0.0f);
+			SET_PED_SWEAT(playerPed, 0.0f);
 
-		CLEAR_PED_ENV_DIRT(GetPlayerPed());	//Must be called every frame
-		//CLEAR_PED_DAMAGE_DECAL_BY_ZONE(GetPlayerPed(), PDZ_TORSO, "basic_dirt_cloth");
-		//CLEAR_PED_DAMAGE_DECAL_BY_ZONE(GetPlayerPed(), PDZ_TORSO, "basic_dirt_skin");
+		CLEAR_PED_ENV_DIRT(playerPed); //Must be called every frame
+		//CLEAR_PED_DAMAGE_DECAL_BY_ZONE(playerPed, PDZ_TORSO, "basic_dirt_cloth");
+		//CLEAR_PED_DAMAGE_DECAL_BY_ZONE(playerPed, PDZ_TORSO, "basic_dirt_skin");
 	}
 	return;
 }
@@ -909,6 +916,12 @@ public:
 		}
 	}
 
+	void Clear()
+	{
+		m_states.clear();
+		m_wasEnteringOrExitingLastFrame = false;
+	}
+
 private:
 	struct VehicleHydraulicsState {
 		Vehicle veh = 0;
@@ -1065,6 +1078,12 @@ public:
 
 			WashSubmerged(veh, cleanRatePerSecond, speedMult);
 		}
+	}
+
+	void Clear()
+	{
+		m_rainShapetestHandle = NULL;
+		m_rainShapetestLastRes = false;
 	}
 
 private:
@@ -1537,20 +1556,27 @@ float speed = 0.0f;
 Timer speedTimer;
 void MinimapSpeedometer()
 {
-	if (!IS_MINIMAP_RENDERING() || IS_RADAR_HIDDEN() || !GetVehiclePedIsIn(GetPlayerPed(), false, false))
+	const Ped playerPed = GetPlayerPed();
+	if (!IS_MINIMAP_RENDERING() || IS_RADAR_HIDDEN() || !GetVehiclePedIsIn(playerPed, false, false))
 		return;
 
 	if (speedTimer.Get() > 100)
 	{
-		speed = GET_ENTITY_SPEED(GetPlayerPed());
+		speed = GET_ENTITY_SPEED(playerPed);
 		speedTimer.Reset();
 	}
 
 	char text[32];
 	if (SHOULD_USE_METRIC_MEASUREMENTS())
-		snprintf(text, sizeof(text), "%.1fkm/h", speed * 3.6f);
+	{
+		const char* const formatMetric = Ini::HideSpeedometerDecimals ? "%.0fkm/h" : "%.1fkm/h";
+		snprintf(text, sizeof(text), formatMetric, speed * 3.6f);
+	}
 	else
-		snprintf(text, sizeof(text), "%.1fmph", speed * 2.236936f);
+	{
+		const char* const formatImperial = Ini::HideSpeedometerDecimals ? "%.0fmph" : "%.1fmph";
+		snprintf(text, sizeof(text), formatImperial, speed * 2.236936f);
+	}
 
 	float txtX = 0.0f, txtY = 0.0f;
 	float n = (16.0f / 9.0f) / GET_SCREEN_ASPECT_RATIO();	// Scale X axis if ratio differs from 16/9
@@ -1680,6 +1706,7 @@ void ReplaceArmourBarWithStamina()
 	{
 		int health = GET_ENTITY_HEALTH(GetPlayerPed()) - 100;
 		int maxHealth = GET_ENTITY_MAX_HEALTH(GetPlayerPed()) - 100;
+		if (maxHealth <= 0) maxHealth = 1;
 		int healthPercentage = ROUND(health * 100.0f / maxHealth);
 		SetHealthHudDisplayValues(healthPercentage, staminaPercentage);
 	}
@@ -2221,4 +2248,37 @@ void RefreshIni()
 		nAudio::InitializedMuteSounds = false;
 	}
 	return;
+}
+
+void ResetPlayerState()
+{
+	if (!DLC::GET_IS_LOADING_SCREEN_ACTIVE())
+	{
+		const Ped playerPed = GetPlayerPed();
+		if (DOES_ENTITY_EXIST(playerPed) && g_crouchController.IsCrouching())
+			g_crouchController.SetCrouch(playerPed, false);
+	}
+	else
+	{
+		g_crouchController.ResetState();
+	}
+
+	nGeneral::mainClimbSTHandle = NULL;
+	nGeneral::mainClimbSTHit = false;
+	nGeneral::heightClimbSTHandle = NULL;
+	nGeneral::heightClimbSTHit = false;
+
+	nWeapons::lastRagdollWp = NULL;
+
+	nVehicle::lastVeh = NULL;
+	nVehicle::lastMissionVeh = NULL;
+	nVehicle::lastVehEngine = NULL;
+	nVehicle::g_hydraulicsManager.Clear();
+	nVehicle::g_vehicleCleaner.Clear();
+
+	nAudio::lastVehRadioOff = NULL;
+
+	nPeds::shoveShapetestHandle = NULL;
+	nPeds::shoveHitEntity = NULL;
+	nPeds::shoveHit = false;
 }

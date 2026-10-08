@@ -1,6 +1,7 @@
 #pragma once
 #include "globals.h"
 #include "utils\functions.h"
+#include "utils\profiler.h"
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -120,8 +121,19 @@ public:
 	}
 
 	void ApplyOptions() const {
-		for (const auto& option_ptr : m_options) { // option_ptr is std::unique_ptr<IOption>&
+		if (!Ini::EnableDebugProfiler) {
+			for (const auto& option_ptr : m_options) { // option_ptr is std::unique_ptr<IOption>&
+				option_ptr->Apply();
+			}
+			return;
+		}
+
+		for (const auto& option_ptr : m_options) {
+			const auto start = std::chrono::high_resolution_clock::now();
 			option_ptr->Apply();
+			const auto end = std::chrono::high_resolution_clock::now();
+			const uint64_t elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+			Profiler::Record(option_ptr->GetName(), elapsed);
 		}
 	}
 };
@@ -129,3 +141,4 @@ public:
 void RegisterPlayerOptions();
 void UpdatePlayerOptions();
 void RefreshIni();
+void ResetPlayerState();

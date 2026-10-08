@@ -56,6 +56,7 @@
     <ClInclude Include="inc\utils\nm.h" />
     <ClInclude Include="inc\utils\player.h" />
     <ClInclude Include="inc\utils\peds.h" />
+    <ClInclude Include="inc\utils\profiler.h" />
     <ClInclude Include="res\resource.h" />
   </ItemGroup>
   <ItemGroup>
@@ -77,7 +78,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>

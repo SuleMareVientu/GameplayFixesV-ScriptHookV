@@ -62,14 +62,18 @@ inline void DisableWrithe(const Ped ped)
 
 void DisableHurt(const Ped ped)
 {
+	if (IS_ENTITY_STATIC(ped) || IS_PED_IN_ANY_VEHICLE(ped, false))
+		return;
+
 	EnablePedConfigFlag(ped, PCF_DisableHurt);
-	DisablePedConfigFlag(ped, PCF_ForceDieIfInjured);
 	DisablePedConfigFlag(ped, PCF_DieWhenRagdoll);
+
 	//Fix long melee fights
 	if (IS_PED_IN_MELEE_COMBAT(ped) || IS_PED_FLEEING(ped))
-		SET_PED_DIES_WHEN_INJURED(ped, true);
+		EnablePedConfigFlag(ped, PCF_ForceDieIfInjured);
 	else
-		SET_PED_DIES_WHEN_INJURED(ped, false);
+		DisablePedConfigFlag(ped, PCF_ForceDieIfInjured);
+
 	return;
 }
 
@@ -471,4 +475,18 @@ void UpdatePedsPool()
 	}
 	UpdatePedsCurrentFrame();	// Remember to update data structures (sets, vectors etc.)
 	return;
+}
+
+void ResetPedState()
+{
+	if (!DLC::GET_IS_LOADING_SCREEN_ACTIVE())
+	{
+		for (auto& item : brollyPeds)
+		{
+			if (item.brolly && DOES_ENTITY_EXIST(item.brolly))
+				DeleteEntity(&item.brolly);
+		}
+	}
+	brollyPeds.clear();
+	pedAccuracies.clear();
 }

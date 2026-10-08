@@ -14,6 +14,7 @@ std::string dllInstanceIniName = "GameplayFixesV.ini";
 std::string dllInstanceLogName = "GameplayFixesV.log";
 int gameVersion = -1;
 bool isEnhancedVersion = false;
+uintptr_t playerPedAddress = 0;
 
 const char* GetDllInstanceName() { return dllInstanceName.c_str(); }
 const char* GetDllInstanceNameNoExt() { return dllInstanceNameNoExt.c_str(); }

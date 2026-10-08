@@ -46,3 +46,4 @@ public:
 
 void RegisterPedOptions();
 void UpdatePedsPool();
+void ResetPedState();
