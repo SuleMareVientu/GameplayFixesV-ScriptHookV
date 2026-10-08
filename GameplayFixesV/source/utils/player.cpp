@@ -184,7 +184,7 @@ int heightClimbSTHandle = NULL; bool heightClimbSTHit = false;
 void EnableMidAirLedgeGrab()
 {
 	constexpr float fwdOff = 0.3f;
-	constexpr int STFlags = SCRIPT_INCLUDE_ALL & ~SCRIPT_INCLUDE_PED & ~SCRIPT_INCLUDE_RIVER & ~SCRIPT_INCLUDE_FOLIAGE;
+	constexpr int STFlags = SCRIPT_INCLUDE_ALL & ~SCRIPT_INCLUDE_PED & ~SCRIPT_INCLUDE_RAGDOLL & ~SCRIPT_INCLUDE_PICKUP & ~SCRIPT_INCLUDE_RIVER & ~SCRIPT_INCLUDE_FOLIAGE;
 
 	if (DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())) ||
 		(!IS_ENTITY_IN_AIR(GetPlayerPed()) && !IS_PED_FALLING(GetPlayerPed())))
@@ -708,7 +708,7 @@ namespace nVehicle
 Vehicle lastVeh = NULL;
 void DisableCarMidAirAndRollControl()
 {
-	Vehicle veh = GetVehiclePedIsIn(GetPlayerPed());
+	Vehicle veh = GetVehiclePedIsIn(GetPlayerPed(), true, true);
 	if (!DOES_ENTITY_EXIST(veh))
 	{
 		if (DOES_ENTITY_EXIST(lastVeh))
@@ -1584,11 +1584,14 @@ void MinimapSpeedometer()
 	if (isBigMapActive)
 		GET_SCRIPT_GFX_ALIGN_POSITION(0.18f * n, -0.047f, &txtX, &txtY);
 	else
-		GET_SCRIPT_GFX_ALIGN_POSITION(0.1f * n, -0.047f, &txtX, &txtY);
+		GET_SCRIPT_GFX_ALIGN_POSITION(0.136f * n, -0.047f, &txtX, &txtY);
 	
 	RESET_SCRIPT_GFX_ALIGN();
 
-	SetTextStyle(TextStyle{ FONT_CONDENSED, 0.44f, 0.44f, RGBA{250, 250, 250, 180}, DROPSTYLE_DROPSHADOWONLY, false, 0.0f, 1.0f });
+	// In GTA V, SET_TEXT_RIGHT_JUSTIFY ignores DISPLAY_TEXT's X coordinate and
+	// aligns the right edge to WrapEndX instead; WrapEndX must be set to txtX.
+	SetTextStyle(TextStyle{ FONT_CONDENSED, 0.44f, 0.44f, RGBA{250, 250, 250, 180}, DROPSTYLE_ALL, false, 0.0f, txtX });
+	SET_TEXT_RIGHT_JUSTIFY(true);
 
 	BEGIN_TEXT_COMMAND_DISPLAY_TEXT("STRING");
 	ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(text);
