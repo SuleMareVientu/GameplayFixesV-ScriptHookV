@@ -957,14 +957,13 @@ void LowPriorityPropsPatch()
 
 	WriteLog("Info", "---------------------- Low Priority Props ----------------------");
 
+	if (!Ini::ExtendGamePools)
+	{
+		WriteLog("Warning", "LowPriorityPropsPatch is enabled while ExtendGamePools is disabled. An external pool extender mod is required or the game will crash due to pool limits!");
+	}
+
 	if (GetIsEnhancedVersion())
 	{
-		if (!Ini::ExtendGamePools)
-		{
-			WriteLog("Info", "Patch skipped: ExtendGamePools is disabled.");
-			return;
-		}
-
 		WriteLog("Operation", "Finding prop priority address...");
 
 		ULONG_PTR address = FindPattern("C7 05 ?? ?? ?? ?? 02 00 00 00 B8 02 00 00 00 89 05");

@@ -1402,6 +1402,34 @@ bool IsPedMainProtagonist(const Ped ped)
 	return false;
 }
 
+bool IsPedMissionOrCompanion(const Ped ped)
+{
+	if (IS_ENTITY_A_MISSION_ENTITY(ped) || GET_PED_TYPE(ped) == PEDTYPE_MISSION || IsPedMainProtagonist(ped))
+		return true;
+
+	const Ped playerPed = GetPlayerPed();
+	if (DOES_ENTITY_EXIST(playerPed))
+	{
+		const int playerGroup = GET_PLAYER_GROUP(GetPlayer());
+		if (IS_PED_IN_GROUP(ped) && IS_PED_GROUP_MEMBER(ped, playerGroup))
+			return true;
+
+		const Hash relGroup = GET_PED_RELATIONSHIP_GROUP_HASH(ped);
+		if (relGroup == RELGROUPHASH_PLAYER || relGroup == Joaat("PLAYER"))
+			return true;
+
+		const int rel = GET_RELATIONSHIP_BETWEEN_PEDS(ped, playerPed);
+		if (rel == ACQUAINTANCE_TYPE_PED_RESPECT || rel == ACQUAINTANCE_TYPE_PED_LIKE)
+			return true;
+
+		const Vehicle playerVeh = GetVehiclePedIsUsing(playerPed);
+		if (DOES_ENTITY_EXIST(playerVeh) && IS_PED_IN_ANY_VEHICLE(ped, false) && GetVehiclePedIsUsing(ped) == playerVeh)
+			return true;
+	}
+
+	return false;
+}
+
 bool IsPedACop(const Ped ped)
 {
 	/*

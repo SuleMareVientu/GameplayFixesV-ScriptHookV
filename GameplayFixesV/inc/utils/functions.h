@@ -204,6 +204,7 @@ void PlayScriptedAnim(
 	const int flags = AF_DEFAULT,
 	const int ikFlags = AIK_NONE);
 bool IsPedMainProtagonist(const Ped ped);
+bool IsPedMissionOrCompanion(const Ped ped);
 bool IsPedACop(const Ped ped);
 bool IsFirstPersonActive();
 bool IsPlayerAiming(bool includeAimGunTask, bool includeShooting);

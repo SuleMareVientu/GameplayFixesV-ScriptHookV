@@ -130,6 +130,7 @@ extern bool DisableSittingPedsInstantDeath;
 extern bool DisablePedOnlyDamagedByPlayer;
 extern bool DisableDeadPedsJumpOutOfVehicle;
 extern bool DeadlyNPCsHeadshots;
+extern bool DisableDeadlyNPCsHeadshotsForMissionPeds;
 extern bool DisarmPedWhenShot;
 extern int DisarmChance;
 extern bool DisarmIncludeLeftHand;

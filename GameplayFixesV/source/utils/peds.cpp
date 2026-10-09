@@ -121,6 +121,9 @@ inline void DisableDeadPedsJumpOutOfVehicle(const Ped ped)
 
 void DeadlyNPCsHeadshots(const Ped ped)
 {
+	if (Ini::DisableDeadlyNPCsHeadshotsForMissionPeds && IsPedMissionOrCompanion(ped))
+		return;
+
 	if (!HAS_PED_BEEN_DAMAGED_BY_WEAPON(ped, NULL, GENERALWEAPON_TYPE_ANYWEAPON) || IS_PED_FALLING(ped) ||
 		HAS_ENTITY_BEEN_DAMAGED_BY_ENTITY(ped, GetPlayerPed(), true))
 		return;
