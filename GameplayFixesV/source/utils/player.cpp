@@ -179,122 +179,153 @@ void EnableCrouching()
 
 Timer midAirLedgeGrabRagdollTimer;
 constexpr int midAirLedgeGrabMaxRagdollTime = 300;
-int mainClimbSTHandle = NULL; bool mainClimbSTHit = false; Vector3 mainClimbSTHitCoords = Vector3();
-int heightClimbSTHandle = NULL; bool heightClimbSTHit = false;
 void EnableMidAirLedgeGrab()
 {
-	constexpr float fwdOff = 0.3f;
-	constexpr int STFlags = SCRIPT_INCLUDE_ALL & ~SCRIPT_INCLUDE_PED & ~SCRIPT_INCLUDE_RAGDOLL & ~SCRIPT_INCLUDE_PICKUP & ~SCRIPT_INCLUDE_RIVER & ~SCRIPT_INCLUDE_FOLIAGE;
-
-	if (DOES_ENTITY_EXIST(GetVehiclePedIsUsing(GetPlayerPed())) ||
-		(!IS_ENTITY_IN_AIR(GetPlayerPed()) && !IS_PED_FALLING(GetPlayerPed())))
+	const Ped playerPed = GetPlayerPed();
+	if (!DOES_ENTITY_EXIST(playerPed) ||
+		DOES_ENTITY_EXIST(GetVehiclePedIsUsing(playerPed)) ||
+		(!IS_ENTITY_IN_AIR(playerPed) && !IS_PED_FALLING(playerPed)) ||
+		IS_PED_CLIMBING(playerPed) ||
+		IS_PED_VAULTING(playerPed) ||
+		IS_PED_SWIMMING(playerPed) ||
+		IS_ENTITY_IN_WATER(playerPed) ||
+		GET_PED_PARACHUTE_STATE(playerPed) > 0)
 		return;
 
-	if (!IS_PED_RAGDOLL(GetPlayerPed()))
+	// Grace window for stumble/slip ragdolls
+	if (!IS_PED_RAGDOLL(playerPed))
 		midAirLedgeGrabRagdollTimer.Reset();
 	else if (midAirLedgeGrabRagdollTimer.Get() > midAirLedgeGrabMaxRagdollTime)
 		return;
 
+	// Limit maximum downward speed (cannot grab ledges at terminal skydive velocities)
+	const Vector3 vel = GET_ENTITY_VELOCITY(playerPed);
+	if (vel.z < -22.0f)
+		return;
+
+	// Exclude peds, ragdolls, pickups, water, foliage (MOVER | VEHICLE | OBJECT | GLASS)
+	constexpr int STFlags = SCRIPT_INCLUDE_MOVER | SCRIPT_INCLUDE_VEHICLE | SCRIPT_INCLUDE_OBJECT | SCRIPT_INCLUDE_GLASS;
+
 	Vector3 fwdVec = Vector3(); Vector3 rightVec = Vector3(); Vector3 upVec = Vector3(); Vector3 locVec = Vector3();
-	GET_ENTITY_MATRIX(GetPlayerPed(), &fwdVec, &rightVec, &upVec, &locVec);
-	Vector3 modelMin = Vector3(); Vector3 modelMax = Vector3();
-	GET_MODEL_DIMENSIONS(GET_ENTITY_MODEL(GetPlayerPed()), &modelMin, &modelMax);
-	const float radius = (modelMax.x - modelMin.x) * 0.35f;
-	const float height = (modelMax.z - modelMin.z) * 0.45f;
-	const Vector3 spineCoords = GET_PED_BONE_COORDS(GetPlayerPed(), BONETAG_SPINE3, 0.0f, 0.0f, 0.0f);
-	Vector3 start = spineCoords;
-	Vector3 end = start + (fwdVec * 1.25f);
-	if (mainClimbSTHandle != NULL)
+	GET_ENTITY_MATRIX(playerPed, &fwdVec, &rightVec, &upVec, &locVec);
+
+	// In first person mode, use gameplay camera forward direction
+	if (GET_FOLLOW_PED_CAM_VIEW_MODE() == 4)
 	{
-		Vector3 hitNormal = Vector3(); Entity hitEntity = NULL;
-		if (GET_SHAPE_TEST_RESULT(mainClimbSTHandle, &mainClimbSTHit, &mainClimbSTHitCoords, &hitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
-			mainClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, start.z, radius, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
-	}
-	else
-		mainClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, start.z, radius, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
-
-	if (!mainClimbSTHit)
-		return;
-
-	//Print("main", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, start.z, 255, 87, 51, 200);
-
-	start = mainClimbSTHitCoords + (fwdVec * fwdOff);
-	start += (rightVec * (radius - 0.25f));
-	start.z = mainClimbSTHitCoords.z;
-	end = start;
-	start.z += height + 1.0f;
-
-	bool surfaceClimbSTHit = false;
-	Vector3 surfaceClimbSTHitCoords = Vector3();
-	Vector3 surfaceClimbSTHitNormal = Vector3();
-	int surfaceClimbSTHandle = START_EXPENSIVE_SYNCHRONOUS_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
-	if (surfaceClimbSTHandle)
-	{
-		Entity hitEntity = NULL;
-		GET_SHAPE_TEST_RESULT(surfaceClimbSTHandle, &surfaceClimbSTHit, &surfaceClimbSTHitCoords, &surfaceClimbSTHitNormal, &hitEntity);
+		const Vector3 camRot = GET_GAMEPLAY_CAM_ROT(2);
+		const float pitch = camRot.x * (3.14159265f / 180.0f);
+		const float yaw = -camRot.z * (3.14159265f / 180.0f);
+		fwdVec = Vector3(std::sin(yaw) * std::abs(std::cos(pitch)), std::cos(yaw) * std::abs(std::cos(pitch)), 0.0f).Normalize();
 	}
 
-	//Print("surface", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
+	const Vector3 spineCoords = GET_PED_BONE_COORDS(playerPed, BONETAG_SPINE3, 0.0f, 0.0f, 0.0f);
+	constexpr float probeDist = 1.15f;
 
-	if (!surfaceClimbSTHit)
+	// Horizontal wall contact probe
+	const Vector3 wallStart = spineCoords;
+	const Vector3 wallEnd = wallStart + (fwdVec * probeDist);
+
+	bool wallHit = false;
+	Vector3 wallHitCoords = Vector3();
+	Vector3 wallNormal = Vector3();
+	Entity hitEntity = NULL;
+
+	int handle = START_EXPENSIVE_SYNCHRONOUS_SHAPE_TEST_LOS_PROBE(
+		wallStart.x, wallStart.y, wallStart.z,
+		wallEnd.x, wallEnd.y, wallEnd.z,
+		STFlags, playerPed, SCRIPT_SHAPETEST_OPTION_DEFAULT);
+	if (handle)
+		GET_SHAPE_TEST_RESULT(handle, &wallHit, &wallHitCoords, &wallNormal, &hitEntity);
+
+	// Must hit a predominantly vertical wall surface
+	if (!wallHit || std::abs(wallNormal.z) > 0.35f)
 		return;
 
-	start = mainClimbSTHitCoords + (fwdVec * fwdOff);
-	start -= (rightVec * (radius - 0.25f));
-	start.z = mainClimbSTHitCoords.z;
-	end = start;
-	start.z += height + 1.0f;
+	// Facing alignment check (ped must face into the wall)
+	Vector3 flatWallNormal = Vector3(-wallNormal.x, -wallNormal.y, 0.0f);
+	const float flatLen = flatWallNormal.Length();
+	if (flatLen <= 0.001f)
+		return;
+	Vector3 inwardDir = flatWallNormal / flatLen;
 
-	bool surface2ndClimbSTHit = false;
-	Vector3 surface2ndClimbSTHitCoords = Vector3();
-	Vector3 surface2ndClimbSTHitNormal = Vector3();
-	int surface2ndClimbSTHandle = START_EXPENSIVE_SYNCHRONOUS_SHAPE_TEST_LOS_PROBE(start.x, start.y, start.z, end.x, end.y, end.z, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
-	if (surface2ndClimbSTHandle)
-	{
-		Entity hitEntity = NULL;
-		GET_SHAPE_TEST_RESULT(surface2ndClimbSTHandle, &surface2ndClimbSTHit, &surface2ndClimbSTHitCoords, &surface2ndClimbSTHitNormal, &hitEntity);
-	}
-
-	//Print("2nd", 0); DRAW_LINE(start.x, start.y, start.z, end.x, end.y, end.z, 255, 87, 51, 200);
-
-	if (!surface2ndClimbSTHit)
+	if (fwdVec.Dot(inwardDir) < 0.45f)
 		return;
 
-	start = (surfaceClimbSTHitCoords + surface2ndClimbSTHitCoords) / 2.0f; start.z += height;
-	end = start; end.z = min(surfaceClimbSTHitCoords.z, surface2ndClimbSTHitCoords.z);
-	Vector3 heightClimbSTHitCoords = Vector3();
-	Vector3 heightClimbSTHitNormal = Vector3();
-	if (heightClimbSTHandle != NULL)
+	// Lateral wall coordinate frame
+	Vector3 wallRight = wallNormal.Cross(Vector3(0.0f, 0.0f, 1.0f));
+	const float rightLen = wallRight.Length();
+	if (rightLen <= 0.001f)
+		return;
+	wallRight = wallRight / rightLen;
+
+	constexpr float handSpan = 0.20f;    // Match RAGE CClimbDetector RADIUS * 2 (20cm each side = 40cm total)
+	constexpr float inwardDepth = 0.20f; // 20cm into the top surface of the ledge
+
+	// Helper for top ledge surface probing
+	auto probeLedgeSurface = [&](const Vector3& offset) -> std::pair<bool, Vector3>
 	{
-		Entity hitEntity = NULL;
-		if (GET_SHAPE_TEST_RESULT(heightClimbSTHandle, &heightClimbSTHit, &heightClimbSTHitCoords, &heightClimbSTHitNormal, &hitEntity) != SHAPETEST_STATUS_RESULTS_NOTREADY)
-			heightClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, end.z, radius, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
-	}
-	else
-		heightClimbSTHandle = START_SHAPE_TEST_CAPSULE(start.x, start.y, start.z, end.x, end.y, end.z, radius, STFlags, GetPlayerPed(), SCRIPT_SHAPETEST_OPTION_DEFAULT);
+		Vector3 rayStart = wallHitCoords + offset; rayStart.z += 1.25f;
+		Vector3 rayEnd = wallHitCoords + offset;   rayEnd.z -= 0.35f;
+		bool hit = false; Vector3 hitPos = Vector3(); Vector3 normal = Vector3(); Entity ent = NULL;
+		int h = START_EXPENSIVE_SYNCHRONOUS_SHAPE_TEST_LOS_PROBE(
+			rayStart.x, rayStart.y, rayStart.z,
+			rayEnd.x, rayEnd.y, rayEnd.z,
+			STFlags, playerPed, SCRIPT_SHAPETEST_OPTION_DEFAULT);
+		if (h)
+			GET_SHAPE_TEST_RESULT(h, &hit, &hitPos, &normal, &ent);
 
-	/*
-	Vector3 min_corner = { min(start.x, end.x) - radius, min(start.y, end.y) - radius, min(start.z, end.z) - radius };
-	Vector3 max_corner = { max(start.x, end.x) + radius, max(start.y, end.y) + radius, max(start.z, end.z) + radius };
-	Print("height", 0); DRAW_BOX(min_corner.x, min_corner.y, min_corner.z, max_corner.x, max_corner.y, max_corner.z, 255, 87, 51, 200);
-	*/
+		// Match RAGE fVaultSlopeMaxAngle = 42.5 deg (cos(42.5 deg) = 0.737)
+		if (hit && normal.z >= 0.737f)
+			return { true, hitPos };
 
-	float avgHeight = (surfaceClimbSTHitCoords.z + surface2ndClimbSTHitCoords.z) / 2.0f;
-	Vector3 avgNormal = (surfaceClimbSTHitNormal + surface2ndClimbSTHitNormal + heightClimbSTHitNormal) / 3.0f;
-	if (!heightClimbSTHit || std::abs(heightClimbSTHitCoords.z - avgHeight) > 0.35f ||
-		std::abs(heightClimbSTHitCoords.z - spineCoords.z) > 1.5f || avgNormal.Dot(Vector3(0.0f, 0.0f, 1.0f)) < 0.4f)
+		return { false, Vector3() };
+	};
+
+	// Dual-hand surface probes
+	const auto leftLedge = probeLedgeSurface((inwardDir * inwardDepth) - (wallRight * handSpan));
+	const auto rightLedge = probeLedgeSurface((inwardDir * inwardDepth) + (wallRight * handSpan));
+
+	if (!leftLedge.first || !rightLedge.first)
 		return;
 
-	if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_JUMP) && !IS_PED_CLIMBING(GetPlayerPed()) && !IS_PED_VAULTING(GetPlayerPed()) &&
-		GET_SCRIPT_TASK_STATUS(GetPlayerPed(), SCRIPT_TASK_CLIMB) == FINISHED_TASK)
+	// Ensure both hands find a reasonably level surface
+	if (std::abs(leftLedge.second.z - rightLedge.second.z) > 0.20f)
+		return;
+
+	const float ledgeZ = (leftLedge.second.z + rightLedge.second.z) * 0.5f;
+	const float heightDiff = ledgeZ - spineCoords.z;
+
+	// Reachable height window: from low chest (-0.35m) to high reach (+1.45m)
+	if (heightDiff < -0.35f || heightDiff > 1.45f)
+		return;
+
+	// Overhead clearance / headroom probe (+1.75m space above ledge, matching RAGE)
+	const Vector3 ledgeCenter = (leftLedge.second + rightLedge.second) * 0.5f;
+	bool ceilingHit = false;
+	Vector3 ceilHitCoords = Vector3();
+	Vector3 ceilNormal = Vector3();
+	int ceilHandle = START_EXPENSIVE_SYNCHRONOUS_SHAPE_TEST_LOS_PROBE(
+		ledgeCenter.x, ledgeCenter.y, ledgeCenter.z + 0.1f,
+		ledgeCenter.x, ledgeCenter.y, ledgeCenter.z + 1.75f,
+		STFlags, playerPed, SCRIPT_SHAPETEST_OPTION_DEFAULT);
+	if (ceilHandle)
+		GET_SHAPE_TEST_RESULT(ceilHandle, &ceilingHit, &ceilHitCoords, &ceilNormal, &hitEntity);
+
+	if (ceilingHit)
+		return;
+
+	// Action Execution (unless player is pulling back on stick to intentionally drop)
+	if (IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_JUMP) &&
+		!IS_CONTROL_PRESSED(PLAYER_CONTROL, INPUT_MOVE_DOWN_ONLY) &&
+		GET_SCRIPT_TASK_STATUS(playerPed, SCRIPT_TASK_CLIMB) == FINISHED_TASK)
 	{
-		const Vector3 vel = GET_ENTITY_VELOCITY(GetPlayerPed());
 		if (vel.z < 0.0f)
-			SET_ENTITY_VELOCITY(GetPlayerPed(), vel.x, vel.y, 0.0f);
+			SET_ENTITY_VELOCITY(playerPed, vel.x * 0.5f, vel.y * 0.5f, 0.0f);
 
-		APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(GetPlayerPed(), APPLY_TYPE_IMPULSE, 0.0f, 0.0f, 5.0f, RAGDOLL_PELVIS, false, true, false);
-		CLEAR_PED_TASKS_IMMEDIATELY(GetPlayerPed());
-		TASK_CLIMB(GetPlayerPed(), false);
+		const float upwardImpulse = std::clamp(3.5f + (heightDiff * 2.0f), 3.0f, 6.5f);
+		APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(playerPed, APPLY_TYPE_IMPULSE, 0.0f, 0.0f, upwardImpulse, RAGDOLL_PELVIS, false, true, false);
+		CLEAR_PED_TASKS_IMMEDIATELY(playerPed);
+		TASK_CLIMB(playerPed, false);
 	}
 	return;
 }
@@ -2266,10 +2297,7 @@ void ResetPlayerState()
 		g_crouchController.ResetState();
 	}
 
-	nGeneral::mainClimbSTHandle = NULL;
-	nGeneral::mainClimbSTHit = false;
-	nGeneral::heightClimbSTHandle = NULL;
-	nGeneral::heightClimbSTHit = false;
+	nGeneral::midAirLedgeGrabRagdollTimer.Reset();
 
 	nWeapons::lastRagdollWp = NULL;
 
