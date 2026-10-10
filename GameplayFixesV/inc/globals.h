@@ -14,7 +14,7 @@ using json = nlohmann::json;
 #pragma region MACROS
 
 #define VER_MAX 3
-#define VER_MIN 3
+#define VER_MIN 4
 #define LOOP(i, n) for(int i = 0; i < n; ++i)
 
 #pragma endregion

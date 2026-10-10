@@ -567,6 +567,20 @@ inline const char* GetCurrentScriptName()
 			return name;
 	}
 
+	// Fallback offsets in case of struct alignment variance across retail builds
+	for (uintptr_t off : { (uintptr_t)0x10, (uintptr_t)0x08 })
+	{
+		const uint32_t fallbackId = *reinterpret_cast<const uint32_t*>(
+			reinterpret_cast<uintptr_t>(activeThread) + off
+		);
+		if (fallbackId != 0 && fallbackId != threadId)
+		{
+			const char* name = GET_NAME_OF_SCRIPT_WITH_THIS_ID(fallbackId);
+			if (name && name[0] != '\0')
+				return name;
+		}
+	}
+
 	return "";
 }
 
