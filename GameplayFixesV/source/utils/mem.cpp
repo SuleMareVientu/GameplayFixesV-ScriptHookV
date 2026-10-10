@@ -540,11 +540,66 @@ namespace nGame
 #pragma endregion
 
 #pragma region Memory Hooking
+typedef void* (*GetActiveThread_t)();
+GetActiveThread_t GetActiveThread = nullptr;
+
+constexpr uintptr_t THREAD_ID_OFFSET = 0x18;
+
+inline const char* GetCurrentScriptName()
+{
+	if (!GetActiveThread)
+		return "";
+
+	void* activeThread = GetActiveThread();
+	if (!activeThread)
+		return "";
+
+	// m_Serialized is at offset 0x18, where m_ThreadId is the first uint32
+	const uint32_t threadId = *reinterpret_cast<const uint32_t*>(
+		reinterpret_cast<uintptr_t>(activeThread) + THREAD_ID_OFFSET
+	);
+
+	if (threadId != 0)
+	{
+		// We can call this native from a non-script context without the game crashing
+		const char* name = GET_NAME_OF_SCRIPT_WITH_THIS_ID(threadId);
+		if (name && name[0] != '\0')
+			return name;
+	}
+
+	return "";
+}
+
+inline uint32_t GetCurrentScriptHash()
+{
+	const char* scriptName = GetCurrentScriptName();
+	if (scriptName && scriptName[0] != '\0')
+		return Joaat(scriptName);
+
+	return 0;
+}
+
+inline bool IsSafehouseScriptHash(uint32_t hash)
+{
+	switch (hash)
+	{
+	case Joaat("family_scene_f0"):
+	case Joaat("family_scene_f1"):
+	case Joaat("family_scene_m"):
+	case Joaat("family_scene_t0"):
+	case Joaat("family_scene_t1"):
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 typedef void(__fastcall* DoDisableInput_t)(void*, uint32_t, const void*, bool);
 DoDisableInput_t TrampolineDoDisableInput = nullptr;
 void __fastcall DetourDoDisableInput(void* _this, uint32_t input, const void* options, bool disableRelatedInputs)
 {
-	if (isPlayerInsideSafehouse)
+	if (isPlayerInsideSafehouse && IsSafehouseScriptHash(GetCurrentScriptHash()))
 	{
 		switch (input)
 		{
@@ -569,8 +624,8 @@ EquipWeapon_t TrampolineEquipWeapon = nullptr;
 bool __fastcall DetourEquipWeapon(void* _this, uint32_t uWeaponNameHash, uint32_t iVehicleIndex,
 	bool bCreateWeaponWhenLoaded, bool bProcessWeaponInstructions, uint32_t attach)
 {
-
-	if (_this && isPlayerInsideSafehouse && uWeaponNameHash == WEAPON_UNARMED && isPlayerArmed)
+	if (_this && isPlayerInsideSafehouse && uWeaponNameHash == WEAPON_UNARMED
+		&& isPlayerArmed && IsSafehouseScriptHash(GetCurrentScriptHash()))
 	{
 		const uintptr_t pedPtr = *reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(_this) + 0x10);
 		if (pedPtr && pedPtr == playerPedAddress)
@@ -590,6 +645,19 @@ void AllowWeaponsInsideSafeHouse()
 
 	const bool enhanced = GetIsEnhancedVersion();
 	ULONG_PTR target = NULL;
+
+	// Resolve GetActiveThread
+	target = enhanced
+		? FindPattern("56 48 83 EC 20 48 89 CE  E8 ?? ?? ?? ?? 48 85 C0 74 ?? E8 ?? ?? ?? ?? 80 B8 ?? 01 00 00 00 74")
+		: FindPattern("40 53 48 83 EC 20 48 8B D9 E8 ?? ?? ?? ?? 48 85 C0 74 ?? E8 ?? ?? ?? ?? 80 B8 ?? 01 00 00 00 74");
+
+	if (target)
+	{
+		GetActiveThread = reinterpret_cast<GetActiveThread_t>(ResolveCall(target + (enhanced ? 8 : 9)));
+		WriteLog("Operation", "Found address of \"GetActiveThread\" at 0x%p!", (void*)GetActiveThread);
+	}
+	else
+		WriteLog("Warning", "Could not find address of \"GetActiveThread\"!");
 
 	// Hook DoDisableInput() and EquipWeapon() called from game scripts
 	target = enhanced

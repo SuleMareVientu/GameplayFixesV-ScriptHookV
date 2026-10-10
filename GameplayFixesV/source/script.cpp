@@ -25,7 +25,7 @@ static void ResetScriptState()
 static void update()
 {
 	// Guard against uninitialized state during save load, screen transitions, or dead/inactive player
-	if (DLC::GET_IS_LOADING_SCREEN_ACTIVE() || !PLAYER::IS_PLAYER_PLAYING(PLAYER::PLAYER_ID()) || !DOES_ENTITY_EXIST(GetPlayerPed()))
+	if (GET_IS_LOADING_SCREEN_ACTIVE() || !IS_PLAYER_PLAYING(PLAYER_ID()) || !DOES_ENTITY_EXIST(GetPlayerPed()))
 	{
 		ResetScriptState();
 		return;

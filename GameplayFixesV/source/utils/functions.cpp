@@ -1046,7 +1046,7 @@ public:
 	static void Clear()
 	{
 		s_retrievedWeaponThisFrame = false;
-		if (!DLC::GET_IS_LOADING_SCREEN_ACTIVE())
+		if (!GET_IS_LOADING_SCREEN_ACTIVE())
 		{
 			for (auto& wp : droppedWeapons)
 			{

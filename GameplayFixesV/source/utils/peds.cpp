@@ -482,7 +482,7 @@ void UpdatePedsPool()
 
 void ResetPedState()
 {
-	if (!DLC::GET_IS_LOADING_SCREEN_ACTIVE())
+	if (!GET_IS_LOADING_SCREEN_ACTIVE())
 	{
 		for (auto& item : brollyPeds)
 		{
