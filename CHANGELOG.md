@@ -1,23 +1,39 @@
+# **v3.4**
+
+- Add DisableDeadlyNPCsHeadshotsForMissionPeds (prevents instant mission failure from companion headshots)
+- Add HideSpeedometerDecimals option for MinimapSpeedometer
+- Add EnableDebugProfiler to monitor mod subsystem performance
+- Improve AllowWeaponsInsideSafeHouse (now targets safehouse scripts specifically without interfering with other scripts)
+- Improve EnableMidAirLedgeGrab (better raycast detection, first-person camera support, fall speed and stumble limits)
+- Decouple LowPriorityPropsPatch from ExtendGamePools (now compatible with external pool mods)
+- Fix potential crashes and state leaks during loading screens and scene transitions
+- General performance optimizations and refactoring
+
 # **v3.3**
+
 - Add DisableIntroScreens & DisableEnhancedLandingPage
 - Improve NM reactions code to prevent game crashes
 - Fix DefaultVehicleRadioOff not working correctly
 - Improve EnableBrakeLightsOnStoppedVehicle
 
 # **v3.2**
-- Fix LowPriorityPropsPatch on Enhanced 
+
+- Fix LowPriorityPropsPatch on Enhanced
 - Misc improvements
 
 # **v3.1**
-- Add support for Enhanced memory patches 
-    - Memory patches are now universal, tested from Legacy b1180 to b3521, and latest Enhanced (b1013).
-- Completely reworked AllowWeaponsInsideSafeHouse 
+
+- Add support for Enhanced memory patches
+  - Memory patches are now universal, tested from Legacy b1180 to b3521, and latest Enhanced (b1013).
+- Completely reworked AllowWeaponsInsideSafeHouse
 - Fixed EnableBrakeLightsOnStoppedVehicle, PedUmbrellas, FriendlyFire
 - Disabled LowPriorityPropsPatch by default: causes crashes in Enhanced.
 - Misc fixes
 
 # **v3.0**
+
 **Added:**  
+
 - Add memory patching options without hiding complexity to the user. These types of patches are known to break easily across different game versions.  
 - Implement basic logging for errors.  
 - Implement checks for current game version, preventing crashes and allowing some options to work on older versions of the game (with some functionality disabled). This mod is now officially compatible with every game version ScriptHookV supports.  
@@ -28,10 +44,10 @@
   - EnableCrouching, EnableMidAirLedgeGrab, DisablePlayerAutoVaulting, DisablePlayerDropDowns, SilentWanted
 - **Player Damage:**  
   - LocationalDamage, DeadlyPlayerHeadshots, EnableWeaponRecoil, DropPlayerWeaponWhenRagdolling EnablePlayerNMReactionsWhenShot  
-- **Player Vehicle:**   
+- **Player Vehicle:**
   - EnableBrakeLightsOnStoppedVehicle, DynamicallyCleanVehicles, DisableVehicleJitter, DisableAirVehicleTurbulence, DisableAutoEquipHelmets  
 - **Player Controls:**  
-  - ReplaceRadioTuneForwardWithRadioOff    
+  - ReplaceRadioTuneForwardWithRadioOff
 - **HUD:**  
   - MinimapSpeedometer  
 - **Audio:**  
@@ -42,13 +58,16 @@
   - DeadlyNPCsHeadshots  
 - **Peds Accuracy:**  
   - PedAccuracyMode, PedShootRateMode, PedGlobalWeaponDamageModifier, PedGlobalMeleeWeaponDamageModifier  
-   
+
 **Improved:**  
-- General refactoring 
+
+- General refactoring
 - ReloadIniKey, DisableWheelsAutoCenterOnCarExit, KeepCarHydraulicsPosition, DisarmPlayerWhenShot, EnablePlayerActionsForAllPeds, DynamicallyCleanWoundsAndDirt, FriendlyFire, DisableFirstPersonView
 
 # **v2.0**
+
 **Added:**  
+
 - ReloadIniKey, FiveM support resource files  
 - **Player:**  
   - DisableActionMode, CleanWoundsAndDirtInWater  
@@ -56,29 +75,32 @@
   - DisableAssistedMovement, DisableCameraAutoCenter, DisableFirstPersonView,
 DisableIdleCamera  
 - **Player Vehicle:**  
-  - KeepCarHydraulicsPosition, EnableHeliWaterPhysics, DisableFlyThroughWindscreen, 
+  - KeepCarHydraulicsPosition, EnableHeliWaterPhysics, DisableFlyThroughWindscreen,
 DisableBikeKnockOff, DisableDragOutCar
 - **HUD:**  
-  - AllowGameExecutionOnPauseMenu, DisablePauseMenuPostFX, DisableHUDPostFX, 
-DisableSpecialAbilityPostFX, EnableBigMapToggle, SetRadarZoom, 
-DisableMinimapTilt, HideMinimapFog, HideMinimapBars, 
-HideAbilityBarForNonMainCharacters, AlwaysHideAbilityBar, 
-ReplaceArmourBarWithStamina, HideMinimapSatNav, HideMinimapDepth, 
+  - AllowGameExecutionOnPauseMenu, DisablePauseMenuPostFX, DisableHUDPostFX,
+DisableSpecialAbilityPostFX, EnableBigMapToggle, SetRadarZoom,
+DisableMinimapTilt, HideMinimapFog, HideMinimapBars,
+HideAbilityBarForNonMainCharacters, AlwaysHideAbilityBar,
+ReplaceArmourBarWithStamina, HideMinimapSatNav, HideMinimapDepth,
 HideHudComponents, HideWeaponReticle, HideEnemiesBlips  
 - **Audio:**  
   - DisableWantedMusic, DisablePoliceScanner, DisableFlyingMusic,
 DisableRadioInterruptions, DefaultVehicleRadioOff  
 - **Peds:**  
   - DisableShootFromGround  
-   
+
 **Improved:**  
-- DisableWheelsAutoCenterOnCarExit, DisarmPedWhenShot, DisableMobilePhone, 
+
+- DisableWheelsAutoCenterOnCarExit, DisarmPedWhenShot, DisableMobilePhone,
 LeaveEngineOnWhenExitingVehicles  
 
 **Removed:**  
+
 - PlayerCanJackFriendlyPeds
 
 # **v1.2**
+
 - CamFollowVehicleDuringHandbrake / CamFollowVehDelay - Force gameplay camera to follow the vehicle when using the handbrake
 - DisableStuntJumps - Disables all stunt jumps around the map
 - DisableMobilePhone - Disables the player's mobile phone  
@@ -86,6 +108,7 @@ LeaveEngineOnWhenExitingVehicles
 DisableEngineSmoke and DisableEngineFire now work as intended
 
 # **v1.1**
+
 - DisarmPlayerWhenShot / DisarmPedWhenShot - Allows enemies that hit the player's weapon (or hands) to disarm the player, similar to RDR and GTA:IV. Adjust DisarmChance and DisarmIncludeLeftHand to your liking. Inspired by jedijosh920's [Disarm](https://www.gta5-mods.com/scripts/disarm)
 - ToggleFPSWalking - Allow player to toggle between jogging and walking in FPS mode. Inspired by chinagreenelvis's [Walk Toggle](https://www.gta5-mods.com/scripts/walk-toggle)
 - DisableEngineFire - Disables engine fires when engine health reaches below 0. Also disables automatic vehicle explosion after engine health reaches -4000
